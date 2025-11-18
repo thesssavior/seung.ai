@@ -272,7 +272,7 @@ export function VideoInputForm() {
           <button 
             type="submit" 
             disabled={isLoading}
-            className="bg-foreground hover:bg-foreground/90 text-background whitespace-nowrap rounded-full p-3"
+            className="bg-foreground hover:bg-foreground/90 text-background whitespace-nowrap rounded-lg p-3"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

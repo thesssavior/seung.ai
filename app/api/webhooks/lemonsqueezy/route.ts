@@ -13,6 +13,7 @@ const webhookSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET!;
 const PREMIUM_STATUSES = ['active', 'on_trial', 'paused', 'past_due', 'cancelled'];
 
 export async function POST(req: NextRequest) {
+  console.log('Lemon Squeezy webhook endpoint hit.');
   if (!webhookSecret) {
     console.error('Lemon Squeezy Webhook Secret not set in environment variables.');
     return new Response('Webhook Secret not configured.', { status: 500 });
