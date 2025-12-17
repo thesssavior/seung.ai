@@ -269,20 +269,19 @@ export function VideoInputForm() {
               </button>
             )}
           </div>
-          <button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isLoading}
-            className="bg-foreground hover:bg-foreground/90 text-background whitespace-nowrap rounded-lg p-3"
+            className="bg-red-600 hover:bg-red-700 text-white whitespace-nowrap"
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <ArrowUp className="h-4 w-4" />
-              // <YoutubeIcon className="mr-2 h-4 w-4" />
+              <YoutubeIcon className="mr-2 h-4 w-4" />
             )}
-            <span className="block sm:hidden">{isLoading ?? t('loadingShort')}</span>
-            <span className="hidden sm:block">{isLoading ?? t('loading')}</span>
-          </button>
+            <span className="block sm:hidden">{isLoading ? t('loadingShort') : t('getSummaryShort')}</span>
+            <span className="hidden sm:block">{isLoading ? t('loading') : t('getSummary')}</span>
+          </Button>
         </div>
       </form>
 
