@@ -60,7 +60,9 @@ export async function POST(req: NextRequest) {
       const variantId = attributes?.variant_id;
       const productName = attributes?.product_name; // Get product name
       const subscriptionId = event.data?.id; // LemonSqueezy subscription ID for tracking
+      const orderId = attributes?.order_id; // LemonSqueezy order ID for tracking
       console.log('🎫 subscriptionId extracted:', subscriptionId, 'type:', typeof subscriptionId);
+      console.log('🧾 orderId extracted:', orderId, 'type:', typeof orderId);
 
       if (!userIdFromWebhook && !userEmail) {
         console.warn('Webhook received without user_id *or* user_email.', event.data);
@@ -74,12 +76,13 @@ export async function POST(req: NextRequest) {
       // Determine the plan based on status - use 'premium' for active subscriptions
       const planToUpdate = PREMIUM_STATUSES.includes(status) ? 'premium' : 'free';
 
-      console.log(`Webhook: Updating plan. Event: ${eventName}, Status: ${status}, Variant: ${variantId}, Product: ${productName}, SubscriptionID: ${subscriptionId || 'N/A'}, UserID: ${userIdFromWebhook || 'N/A'}, Email: ${userEmail || 'N/A'}`);
+      console.log(`Webhook: Updating plan. Event: ${eventName}, Status: ${status}, Variant: ${variantId}, Product: ${productName}, SubscriptionID: ${subscriptionId || 'N/A'}, OrderID: ${orderId || 'N/A'}, UserID: ${userIdFromWebhook || 'N/A'}, Email: ${userEmail || 'N/A'}`);
 
-      // Store subscription_id to link user with LemonSqueezy subscription
+      // Store subscription_id and order_id to link user with LemonSqueezy
       const updatePayload = {
         plan: planToUpdate,
-        lemon_subscription_id: subscriptionId || null
+        lemon_subscription_id: subscriptionId || null,
+        lemon_order_id: orderId || null
       };
       console.log('📝 Update payload:', updatePayload);
 
