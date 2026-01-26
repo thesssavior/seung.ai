@@ -35,48 +35,77 @@ export async function POST(req: NextRequest) {
     }
 
     const event = JSON.parse(rawBody);
+    console.log('📦 Raw webhook event:', JSON.stringify(event, null, 2));
+
     const eventName = event.meta?.event_name;
     const attributes = event.data?.attributes;
-    const customData = event.meta?.custom_data ?? {};  // ✅ right place
-    const userIdFromWebhook = customData?.user_id; // Extract user_id from custom_data
+    const customData = event.meta?.custom_data ?? {};
+
+    console.log('🔍 Parsed webhook data:', {
+      eventName,
+      dataId: event.data?.id,
+      dataType: event.data?.type,
+      customData,
+      attributesStatus: attributes?.status,
+      attributesUserEmail: attributes?.user_email
+    });
+
+    // Extract user_id, treat empty string as undefined
+    const userIdFromWebhook = customData?.user_id && customData.user_id.trim() !== '' ? customData.user_id : undefined;
+    console.log('👤 userIdFromWebhook:', userIdFromWebhook);
 
     if (eventName === 'subscription_created' || eventName === 'subscription_updated') {
       let userEmail = attributes?.user_email;
       const status = attributes?.status;
       const variantId = attributes?.variant_id;
       const productName = attributes?.product_name; // Get product name
+      const subscriptionId = event.data?.id; // LemonSqueezy subscription ID for tracking
+      console.log('🎫 subscriptionId extracted:', subscriptionId, 'type:', typeof subscriptionId);
 
       if (!userIdFromWebhook && !userEmail) {
         console.warn('Webhook received without user_id *or* user_email.', event.data);
         return new Response('Missing user identifier.', { status: 400 });
       }
-        
-      userEmail = userEmail.toLowerCase().trim();
+
+      if (userEmail) {
+        userEmail = userEmail.toLowerCase().trim();
+      }
 
       // Determine the plan based on status - use 'premium' for active subscriptions
       const planToUpdate = PREMIUM_STATUSES.includes(status) ? 'premium' : 'free';
 
-      console.log(`Webhook: Updating plan. Event: ${eventName}, Status: ${status}, Variant: ${variantId}, Product: ${productName}, UserID: ${userIdFromWebhook || 'N/A'}, Email: ${userEmail || 'N/A'}`);
+      console.log(`Webhook: Updating plan. Event: ${eventName}, Status: ${status}, Variant: ${variantId}, Product: ${productName}, SubscriptionID: ${subscriptionId || 'N/A'}, UserID: ${userIdFromWebhook || 'N/A'}, Email: ${userEmail || 'N/A'}`);
 
-      let query = supabase.from('users').update({ plan: planToUpdate });
+      // Store subscription_id to link user with LemonSqueezy subscription
+      const updatePayload = {
+        plan: planToUpdate,
+        lemon_subscription_id: subscriptionId || null
+      };
+      console.log('📝 Update payload:', updatePayload);
+
+      let query = supabase.from('users').update(updatePayload);
 
       if (userIdFromWebhook) {
         query = query.eq('id', userIdFromWebhook);
-        console.log(`Updating plan for user ID: ${userIdFromWebhook} to '${planToUpdate}'.`);
+        console.log(`🔎 Querying by user ID: ${userIdFromWebhook}`);
       } else if (userEmail) {
         query = query.eq('email', userEmail.toLowerCase().trim());
-        console.log(`Updating plan for email: ${userEmail} to '${planToUpdate}'.`);
+        console.log(`🔎 Querying by email: ${userEmail}`);
       } else {
         console.warn('Webhook received without user_id or user_email.', event.data);
         return new Response('Missing user identifier.', { status: 400 });
       }
-      
-      const { error, data } = await query.select();
+
+      const { error, data, count } = await query.select();
+
+      console.log('💾 Supabase update result:', { error, data, count });
 
       if (error) {
-        console.error(`Supabase error updating plan:`, error.message);
+        console.error(`❌ Supabase error updating plan:`, error.message, error);
+      } else if (!data || data.length === 0) {
+        console.warn(`⚠️ No rows updated! User not found in DB. userIdFromWebhook: ${userIdFromWebhook}, userEmail: ${userEmail}`);
       } else {
-        console.log(`Successfully updated plan.`);
+        console.log(`✅ Successfully updated plan. Rows affected:`, data.length, 'Data:', JSON.stringify(data));
       }
     } 
     else if ( eventName === 'subscription_payment_failed' || eventName === 'subscription_expired' ) {

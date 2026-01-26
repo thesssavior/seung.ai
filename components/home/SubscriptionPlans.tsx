@@ -196,8 +196,8 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
                     </span>
                  </p>
                   <button
-                  onClick={() => handleCheckout(currentPlan.id, currentPlan.variant_id, userId ?? '')}
-                  disabled={checkingOutId === currentPlan.variant_id}
+                  onClick={() => userId && handleCheckout(currentPlan.id, currentPlan.variant_id, userId)}
+                  disabled={checkingOutId === currentPlan.variant_id || !userId}
                    className="w-full bg-foreground text-background font-bold py-2 px-4 rounded hover:opacity-90 transition-colors duration-200 text-center mt-4 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {checkingOutId === currentPlan.variant_id ? t('loading') : t('subscribeButton')}
