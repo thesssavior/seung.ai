@@ -1,4 +1,8 @@
 {
+  "metadata": {
+    "title": "AI Video Summary",
+    "description": "Enter the URL of the video you want summarized and get an easy video summary."
+  },
   "title": "What do you want to learn?",
   "subtitle": "Get instant AI-powered summaries of any YouTube video",
   "videoUrl": "Enter YouTube URL",
@@ -29,6 +33,7 @@
   "guestTokenLimit": "Sign in to use longer videos and more powerful AI features.",
   "guestInputTooLong": "The video is too long to summarize. Please try a shorter video.",
   "dailyLimitExceededError": "You have reached your daily limit. Please try again tomorrow.",
+  "trialLimitExceededError": "You have used all 3 free trials.",
   "subCTA": "Upgrade to Premium for unlimited summaries and more features.",
   "upgrade": "Upgrade plan",
   "startForFree": "Start for free",

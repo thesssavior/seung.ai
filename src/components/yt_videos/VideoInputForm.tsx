@@ -55,7 +55,8 @@ export function VideoInputForm() {
   const [trialUsed, setTrialUsed] = useState(false);
   const [inAppBrowser, setInAppBrowser] = useState(false);
   const [showTokenLimitUpgrade, setShowTokenLimitUpgrade] = useState(false);
-  const [dailyLimitExceeded, setDailyLimitExceeded] = useState(false);
+  const [trialLimitExceeded, setTrialLimitExceeded] = useState(false);
+  const [freeTrialsRemaining, setFreeTrialsRemaining] = useState(3);
 
   // Check localStorage for trial status on mount - only after hydration
   useEffect(() => {
@@ -64,6 +65,10 @@ export function VideoInputForm() {
       if (storedTrialUsed === 'true') {
         setTrialUsed(true);
       }
+      // Check free trials count for signed-in free users
+      const storedTrialCount = localStorage.getItem('freeUserTrialCount');
+      const count = storedTrialCount ? parseInt(storedTrialCount, 10) : 0;
+      setFreeTrialsRemaining(3 - count);
     }
   }, [isHydrated]);
 
@@ -108,21 +113,21 @@ export function VideoInputForm() {
     e.preventDefault();
     setError("");
     setShowTokenLimitUpgrade(false);
-    setDailyLimitExceeded(false);
+    setTrialLimitExceeded(false);
 
     if (!user && trialUsed) {
       setShowLoginPrompt(true);
       return;
     }
 
-    // Check daily limit for signed-in free users - only after hydration
+    // Check trial limit for signed-in free users (3 free trials total)
     if (user && userPlan !== 'premium' && isHydrated && typeof window !== 'undefined') {
-      const today = new Date().toDateString();
-      const lastGenerationDate = localStorage.getItem('freeUserLastGenerationDate');
+      const storedTrialCount = localStorage.getItem('freeUserTrialCount');
+      const count = storedTrialCount ? parseInt(storedTrialCount, 10) : 0;
 
-      if (lastGenerationDate === today) {
-        setDailyLimitExceeded(true);
-        setError(t('dailyLimitExceededError'));
+      if (count >= 3) {
+        setTrialLimitExceeded(true);
+        setError(t('trialLimitExceededError'));
         setIsLoading(false);
         return;
       }
@@ -201,9 +206,13 @@ export function VideoInputForm() {
             localStorage.setItem('trialUsed', 'true');
         }
       } else if (user && userPlan !== 'premium' && isHydrated) {
-        // Record generation date for free users - only after hydration
+        // Increment trial count for free users (3 free trials total)
         if (typeof window !== 'undefined') {
-          localStorage.setItem('freeUserLastGenerationDate', new Date().toDateString());
+          const storedTrialCount = localStorage.getItem('freeUserTrialCount');
+          const count = storedTrialCount ? parseInt(storedTrialCount, 10) : 0;
+          const newCount = count + 1;
+          localStorage.setItem('freeUserTrialCount', newCount.toString());
+          setFreeTrialsRemaining(3 - newCount);
         }
       }
       
@@ -211,7 +220,7 @@ export function VideoInputForm() {
       router.push(`/${locale}/summaries/new`);
 
     } catch (err: any) {
-      if (!showTokenLimitUpgrade && !dailyLimitExceeded) {
+      if (!showTokenLimitUpgrade && !trialLimitExceeded) {
         setError(err.message);
       }
     } finally {
@@ -308,16 +317,16 @@ export function VideoInputForm() {
         </div>
       )}
 
-      {(showTokenLimitUpgrade || dailyLimitExceeded) && (
+      {(showTokenLimitUpgrade || trialLimitExceeded) && (
         <div className="mt-4">
           <Alert variant="destructive" className="bg-yellow-50 border-yellow-300 text-yellow-800 mt-4">
             <AlertCircle className="h-4 w-4 !text-yellow-700" />
             <AlertDescription>
-              {showTokenLimitUpgrade ? t('unpaidInputTooLong') : t('dailyLimitExceededError')}
+              {showTokenLimitUpgrade ? t('unpaidInputTooLong') : t('trialLimitExceededError')}
               <br />
               {t('subCTA')}
               <br />
-              <button 
+              <button
                 onClick={openSubscriptionModal}
                 className="underline font-bold hover:text-yellow-900"
               >
@@ -328,7 +337,7 @@ export function VideoInputForm() {
         </div>
       )}
 
-      {error && !showTokenLimitUpgrade && !dailyLimitExceeded && (
+      {error && !showTokenLimitUpgrade && !trialLimitExceeded && (
         <Alert variant="destructive" className="mt-4 bg-red-50 border-red-200 text-red-600">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>

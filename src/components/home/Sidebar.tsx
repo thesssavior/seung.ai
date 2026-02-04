@@ -300,10 +300,11 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="flex flex-col items-center justify-center px-4 py-[18px] border-b">
+      <div className="flex flex-col items-center justify-center px-4 py-[16px] border-b">
         <span className="w-full flex justify-start">
           <Link href={`/${locale}`} className="flex items-center w-full justify-start">
-            <Logo width={110} height={110} className="w-full h-auto max-w-[100px]" />
+            <Logo width={20} height={20} className="w-full h-auto max-w-[24px]" />
+            <span className="text-lg font-medium ml-2 mt-1">Seung AI</span>
           </Link>
         </span>
       </div>

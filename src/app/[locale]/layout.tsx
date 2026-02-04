@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import '../globals.css';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
 // Add react-pdf CSS imports
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -13,6 +15,20 @@ export function generateStaticParams() {
     { locale: 'ko' },
     { locale: 'en' }
   ];
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'metadata' });
+
+  return {
+    title: t('title'),
+    description: t('description'),
+  };
 }
 
 export default async function LocaleLayout({

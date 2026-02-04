@@ -42,14 +42,14 @@ export function Logo({
   const isDark = (theme === 'system' ? systemTheme : theme) === 'dark';
   
   // Choose the appropriate logo
-  const logoSrc = small ? (isDark ? '/small_white.png' : '/small.png') : (isDark ? '/seung_white.png' : '/seung.png');
+  const logoSrc = small ? (isDark ? '/seung_logo_white.jpg' : '/seung_logo.jpeg') : (isDark ? '/seung_logo_white.jpg' : '/seung_logo.jpeg');
 
   return (
     <Image 
       src={logoSrc} 
       alt={alt} 
-      width={small ? width/3 : width} 
-      height={small ? height/3 : height} 
+      width={small ? width/4 : width} 
+      height={small ? height/4 : height} 
       className={className}
       priority // Since this is likely above the fold
     />
