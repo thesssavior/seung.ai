@@ -1,10 +1,9 @@
 'use client';
-import { CheckCircle, Plus } from 'lucide-react';
+import { Check, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
 
 export default function PaymentSuccess() {
   const t = useTranslations('PaymentSuccess');
@@ -12,7 +11,6 @@ export default function PaymentSuccess() {
   const [plan, setPlan] = useState<string>('free');
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const locale = useLocale();
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -25,7 +23,6 @@ export default function PaymentSuccess() {
             return;
           }
           const { plan: latestPlan } = await res.json();
-          console.log("Fetched plan:", latestPlan);
           if (latestPlan && latestPlan !== 'free') {
             setPlan(latestPlan);
             clearInterval(interval);
@@ -45,30 +42,50 @@ export default function PaymentSuccess() {
   const isLoadingPlan = loading && !isPremium;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center px-4">
-      <CheckCircle className="w-16 h-16 text-green-500 mb-6" />
-      <h1 className="text-3xl font-bold mb-4">{t('title')}</h1>
+    <div className="min-h-[calc(100vh-10rem)] flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        {/* Success Icon */}
+        <div className="flex justify-center mb-8">
+          <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center">
+            <Check className="w-8 h-8 text-white stroke-[3]" />
+          </div>
+        </div>
 
-      <div className="mb-8">
-        <p className="text-lg text-gray-600 mb-2">
-          {t('statusLabel')} <span className="font-semibold text-gray-800">Premium</span>
-        </p>
-        {isLoadingPlan ? (
-          <p className="text-yellow-600 animate-pulse">{t('statusUpdating')}</p>
-        ) : isPremium ? (
-          <p className="text-green-600">{t('statusActive')}</p>
-        ) : (
-          <p className="text-gray-500">Your plan is currently Premium.</p>
-        )}
+        {/* Content */}
+        <div className="text-center space-y-3 mb-10">
+          <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+            {t('title')}
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400">
+            {t('statusLabel')}{' '}
+            <span className="text-gray-900 dark:text-white font-medium">Premium</span>
+          </p>
+        </div>
+
+        {/* Status */}
+        <div className="flex justify-center mb-10">
+          {isLoadingPlan ? (
+            <div className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>{t('statusUpdating')}</span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-sm font-medium">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              {t('statusActive')}
+            </div>
+          )}
+        </div>
+
+        {/* Button */}
+        <button
+          onClick={() => router.push("/")}
+          className="w-full py-3 px-4 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+        >
+          {t('newSummaryButton')}
+          <ArrowRight className="w-4 h-4" />
+        </button>
       </div>
-
-      <Button
-        size="lg"
-        className="bg-black hover:bg-zinc-800 text-white"
-        onClick={() => router.push("/")}
-      >
-        <Plus className="w-5 h-5 mr-2" /> {t('newSummaryButton')}
-      </Button>
     </div>
   );
 }

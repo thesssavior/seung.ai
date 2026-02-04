@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import {
   Dialog,
@@ -13,129 +13,67 @@ import { Check, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Logo } from '@/components/ui/logo';
 
-type Plan = {
-  id: string; // Product ID
-  name: string;
-  price: number; // Price in cents
-  price_formatted: string;
-  description: string;
-  buy_link: string; // Probably not needed if using custom checkout
-  variant_id: string; // Variant ID
-  interval: 'month' | 'week' | null; // Billing interval from variant
-};
-
 interface SubscriptionPlansProps {
   isOpen: boolean;
   onCloseAction: () => void;
 }
 
+// Pricing configuration - update these values as needed
+const PRICING = {
+  weekly: {
+    price: 4,
+    priceFormatted: '$4',
+  },
+  monthly: {
+    price: 9,
+    priceFormatted: '$9',
+  },
+  yearly: {
+    price: 49,
+    priceFormatted: '$49',
+  },
+};
+
 export default function SubscriptionPlans({ isOpen, onCloseAction }: SubscriptionPlansProps) {
   const t = useTranslations('SubscriptionPlans');
   const locale = useLocale();
-  const [weeklyPlan, setWeeklyPlan] = useState<Plan | null>(null);
-  const [monthlyPlan, setMonthlyPlan] = useState<Plan | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [checkingOutId, setCheckingOutId] = useState<string | null>(null);
-  const [billingCycle, setBillingCycle] = useState<'weekly' | 'monthly'>('weekly');
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
   const { user } = useAuth();
-  const userId = user?.id;
 
-  // Define VAT rate (e.g., 10% for KRW, adjust as needed)
-  // TODO: Make this VAT rate configurable or fetch from an API if it varies.
-  const VAT_RATE = 0.10;
+  const handleCheckout = async () => {
+    if (!user) {
+      console.error('User not authenticated');
+      return;
+    }
 
-  const handleCheckout = async (productId: string, variantId: string, userId: string) => {
-    setCheckingOutId(variantId); // Track checkout by variantId
+    setCheckingOut(true);
     try {
-      const res = await fetch('/api/lemonsqueezy/checkout', {
+      const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, variantId, locale, userId }),
+        body: JSON.stringify({
+          billingCycle,
+          locale,
+        }), 
       });
+
       const data = await res.json();
+
       if (res.ok && data.url) {
         window.location.href = data.url;
       } else {
         console.error('Checkout error:', data.error);
-        setCheckingOutId(null);
+        setCheckingOut(false);
       }
     } catch (err) {
       console.error('Checkout exception:', err);
-      setCheckingOutId(null);
+      setCheckingOut(false);
     }
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      console.log("SubscriptionPlans useEffect triggered, isOpen:", isOpen);
-      setLoading(true);
-      setWeeklyPlan(null);
-      setMonthlyPlan(null);
-      fetch('/api/lemonsqueezy')
-        .then(res => res.json())
-        .then(data => {
-          console.log("Lemon Squeezy API Data (Products with Variants):", JSON.stringify(data, null, 2));
-
-          const products = data.data || [];
-          const variants = data.included || [];
-          console.log("All Variants:", JSON.stringify(variants, null, 2));
-
-          let foundWeekly: Plan | null = null;
-          let foundMonthly: Plan | null = null;
-
-          variants.forEach((variant: any) => {
-            if (variant.type !== 'variants') return;
-
-            console.log(`Processing variant ${variant.id}, interval: ${variant.attributes.interval}`);
-
-            const product = products.find((p: any) => p.type === 'products' && p.id == variant.attributes.product_id);
-            if (!product) {
-              console.warn(`Product details not found for variant ${variant.id}`);
-              return;
-            }
-
-            const priceInWon = variant.attributes.price / 100;
-            const formattedKoreanWon = priceInWon.toLocaleString('ko-KR', {
-              style: 'currency',
-              currency: 'KRW',
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0
-            });
-
-            const planData: Plan = {
-              id: product.id,
-              name: product.attributes.name,
-              price: variant.attributes.price,
-              price_formatted: formattedKoreanWon,
-              description: product.attributes.description || '',
-              buy_link: '',
-              variant_id: variant.id,
-              interval: variant.attributes.interval,
-            };
-
-            if (variant.attributes.interval === 'week') {
-              console.log(`Found weekly plan: ${variant.id} for product ${product.id}`);
-              foundWeekly = planData;
-            } else if (variant.attributes.interval === 'month') {
-              console.log(`Found monthly plan: ${variant.id} for product ${product.id}`);
-              foundMonthly = planData;
-            }
-          });
-
-          console.log("Setting weeklyPlan:", foundWeekly);
-          console.log("Setting monthlyPlan:", foundMonthly);
-          setWeeklyPlan(foundWeekly);
-          setMonthlyPlan(foundMonthly);
-          setLoading(false);
-        }).catch(err => {
-            console.error("Error fetching plans:", err);
-            setLoading(false);
-        });
-    }
-  }, [isOpen]);
-
-  const currentPlan = billingCycle === 'weekly' ? weeklyPlan : monthlyPlan;
-  const planFeatures = t.raw('features'); // Get features array
+  const currentPricing = PRICING[billingCycle];
+  const planFeatures = t.raw('features');
 
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
@@ -149,79 +87,101 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
 
         {/* Billing Cycle Toggle */}
         <div className="flex justify-center my-4">
-           <div className="inline-flex bg-gray-100 p-1 rounded-full">
-               <button
-                   onClick={() => setBillingCycle('weekly')}
-                   className={`px-4 py-1 rounded-full text-sm font-medium transition-colors duration-150 ${billingCycle === 'weekly' ? 'bg-gray-900 text-white shadow' : 'text-gray-600 hover:text-gray-900'}`}
-               >
-                   {t('weekly')}
-               </button>
-               <button
-                   onClick={() => setBillingCycle('monthly')}
-                   className={`px-4 py-1 rounded-full text-sm font-medium transition-colors duration-150 ${billingCycle === 'monthly' ? 'bg-gray-900 text-white shadow' : 'text-gray-600 hover:text-gray-900'}`}
-               >
-                   {t('monthly')}
-               </button>
-           </div>
+          <div className="inline-flex bg-gray-100 dark:bg-gray-800 p-1 rounded-full">
+            <button
+              onClick={() => setBillingCycle('weekly')}
+              className={`px-4 py-1 rounded-full text-sm font-medium transition-colors duration-150 ${
+                billingCycle === 'weekly'
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              {t('weekly')}
+            </button>
+            <button
+              onClick={() => setBillingCycle('monthly')}
+              className={`px-4 py-1 rounded-full text-sm font-medium transition-colors duration-150 ${
+                billingCycle === 'monthly'
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              {t('monthly')}
+            </button>
+            <button
+              onClick={() => setBillingCycle('yearly')}
+              className={`px-4 py-1 rounded-full text-sm font-medium transition-colors duration-150 ${
+                billingCycle === 'yearly'
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              {t('yearly', { defaultValue: 'Yearly' })}
+            </button>
+          </div>
         </div>
 
         <div className="py-4">
-          {loading ? (
-            <div className="flex justify-center items-center min-h-[120px]">
-              <Loader2 className="w-8 h-8 animate-spin" />
-            </div>
-          ) : !currentPlan ? (
-            <div>Plan not available for selected cycle.</div> // Handle case where plan isn't found
-          ) : (
-            // Display only the selected plan
-            <div key={currentPlan.variant_id} className="border border-border p-6 rounded-lg shadow-sm bg-card text-card-foreground flex flex-col md:flex-row gap-6">
-              {/* Left Column */}
-              <div className="flex flex-col w-full md:w-1/3">
-                 <div className="flex items-center mb-4">
-                   <Logo
-                      width={48} // Adjust size as needed
-                      height={48}
-                      className="mr-3 rounded-md" // Add margin and potentially rounded corners
-                    />
-                      <div>
-                        <h3 className="font-semibold text-xl">{currentPlan.name}</h3>
-                     </div>
-                 </div>
-                 <p className="text-sm text-muted-foreground mb-4 flex-grow">
-                   Get access to all features and benefits of the app. No limits, no restrictions.
-                 </p>
-                  <p className="text-3xl font-bold mb-1">{currentPlan.price_formatted}
-                    <span className="text-sm font-normal text-muted-foreground">
-                       {billingCycle === 'weekly' ? t('pricePerWeekVat') : t('pricePerMonthVat')}
-                    </span>
-                 </p>
-                  <button
-                  onClick={() => userId && handleCheckout(currentPlan.id, currentPlan.variant_id, userId)}
-                  disabled={checkingOutId === currentPlan.variant_id || !userId}
-                   className="w-full bg-foreground text-background font-bold py-2 px-4 rounded hover:opacity-90 transition-colors duration-200 text-center mt-4 disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {checkingOutId === currentPlan.variant_id ? t('loading') : t('subscribeButton')}
-                    {checkingOutId !== currentPlan.variant_id && <span aria-hidden="true">→</span>}
-                 </button>
+          <div className="border border-border p-6 rounded-lg shadow-sm bg-card text-card-foreground flex flex-col md:flex-row gap-6">
+            {/* Left Column */}
+            <div className="flex flex-col w-full md:w-1/3">
+              <div className="flex items-center mb-4">
+                <Logo
+                  width={48}
+                  height={48}
+                  className="mr-3 rounded-md"
+                />
+                <div>
+                  <h3 className="font-semibold text-xl">Premium</h3>
+                </div>
               </div>
+              <p className="text-sm text-muted-foreground mb-4 flex-grow">
+                Get access to all features and benefits of the app. No limits, no restrictions.
+              </p>
+              <p className="text-3xl font-bold mb-1">
+                {currentPricing.priceFormatted}
+                <span className="text-sm font-normal text-muted-foreground ml-1">
+                  {billingCycle === 'weekly' ? '/ week' : billingCycle === 'monthly' ? '/ month' : '/ year'}
+                </span>
+              </p>
+              <button
+                onClick={handleCheckout}
+                disabled={checkingOut || !user}
+                className="w-full bg-foreground text-background font-bold py-2 px-4 rounded hover:opacity-90 transition-colors duration-200 text-center mt-4 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {checkingOut ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t('loading')}
+                  </>
+                ) : (
+                  <>
+                    {t('subscribeButton')}
+                    <span aria-hidden="true">→</span>
+                  </>
+                )}
+              </button>
+            </div>
 
-              {/* Right Column (Feature List) */}
-              <div className="w-full md:w-2/3">
-                <h4 className="font-medium mb-3">{t('featureListTitle')}</h4>
-                <ul className="space-y-2">
-                   {/* Use translated features */}
-                   {Array.isArray(planFeatures) ? planFeatures.map((feature: string, index: number) => (
+            {/* Right Column (Feature List) */}
+            <div className="w-full md:w-2/3">
+              <h4 className="font-medium mb-3">{t('featureListTitle')}</h4>
+              <ul className="space-y-2">
+                {Array.isArray(planFeatures) ? (
+                  planFeatures.map((feature: string, index: number) => (
                     <li key={index} className="flex items-center text-sm text-muted-foreground">
                       <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
                       {feature}
                     </li>
-                  )) : <li className="text-red-500">Error: Features not loaded correctly.</li>}
-                </ul>
-              </div>
+                  ))
+                ) : (
+                  <li className="text-red-500">Error: Features not loaded correctly.</li>
+                )}
+              </ul>
             </div>
-          )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
   );
-} 
+}

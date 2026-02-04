@@ -20,6 +20,7 @@ const SettingsPage = () => {
   const locale = useLocale();
   const [isPending, startTransition] = useTransition();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isManagingSubscription, setIsManagingSubscription] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'default' | 'split'>('default');
   const [userPlan, setUserPlan] = useState<string>('free');
   const { openSubscriptionModal } = useFolder();
@@ -45,6 +46,27 @@ const SettingsPage = () => {
     };
     fetchPlan();
   }, [user]);
+
+  const handleManageSubscription = async () => {
+    setIsManagingSubscription(true);
+    try {
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale }),
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error('Portal error:', data.error);
+      }
+    } catch (error) {
+      console.error('Portal exception:', error);
+    } finally {
+      setIsManagingSubscription(false);
+    }
+  };
 
   const handleLanguageChange = (newLocale: string) => {
     localStorage.setItem('uiLanguage', newLocale);
@@ -243,10 +265,11 @@ const SettingsPage = () => {
         </CardHeader>
         <CardContent>
           {userPlan === 'premium' ? (
-            <Button asChild>
-              <a href="https://seung.lemonsqueezy.com/billing" target="_blank" rel="noopener noreferrer">
-                {t('subscriptionSection.manageButton', { defaultValue: 'Go to Billing' })}
-              </a>
+            <Button onClick={handleManageSubscription} disabled={isManagingSubscription}>
+              {isManagingSubscription ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              {t('subscriptionSection.manageButton', { defaultValue: 'Manage Subscription' })}
             </Button>
           ) : (
             <Button onClick={openSubscriptionModal}>
