@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { getUser } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabaseClient';
 import { calculateTokenCount } from '@/lib/utils';
 
@@ -27,9 +27,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ fold
 export async function POST(req: Request, { params }: { params: Promise<{ folderId: string }> }) {
   try {
     const { folderId } = await params;
-    const session = await auth();
+    const user = await getUser();
     
-    if (!session?.user?.id) {
+    if (!user?.id) {
       console.log('No session user ID found in summaries API');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -61,7 +61,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ folderI
 
     const insertData = {
       folder_id: folderId,
-      user_id: session.user.id,
+      user_id: user.id,
       video_id: videoId,
       summary: summary || '',
       name: name || title,
@@ -100,8 +100,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ folderI
 // PATCH /api/folders/[folderId]/summaries
 export async function PATCH(req: Request, { params }: { params: Promise<{ folderId: string }> }) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const body = await req.json();
@@ -130,8 +130,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ folder
 export async function DELETE(req: Request, { params }: { params: Promise<{ folderId: string }> }) {
   try {
     // const { folderId } = await params; // folderId might not be strictly necessary if summaryId is unique
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -147,7 +147,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ folde
       .from('summaries')
       .delete()
       .eq('id', summaryId)
-      .eq('user_id', session.user.id);
+      .eq('user_id', user.id);
 
     if (deleteError) {
       console.error('Summary deletion error:', deleteError.message);

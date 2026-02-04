@@ -1,19 +1,17 @@
 'use client';
 
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Book, Search, Clock, Folder, ChevronDown, ChevronRight, User, Plus, LogOut, MoreHorizontal, Crown, Settings, Home, HelpCircle, Trash2, Pencil } from 'lucide-react';
+import { Search, Folder, ChevronDown, ChevronRight, User, Plus, Settings, Home, HelpCircle, Trash2, Pencil, Crown } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { signIn, signOut } from 'next-auth/react';
-import { useSession } from "next-auth/react";
+import { useAuth } from '@/contexts/AuthContext';
 import { Logo } from '@/components/ui/logo';
-import { useFolder, FolderContext } from '@/components/home/SidebarLayout';
+import { useFolder } from '@/components/home/SidebarLayout';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
 import { useSearch } from '@/contexts/SearchContext';
-import { useDevMode } from '@/hooks/useDevMode';
 
 interface FolderType { id: string; name: string; }
 interface SummaryType { id: string; video_id: string; summary: string; name: string; }
@@ -36,40 +34,46 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
   const [loadingSummaries, setLoadingSummaries] = useState<{ [folderId: string]: boolean }>({});
   const [newFolderName, setNewFolderName] = useState('');
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
-  const [isSignedIn, setIsSignedIn] = useState<boolean | null>(null);
   const [recentOpen, setRecentOpen] = useState(true);
   const [knowledgeOpen, setKnowledgeOpen] = useState(true);
   const [recents, setRecents] = useState<SummaryType[]>([]);
   const params = useParams();
   const locale = params.locale as string;
   const [inAppBrowser, setInAppBrowser] = useState(false);
-  const { data: session } = useSession();
+  const { user, isLoading, signInWithGoogle } = useAuth();
   const { activeFolder, setActiveFolder, openSubscriptionModal } = useFolder();
   const [folderOpen, setFolderOpen] = useState<{ [folderId: string]: boolean }>({});
   const [hoveredSummaryId, setHoveredSummaryId] = useState<string | null>(null);
-  const isDevMode = useDevMode();
   const [hoveredFolderId, setHoveredFolderId] = useState<string | null>(null);
   const [isMac, setIsMac] = useState(false);
+  const [userPlan, setUserPlan] = useState<string>('free');
   const { openSearchModal } = useSearch();
 
-  // Needs test
-  // Use session from useSession hook instead of redundant fetch
+  const isSignedIn = !isLoading && !!user;
+
+  // Fetch user plan
   useEffect(() => {
-    console.log('Client: Session state changed:', session?.user?.id, session?.user?.email);
-    setIsSignedIn(!!session?.user);
-  }, [session]);
+    const fetchPlan = async () => {
+      if (user) {
+        try {
+          const res = await fetch('/api/home/user/plan');
+          const data = await res.json();
+          setUserPlan(data.plan || 'free');
+        } catch {
+          setUserPlan('free');
+        }
+      }
+    };
+    fetchPlan();
+  }, [user]);
 
   // Fetch folders using api/folders
   const fetchFolders = async () => {
     setIsLoadingFolders(true);
     try {
-      console.log('Client: Starting to fetch folders...');
       const res = await fetch('/api/folders');
-      console.log('Client: Fetch response status:', res.status, res.statusText);
-      
       if (res.ok) {
         const data: FolderType[] = await res.json();
-        console.log('Client: Successfully fetched folders:', data);
         setFolders(data);
         if (!activeFolder && data.length) {
           setActiveFolder(data[0]);
@@ -77,8 +81,6 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
           setActiveFolder(null);
         }
       } else {
-        const errorText = await res.text();
-        console.error("Failed to fetch folders - Status:", res.status, "Response:", errorText);
         setFolders([]);
         setActiveFolder(null);
       }
@@ -91,7 +93,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
     }
   };
 
-  // Fetch summaries for active folder using api/folders/${folderId}/summaries
+  // Fetch summaries for active folder
   const fetchSummaries = async (folderId: string) => {
     setLoadingSummaries(prev => ({ ...prev, [folderId]: true }));
     try {
@@ -102,7 +104,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
       } else {
         setFolderSummaries(prev => ({ ...prev, [folderId]: [] }));
       }
-    } catch (error) {
+    } catch {
       setFolderSummaries(prev => ({ ...prev, [folderId]: [] }));
     } finally {
       setLoadingSummaries(prev => ({ ...prev, [folderId]: false }));
@@ -111,13 +113,10 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
 
   // Fetch folders on signin, refreshKey
   useEffect(() => {
-    console.log('Client: isSignedIn effect triggered. isSignedIn:', isSignedIn, 'refreshKey:', refreshKey);
     if (isSignedIn) {
-      console.log('Client: User is signed in, fetching folders...');
       setIsLoadingFolders(true);
       fetchFolders();
     } else {
-      console.log('Client: User not signed in, clearing folder state');
       setFolders([]);
       setActiveFolder(null);
       setFolderSummaries({});
@@ -125,11 +124,10 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
     }
   }, [isSignedIn, refreshKey]);
 
-  // Fetch summaries for active folder on active folder change, refreshKey
+  // Fetch summaries for active folder on change
   useEffect(() => {
     if (activeFolder) {
       setFolderOpen({ [activeFolder.id]: true });
-      // Fetch summaries for active folder if not already loaded
       if (!folderSummaries[activeFolder.id]) {
         fetchSummaries(activeFolder.id);
       }
@@ -138,7 +136,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
     }
   }, [activeFolder, refreshKey]);
 
-  // Fetch recent summaries on signin, refreshKey
+  // Fetch recent summaries
   useEffect(() => {
     if (isSignedIn) {
       fetch('/api/folders/recent-summaries')
@@ -158,14 +156,14 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
   // Folder operations
   const handleAddFolder = async () => {
     if (!newFolderName.trim()) return;
-    const res = await fetch('/api/folders', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ name: newFolderName }) });
+    const res = await fetch('/api/folders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newFolderName }) });
     if (res.ok) { setNewFolderName(''); setShowNewFolderInput(false); fetchFolders(); }
   };
 
   const handleRenameFolder = async (id: string) => {
     const name = prompt(t('Sidebar.renameFolder') || 'Rename folder');
     if (!name) return;
-    await fetch(`/api/folders/${id}`, { method: 'PATCH', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ name }) });
+    await fetch(`/api/folders/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
     fetchFolders();
   };
 
@@ -177,7 +175,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
   };
 
   const handleDeleteSummary = async (folderId: string, summaryId: string) => {
-    if (!confirm(t('Sidebar.confirmDeleteSummary', { defaultValue: '파일을 삭제하시겠습니까?' }))) return;
+    if (!confirm(t('Sidebar.confirmDeleteSummary', { defaultValue: 'Delete this file?' }))) return;
 
     try {
       const res = await fetch(`/api/folders/${folderId}/summaries`, {
@@ -187,7 +185,6 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
       });
 
       if (res.ok) {
-        // Optimistically update UI or refetch
         setFolderSummaries(prev => ({
           ...prev,
           [folderId]: prev[folderId]?.filter(s => s.id !== summaryId) || [],
@@ -206,7 +203,6 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
   // Drag-and-drop handlers
   const onDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
-    // Folder reordering
     if (result.type === 'folder') {
       const reordered = Array.from(folders);
       const [removed] = reordered.splice(result.source.index, 1);
@@ -214,33 +210,28 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
       setFolders(reordered);
       return;
     }
-    // Summary moving across folders
     if (result.type === 'summary') {
       const sourceFolderId = result.source.droppableId;
       const destFolderId = result.destination.droppableId;
       if (sourceFolderId === destFolderId) return;
       const summaryIdx = result.source.index;
-      // Find the summary in the current summaries list
       const summaryToMove = folderSummaries[sourceFolderId][summaryIdx];
       if (!summaryToMove) return;
-      
-      // Optimistically update the UI
+
       setFolderSummaries(prev => ({
         ...prev,
         [sourceFolderId]: prev[sourceFolderId].filter((_, i) => i !== summaryIdx),
         [destFolderId]: [...(prev[destFolderId] || []), summaryToMove]
       }));
-      
-      // Call API to move summary
+
       try {
         const response = await fetch(`/api/folders/${sourceFolderId}/summaries`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ summaryId: summaryToMove.id, targetFolderId: destFolderId }),
         });
-        
+
         if (!response.ok) {
-          // Revert optimistic update on error
           setFolderSummaries(prev => ({
             ...prev,
             [sourceFolderId]: [...prev[sourceFolderId], summaryToMove],
@@ -248,14 +239,12 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
           }));
           console.error('Failed to move summary');
         } else {
-          // Refetch summaries for both folders to ensure consistency
           fetchSummaries(sourceFolderId);
           if (folderSummaries[destFolderId] || folderOpen[destFolderId]) {
             fetchSummaries(destFolderId);
           }
         }
       } catch (error) {
-        // Revert optimistic update on error
         setFolderSummaries(prev => ({
           ...prev,
           [sourceFolderId]: [...prev[sourceFolderId], summaryToMove],
@@ -266,66 +255,43 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
     }
   };
 
-  // warn kakaotalk in app browser users
+  // Detect in-app browser and platform
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const ua = navigator.userAgent || navigator.vendor;
       if (/KAKAOTALK/i.test(ua)) {
         setInAppBrowser(true);
       }
-      // Detect platform for keyboard shortcut
       setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0);
     }
   }, []);
 
-
-
-  // Helper to toggle folder open/close
   const toggleFolder = (folderId: string) => {
-    setFolderOpen(prev => {
-      const next = { ...prev, [folderId]: !prev[folderId] };
-      // Only one open at a time if you want accordion style:
-      // Object.keys(next).forEach(id => { if (id !== folderId) next[id] = false; });
-      return next;
-    });
+    setFolderOpen(prev => ({ ...prev, [folderId]: !prev[folderId] }));
     if (!folderOpen[folderId] && !folderSummaries[folderId]) {
       fetchSummaries(folderId);
     }
   };
 
-  // UI: show login prompt if not signed in
-  if (isSignedIn === false) {
+  // Show login prompt if not signed in
+  if (!isLoading && !user) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-background p-6 text-center space-y-4">
         <User className="w-12 h-12 text-muted-foreground" />
         <p className="text-foreground text-lg font-medium">
-          {t('signInDescription') || '로그인 후 이용 가능합니다'}
+          {t('signInDescription') || 'Please sign in to continue'}
         </p>
         {inAppBrowser ? (
           <div className="bg-destructive/10 text-destructive p-4 rounded-md text-base font-semibold">
-            Google 로그인이 차단되었습니다. 크롬, 사파리 등 기본 브라우저로 열어주세요.
+            Google sign-in is blocked in this browser. Please open in Chrome or Safari.
           </div>
         ) : (
-          <div className="space-y-2">
-            <button
-              onClick={() => signIn('google')}
-              className="w-full px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md"
-            >
-              {t('signIn') || '로그인하기'}
-            </button>
-            {isDevMode && (
-              <button
-                onClick={() => signIn('test-account', { 
-                  username: "testuser", 
-                  password: "test123",
-                  callbackUrl: "/" 
-                })}
-                className="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 text-primary-foreground rounded-md text-sm"
-              >
-                🧪 Test Account
-              </button>
-            )}
-          </div>
+          <button
+            onClick={signInWithGoogle}
+            className="w-full px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md"
+          >
+            {t('signIn') || 'Sign In'}
+          </button>
         )}
       </div>
     );
@@ -348,18 +314,18 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
           <li>
             <Link href={`/${locale}`}>
               <div className="flex items-center gap-2 px-2 py-2 rounded hover:bg-accent font-medium">
-                <Home className="w-4 h-4" /> {t('Sidebar.home', { defaultValue: '홈' })}
+                <Home className="w-4 h-4" /> {t('Sidebar.home', { defaultValue: 'Home' })}
               </div>
             </Link>
           </li>
           <li>
-            <button 
+            <button
               onClick={openSearchModal}
               className="flex items-center justify-between w-full px-2 py-2 rounded hover:bg-accent font-medium text-left"
               title="Search (Ctrl+K)"
             >
               <div className="flex items-center gap-2">
-                <Search className="w-4 h-4" /> {t('Sidebar.search', { defaultValue: '검색' })}
+                <Search className="w-4 h-4" /> {t('Sidebar.search', { defaultValue: 'Search' })}
               </div>
               <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
                 {isMac ? '⌘K' : 'Ctrl+K'}
@@ -373,11 +339,11 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
               onClick={() => setRecentOpen(o => !o)}
             >
               {recentOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              {t('Sidebar.recent', { defaultValue: '최근' })}
+              {t('Sidebar.recent', { defaultValue: 'Recent' })}
             </button>
             {recentOpen && (
               <ul className="ml-6 mt-1 space-y-1">
-                {recents.length === 0 && <li className="text-xs text-muted-foreground">최근 항목 없음</li>}
+                {recents.length === 0 && <li className="text-xs text-muted-foreground">No recent items</li>}
                 {recents.map(r => (
                   <li key={r.id}>
                     <Link href={`/${locale}/summaries/${r.id}`} className="truncate text-sm text-foreground hover:underline cursor-pointer block">
@@ -397,11 +363,11 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                 style={{ flex: 1 }}
               >
                 {knowledgeOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                {t('Sidebar.myKnowledge', { defaultValue: '내 지식' })}
+                {t('Sidebar.myKnowledge', { defaultValue: 'My Knowledge' })}
               </button>
               <button
                 className="ml-1 text-xs text-muted-foreground hover:text-foreground"
-                title="새 폴더 만들기"
+                title="New folder"
                 onClick={() => setShowNewFolderInput(true)}
               >
                 <Plus className="w-4 h-4" />
@@ -416,14 +382,13 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                         <Draggable key={f.id} draggableId={f.id} index={idx}>
                           {(dragProvided) => (
                             <li ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps}>
-                              {/* Make folder header droppable for summaries */}
                               <Droppable droppableId={f.id} type="summary">
                                 {(folderDropProvided, folderDropSnapshot) => (
                                   <div>
-                                    <div 
+                                    <div
                                       ref={folderDropProvided.innerRef}
                                       {...folderDropProvided.droppableProps}
-                                      className={`flex items-center gap-1 font-semibold text-foreground group ${activeFolder?.id===f.id || folderDropSnapshot.isDraggingOver ? 'bg-accent rounded px-1' : 'px-1'}`}
+                                      className={`flex items-center gap-1 font-semibold text-foreground group ${activeFolder?.id === f.id || folderDropSnapshot.isDraggingOver ? 'bg-accent rounded px-1' : 'px-1'}`}
                                       onClick={() => setActiveFolder(f)}
                                       onMouseEnter={() => setHoveredFolderId(f.id)}
                                       onMouseLeave={() => setHoveredFolderId(null)}
@@ -431,7 +396,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                                       <button
                                         className="mr-1"
                                         onClick={e => { e.stopPropagation(); toggleFolder(f.id); }}
-                                        aria-label={folderOpen[f.id] ? t('Sidebar.collapseFolder') || 'Collapse folder' : t('Sidebar.expandFolder') || 'Expand folder'}
+                                        aria-label={folderOpen[f.id] ? 'Collapse folder' : 'Expand folder'}
                                       >
                                         {folderOpen[f.id] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                       </button>
@@ -442,36 +407,35 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                                           <button
                                             onClick={e => { e.stopPropagation(); handleRenameFolder(f.id); }}
                                             className="p-1 text-muted-foreground hover:text-foreground"
-                                            title={t('Sidebar.renameFolder') || 'Rename folder'}
+                                            title="Rename folder"
                                           >
                                             <Pencil className="w-3.5 h-3.5" />
                                           </button>
                                           <button
                                             onClick={e => { e.stopPropagation(); handleDeleteFolder(f.id); }}
                                             className="p-1 text-muted-foreground hover:text-destructive"
-                                            title={t('Sidebar.deleteFolder') || 'Delete folder'}
+                                            title="Delete folder"
                                           >
                                             <Trash2 className="w-3.5 h-3.5" />
                                           </button>
                                         </div>
                                       )}
                                     </div>
-                                    
-                                    {/* Summaries in folder: only show if expanded */}
+
                                     {folderOpen[f.id] && (
                                       <div className="ml-5 mt-1 space-y-1">
                                         {loadingSummaries[f.id] ? (
-                                          <div className="text-xs text-muted-foreground">{t('Sidebar.loadingSummaries') || 'Loading summaries...'}</div>
+                                          <div className="text-xs text-muted-foreground">Loading...</div>
                                         ) : folderSummaries[f.id]?.length === 0 ? (
-                                          <div className="text-xs text-muted-foreground">{t('Sidebar.noSummaries') || 'No summaries'}</div>
+                                          <div className="text-xs text-muted-foreground">No summaries</div>
                                         ) : (
                                           folderSummaries[f.id].map((s, sIdx) => (
                                             <Draggable key={s.id} draggableId={s.id} index={sIdx}>
                                               {(summaryDragProvided) => (
-                                                <div 
-                                                  ref={summaryDragProvided.innerRef} 
-                                                  {...summaryDragProvided.draggableProps} 
-                                                  {...summaryDragProvided.dragHandleProps} 
+                                                <div
+                                                  ref={summaryDragProvided.innerRef}
+                                                  {...summaryDragProvided.draggableProps}
+                                                  {...summaryDragProvided.dragHandleProps}
                                                   className="flex items-center justify-between text-sm text-foreground hover:bg-accent rounded group"
                                                   onMouseEnter={() => setHoveredSummaryId(s.id)}
                                                   onMouseLeave={() => setHoveredSummaryId(null)}
@@ -482,11 +446,11 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                                                   {hoveredSummaryId === s.id && (
                                                     <button
                                                       onClick={(e) => {
-                                                        e.stopPropagation(); // Prevent navigation
+                                                        e.stopPropagation();
                                                         handleDeleteSummary(f.id, s.id);
                                                       }}
                                                       className="p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                                                      title={t('Sidebar.deleteSummary', { defaultValue: 'Delete summary' })}
+                                                      title="Delete summary"
                                                     >
                                                       <Trash2 className="w-3 h-3" />
                                                     </button>
@@ -498,7 +462,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                                         )}
                                       </div>
                                     )}
-                                    
+
                                     {folderDropProvided.placeholder}
                                   </div>
                                 )}
@@ -509,9 +473,8 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                       ))}
                       {provided.placeholder}
                       {isLoadingFolders && (
-                        <li className="ml-6 mt-1 space-y-1 text-xs text-muted-foreground">{t('Sidebar.loadingFolders') || '로딩중...'}</li>
+                        <li className="ml-6 mt-1 space-y-1 text-xs text-muted-foreground">Loading...</li>
                       )}
-                      {/* Add folder input */}
                       {showNewFolderInput && (
                         <li className="flex items-center gap-1 bg-accent rounded px-1 py-1 mt-2">
                           <span className="flex items-center">
@@ -529,16 +492,16 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                           />
                           <button
                             onClick={handleAddFolder}
-                            className="px-1 py-1 bg-muted text-foreground rounded text-xs shadow hover:bg-primary hover:text-primary-foreground transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                            title="폴더 추가"
+                            className="px-1 py-1 bg-muted text-foreground rounded text-xs shadow hover:bg-primary hover:text-primary-foreground transition-colors duration-150"
+                            title="Add folder"
                           >
                             <Plus className="w-4 h-4 inline" />
                           </button>
                           <button
                             onClick={() => { setShowNewFolderInput(false); setNewFolderName(''); }}
                             className="px-1 py-1 bg-muted text-foreground rounded text-xs hover:bg-primary hover:text-primary-foreground transition-colors duration-150"
-                            title="취소"
-                          >취소</button>
+                            title="Cancel"
+                          >Cancel</button>
                         </li>
                       )}
                     </ul>
@@ -550,11 +513,11 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
         </ul>
       </nav>
 
-      <div className="px-4 space-y-3 border-t text-center hidden sm:block">
+      <div className="px-4 space-y-3 text-center hidden sm:block">
         <Link href={`/${locale}/community`}>
-          <Button 
-            variant="ghost" 
-          title={t('helpAndCommunity')}
+          <Button
+            variant="ghost"
+            title={t('helpAndCommunity')}
           >
             <span className="sm:hidden"><HelpCircle className="h-5 w-5" /></span>
             <span className="hidden sm:flex items-center space-x-2 gap-x-1">
@@ -565,10 +528,10 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
         </Link>
       </div>
 
-      {/* --- Footer Area Redesign --- */}
+      {/* Footer Area */}
       <div className="px-4 py-3 space-y-3 border-t">
         {/* Upgrade Section */}
-        {session?.user?.plan === 'premium' ? (
+        {userPlan === 'premium' ? (
           <div className="bg-green-500/10 p-4 rounded-lg text-center">
             <div className="flex items-center justify-center gap-2 mb-1">
               <Crown className="w-5 h-5 text-green-600 dark:text-green-400" />
@@ -577,7 +540,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
             <p className="text-xs text-green-600 dark:text-green-400">{t('Sidebar.premiumActiveSubtitle')}</p>
           </div>
         ) : (
-          <div 
+          <div
             className="bg-muted p-4 rounded-lg text-center cursor-pointer hover:bg-accent transition-colors"
             onClick={openSubscriptionModal}
           >
@@ -594,21 +557,20 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
         {/* User Info Section */}
         <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={session?.user?.image ?? undefined} alt={session?.user?.name ?? 'User'} />
-            <AvatarFallback>{getInitials(session?.user?.name ?? '')}</AvatarFallback>
+            <AvatarImage src={user?.user_metadata?.avatar_url ?? undefined} alt={user?.user_metadata?.full_name ?? 'User'} />
+            <AvatarFallback>{getInitials(user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? '')}</AvatarFallback>
           </Avatar>
           <div className="flex-1 overflow-hidden">
-            <p className="text-sm font-medium truncate text-foreground">{session?.user?.name}</p>
-            <p className="text-xs truncate text-muted-foreground">{session?.user?.email}</p>
+            <p className="text-sm font-medium truncate text-foreground">{user?.user_metadata?.full_name || user?.user_metadata?.name}</p>
+            <p className="text-xs truncate text-muted-foreground">{user?.email}</p>
           </div>
           <Link href={`/${locale}/settings`} className="flex items-center">
-            <button className="text-muted-foreground hover:text-foreground" title="Settings"> {/* Add functionality later */}
+            <button className="text-muted-foreground hover:text-foreground" title="Settings">
               <Settings className="w-5 h-5" />
             </button>
           </Link>
         </div>
       </div>
-      {/* --- End Footer Area Redesign --- */}
     </div>
   );
-} 
+}

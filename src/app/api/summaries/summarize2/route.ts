@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 import { getTranslations } from "next-intl/server";
 import { formatTime } from '@/lib/utils';
 import { NextRequest } from 'next/server';
-import { auth } from '@/auth';
+import { getUser } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabaseClient';
 
 const model = 'gpt-5-mini';
@@ -111,8 +111,8 @@ export async function POST(req: Request) {
 // PATCH /api/summaries/summarize2
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -135,7 +135,7 @@ export async function PATCH(req: NextRequest) {
       .from('summaries')
       .update(updateData)
       .eq('id', summaryId)
-      .eq('user_id', session.user.id) // Ensure user owns this summary
+      .eq('user_id', user.id) // Ensure user owns this summary
       .select('id, video_id, name')
       .single();
 

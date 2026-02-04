@@ -15,7 +15,7 @@ export default function Footer() {
             </Link>
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            © 2024 Lumary. All rights reserved.
+            © 2024 Seung. All rights reserved.
           </p>
         </div>
       </div>

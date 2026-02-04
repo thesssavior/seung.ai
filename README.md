@@ -1,3 +1,3 @@
-lumary.me
+seung.ai
 
 input yt url -> output video summary

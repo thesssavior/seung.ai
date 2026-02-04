@@ -17,7 +17,7 @@ import 'reactflow/dist/style.css';
 import { Loader2, AlertTriangle, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 
 // No custom nodeTypes or edgeTypes needed - removing empty objects to prevent React Flow warnings
 
@@ -44,7 +44,7 @@ const MindmapComponent: React.FC<MindmapProps> = ({ summary, mindmap, locale, co
   const [reactFlowReady, setReactFlowReady] = useState(false);
   const { fitView } = useReactFlow();
   const hasFit = useRef(false);
-  const { data: session } = useSession();
+  const { user } = useAuth();
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),
@@ -111,7 +111,7 @@ const MindmapComponent: React.FC<MindmapProps> = ({ summary, mindmap, locale, co
         setIsLoading(false);
 
         // Save only when the user is logged in and we have a valid summaryId
-        if (!session) {
+        if (!user) {
           setIsSaving(false);
           return;
         }

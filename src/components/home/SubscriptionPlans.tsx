@@ -10,7 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Check, Loader2 } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Logo } from '@/components/ui/logo';
 
 type Plan = {
@@ -37,8 +37,8 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
   const [loading, setLoading] = useState(true);
   const [checkingOutId, setCheckingOutId] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'weekly' | 'monthly'>('weekly');
-  const { data: session } = useSession();
-  const userId = session?.user?.id;
+  const { user } = useAuth();
+  const userId = user?.id;
 
   // Define VAT rate (e.g., 10% for KRW, adjust as needed)
   // TODO: Make this VAT rate configurable or fetch from an API if it varies.

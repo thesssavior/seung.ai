@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
-import { auth } from '@/auth';
+import { getUser } from '@/lib/supabase/auth';
 
 export async function POST(req: Request) {
   try {
     // Get session to identify the user (optional)
-    const session = await auth();
-    const userId = session?.user?.id || null;
+    const user = await getUser();
+    const userId = user?.id || null;
 
     // Parse request body
     const body = await req.json();

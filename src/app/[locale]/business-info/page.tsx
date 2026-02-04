@@ -132,7 +132,7 @@ export default function BusinessInfoPage() {
               <section>
                 <h3 className="text-lg font-semibold mb-3 border-b border-border pb-2">제1조 (목적)</h3>
                 <p className="text-sm text-muted-foreground">
-                  이 약관은 Lumary(이하 “회사”)가 제공하는 웹 기반 요약 서비스(이하 “서비스”)의 이용조건 및 절차, 회사와 이용자의 권리·의무 및 책임사항을 규정함을 목적으로 합니다.
+                  이 약관은 Seung(이하 “회사”)가 제공하는 웹 기반 요약 서비스(이하 “서비스”)의 이용조건 및 절차, 회사와 이용자의 권리·의무 및 책임사항을 규정함을 목적으로 합니다.
                 </p>
               </section>
 
@@ -223,8 +223,8 @@ export default function BusinessInfoPage() {
 
           <div className="prose prose-gray max-w-none">
             <p className="text-gray-700 mb-6">
-              <strong>Lumary(이하 "회사")</strong>는 이용자의 개인정보를 중요시하며, 「개인정보 보호법」 등 관련 법령을 준수하고 있습니다. 
-              본 개인정보처리방침은 Lumary에서 제공하는 웹 기반 요약 서비스(이하 "서비스") 이용 시, 사용자의 개인정보가 어떻게 수집, 이용, 보관, 보호되는지를 안내합니다.
+              <strong>Seung(이하 "회사")</strong>는 이용자의 개인정보를 중요시하며, 「개인정보 보호법」 등 관련 법령을 준수하고 있습니다. 
+              본 개인정보처리방침은 Seung에서 제공하는 웹 기반 요약 서비스(이하 "서비스") 이용 시, 사용자의 개인정보가 어떻게 수집, 이용, 보관, 보호되는지를 안내합니다.
             </p>
 
             <div className="space-y-6">
@@ -316,7 +316,7 @@ export default function BusinessInfoPage() {
 
               <section>
                 <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-2">제6조 (이용자의 권리)</h3>
-                <p className="text-sm text-gray-700">이용자는 자신의 개인정보 열람, 정정, 삭제, 처리정지 등을 요청할 수 있습니다. 요청은 이메일(<a href="mailto:lumary.help@gmail.com" className="underline text-blue-600 hover:text-blue-800">lumary.help@gmail.com</a>)로 접수하며, 회사는 지체 없이 처리합니다.</p>
+                <p className="text-sm text-gray-700">이용자는 자신의 개인정보 열람, 정정, 삭제, 처리정지 등을 요청할 수 있습니다. 요청은 이메일(<a href="mailto:seung.help@gmail.com" className="underline text-blue-600 hover:text-blue-800">seung.help@gmail.com</a>)로 접수하며, 회사는 지체 없이 처리합니다.</p>
               </section>
 
               <section>
@@ -331,7 +331,7 @@ export default function BusinessInfoPage() {
                     <Mail className="w-4 h-4 text-blue-600" />
                     <div>
                       <p className="font-medium text-gray-700">성명: 조승주</p>
-                      <p className="text-gray-600">이메일: <a href="mailto:lumary.help@gmail.com" className="text-blue-600 hover:text-blue-800 underline">lumary.help@gmail.com</a></p>
+                      <p className="text-gray-600">이메일: <a href="mailto:seung.help@gmail.com" className="text-blue-600 hover:text-blue-800 underline">seung.help@gmail.com</a></p>
                     </div>
                   </div>
                 </div>
@@ -354,7 +354,7 @@ export default function BusinessInfoPage() {
 
           <div className="prose prose-gray max-w-none">
             <p className="text-gray-700 mb-6">
-              <strong>Lumary(이하 "회사")</strong>의 유료 서비스 이용과 관련된 환불 정책을 다음과 같이 안내드립니다.
+              <strong>Seung(이하 "회사")</strong>의 유료 서비스 이용과 관련된 환불 정책을 다음과 같이 안내드립니다.
             </p>
 
             <div className="space-y-6">
@@ -392,7 +392,7 @@ export default function BusinessInfoPage() {
                 <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-2">
                   제3조 (환불 신청 절차)
                 </h3>
-                <p className="mb-3 text-sm">환불을 원하실 경우, 다음 정보를 포함하여 <a href="mailto:lumary.help@gmail.com" className="text-blue-600 hover:text-blue-800 underline">lumary.help@gmail.com</a>으로 문의해주세요:</p>
+                <p className="mb-3 text-sm">환불을 원하실 경우, 다음 정보를 포함하여 <a href="mailto:seung.help@gmail.com" className="text-blue-600 hover:text-blue-800 underline">seung.help@gmail.com</a>으로 문의해주세요:</p>
                 
                 <div className="bg-blue-50 p-3 rounded-lg text-sm">
                   <ul className="list-disc list-inside text-gray-700 space-y-1">
@@ -420,12 +420,12 @@ export default function BusinessInfoPage() {
                   <div className="flex items-center gap-2 mb-2">
                     <ExternalLink className="w-4 h-4 text-blue-600" />
                     <a 
-                      href="https://lumary.lemonsqueezy.com/billing" 
+                      href="https://seung.lemonsqueezy.com/billing" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-800 underline font-medium"
                     >
-                      https://lumary.lemonsqueezy.com/billing
+                      https://seung.lemonsqueezy.com/billing
                     </a>
                   </div>
                   

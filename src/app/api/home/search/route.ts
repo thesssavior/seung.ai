@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { getUser } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabaseClient';
 
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
+    const user = await getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const { data: folders, error: foldersError } = await supabase
       .from('folders')
       .select('id, name, created_at')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .ilike('name', searchTerm)
       .order('created_at', { ascending: false });
 
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     const { data: summaries, error: summariesError } = await supabase
       .from('summaries')
       .select('id, name, summary, description, video_id, folder_id, created_at')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .or(`name.ilike.${searchTerm},summary.ilike.${searchTerm},description.ilike.${searchTerm}`)
       .order('created_at', { ascending: false })
       .limit(50); // Limit results to prevent overwhelming the UI

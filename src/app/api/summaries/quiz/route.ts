@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { auth } from '@/auth';
+import { getUser } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabaseClient';
 
 const model = 'gpt-4.1-mini';
@@ -125,8 +125,8 @@ export async function POST(req: NextRequest) {
 // PATCH /api/summaries/quiz
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -150,7 +150,7 @@ export async function PATCH(req: NextRequest) {
       .from('summaries')
       .update({ quiz: quiz })
       .eq('id', summaryId)
-      .eq('user_id', session.user.id) // Ensure user owns this summary
+      .eq('user_id', user.id) // Ensure user owns this summary
       .select('id, video_id')
       .single();
 

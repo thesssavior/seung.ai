@@ -7,7 +7,6 @@ import ServerDownModalProvider from '@/components/home/ServerDownModalProvider';
 import ConditionalFooter from '@/components/ConditionalFooter';
 import { SummaryGenerationProvider } from '@/contexts/SummaryGenerationContext';
 import { Toaster } from "@/components/ui/sonner";
-import { SessionProvider } from "next-auth/react";
 import SearchProvider from '@/contexts/SearchContext';
 import GlobalSearchModal from '@/components/GlobalSearchModal';
 import { Providers } from '@/components/providers';
@@ -19,38 +18,35 @@ interface ClientLayoutWrapperProps {
   messages: any;
 }
 
-export function ClientLayoutWrapper({ 
-  children, 
-  locale, 
-  messages 
+export function ClientLayoutWrapper({
+  children,
+  locale,
+  messages
 }: ClientLayoutWrapperProps) {
 
-  // Default layout for all other pages
   return (
     <Providers>
       <NextIntlClientProvider locale={locale} messages={messages} timeZone="Asia/Seoul">
-        <SessionProvider>
-          <SearchProvider>
-            <SummaryGenerationProvider>
-              <ServerDownModalProvider>
-                <div>
-                  <SidebarLayout>
-                    <Suspense fallback={<div className="flex justify-center items-center h-32">Loading...</div>}>
-                      <div className="bg-background text-foreground min-h-screen">
-                        <Navbar />
-                        {children}
-                      </div>
-                    </Suspense>
-                  </SidebarLayout>
-                  <ConditionalFooter />
-                </div>
-                <GlobalSearchModal />
-              </ServerDownModalProvider>
-            </SummaryGenerationProvider>
-          </SearchProvider>
-        </SessionProvider>
+        <SearchProvider>
+          <SummaryGenerationProvider>
+            <ServerDownModalProvider>
+              <div>
+                <SidebarLayout>
+                  <Suspense fallback={<div className="flex justify-center items-center h-32">Loading...</div>}>
+                    <div className="bg-background text-foreground min-h-screen">
+                      <Navbar />
+                      {children}
+                    </div>
+                  </Suspense>
+                </SidebarLayout>
+                <ConditionalFooter />
+              </div>
+              <GlobalSearchModal />
+            </ServerDownModalProvider>
+          </SummaryGenerationProvider>
+        </SearchProvider>
         <Toaster />
       </NextIntlClientProvider>
     </Providers>
   );
-} 
+}

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useTransition, useEffect, Suspense } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -15,12 +15,13 @@ import { LanguageSwitcher } from '@/components/home/LanguageSwitcher';
 
 const SettingsPage = () => {
   const t = useTranslations('SettingsPage');
-  const { data: session, status } = useSession();
+  const { user, isLoading, signOut } = useAuth();
   const router = useRouter();
   const locale = useLocale();
   const [isPending, startTransition] = useTransition();
-  const [isDeleting, setIsDeleting] = useState(false); // For delete account loading state
+  const [isDeleting, setIsDeleting] = useState(false);
   const [layoutMode, setLayoutMode] = useState<'default' | 'split'>('default');
+  const [userPlan, setUserPlan] = useState<string>('free');
   const { openSubscriptionModal } = useFolder();
   const { theme, setTheme } = useTheme();
 
@@ -29,10 +30,24 @@ const SettingsPage = () => {
     setLayoutMode(getLayoutPreference());
   }, []);
 
+  // Fetch user plan
+  useEffect(() => {
+    const fetchPlan = async () => {
+      if (user) {
+        try {
+          const res = await fetch('/api/home/user/plan');
+          const data = await res.json();
+          setUserPlan(data.plan || 'free');
+        } catch {
+          setUserPlan('free');
+        }
+      }
+    };
+    fetchPlan();
+  }, [user]);
+
   const handleLanguageChange = (newLocale: string) => {
-    // Save the preference to localStorage
     localStorage.setItem('uiLanguage', newLocale);
-    
     startTransition(() => {
       router.replace(`/${newLocale}/settings`);
     });
@@ -44,18 +59,18 @@ const SettingsPage = () => {
   };
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: `/` });
+    await signOut();
+    router.push('/');
   };
 
   const handleDeleteAccount = async () => {
-    // TODO: Implement confirmation modal
     if (window.confirm(t('confirmDeleteAccount'))) {
       setIsDeleting(true);
       try {
-        // Call API to delete account
         const response = await fetch('/api/home/user/delete', { method: 'DELETE' });
         if (response.ok) {
-          await signOut({ callbackUrl: '/' }); // Sign out and redirect to home
+          await signOut();
+          router.push('/');
         } else {
           const errorData = await response.json();
           alert(t('deleteAccountError', { error: errorData.error || 'Unknown error' }));
@@ -69,17 +84,14 @@ const SettingsPage = () => {
     }
   };
 
-  if (status === 'loading') {
+  if (isLoading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
 
-  if (!session) {
-    // Optionally, redirect to sign-in or show a message
-    // router.push('/signin'); // Example redirect
+  if (!user) {
     return (
       <div className="text-center py-10">
         <p>{t('mustBeLoggedIn')}</p>
-        {/* Optionally, add a sign-in button here */}
       </div>
     );
   }
@@ -98,21 +110,21 @@ const SettingsPage = () => {
         <CardContent className="space-y-4">
           <div>
             <label className="text-sm font-medium text-muted-foreground">{t('accountSection.nameLabel')}</label>
-            <p className="text-foreground break-all">{session.user?.name || t('accountSection.noName')}</p>
+            <p className="text-foreground break-all">{user.user_metadata?.full_name || user.user_metadata?.name || t('accountSection.noName')}</p>
           </div>
 
           <div>
             <label className="text-sm font-medium text-muted-foreground">{t('accountSection.emailLabel')}</label>
-            <p className="text-foreground break-all">{session.user?.email || t('accountSection.noEmail')}</p>
+            <p className="text-foreground break-all">{user.email || t('accountSection.noEmail')}</p>
           </div>
         </CardContent>
         <CardFooter className="flex flex-row gap-2">
           <Button onClick={handleSignOut} variant="outline">
             {t('accountSection.signOutButton')}
           </Button>
-          <Button 
-            onClick={handleDeleteAccount} 
-            variant="destructive" 
+          <Button
+            onClick={handleDeleteAccount}
+            variant="destructive"
             disabled={isDeleting}
           >
             {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -179,8 +191,8 @@ const SettingsPage = () => {
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground mt-1 p-2">
-              {layoutMode === 'split' 
-                ? t('preferencesSection.splitLayoutDescription') 
+              {layoutMode === 'split'
+                ? t('preferencesSection.splitLayoutDescription')
                 : t('preferencesSection.defaultLayoutDescription')
               }
             </p>
@@ -230,10 +242,9 @@ const SettingsPage = () => {
           <CardDescription>{t('subscriptionSection.description', { defaultValue: 'View and manage your subscription details.' })}</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* plan exists: free or premium */}
-          {session?.user?.plan === 'premium' ? (
+          {userPlan === 'premium' ? (
             <Button asChild>
-              <a href="https://lumary.lemonsqueezy.com/billing" target="_blank" rel="noopener noreferrer">
+              <a href="https://seung.lemonsqueezy.com/billing" target="_blank" rel="noopener noreferrer">
                 {t('subscriptionSection.manageButton', { defaultValue: 'Go to Billing' })}
               </a>
             </Button>
@@ -245,8 +256,6 @@ const SettingsPage = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* Add more sections as needed, e.g., Theme, Notifications */}
     </div>
     </Suspense>
   );

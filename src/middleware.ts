@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { NextRequest } from 'next/server'
+import { updateSession } from '@/lib/supabase/middleware'
 import createIntlMiddleware from 'next-intl/middleware'
 
 // i18n middleware
@@ -12,43 +13,43 @@ const intlMiddleware = createIntlMiddleware({
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
+
   // Skip internal or static files
   if (
     pathname.startsWith('/api') ||
     pathname.startsWith('/_next') ||
+    pathname.startsWith('/auth/callback') ||
     pathname === '/favicon.ico' ||
-    pathname.match(/\.(png|mjs)$/)
+    pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|mjs|js|css)$/)
   ) {
     return NextResponse.next();
   }
 
-  // Skip root page - let client-side localStorage checking handle it
+  // Update Supabase auth session
+  const { supabaseResponse } = await updateSession(request)
+
+  // Skip root page - let client-side handle redirect
   if (pathname === '/') {
-    return NextResponse.next();
+    return supabaseResponse;
   }
 
-  const host = request.headers.get('host') || ''
+  // Run i18n handling
+  const intlResponse = intlMiddleware(request)
 
-  // 🔁 Redirect old domain to new domain
-  if (host.includes('ytsummarize-production.up.railway.app')) {
-    const url = request.nextUrl.clone()
-    url.host = 'lumary.me'
-    return NextResponse.redirect(url)
-  }
+  // Merge cookies from supabase response into intl response
+  supabaseResponse.cookies.getAll().forEach(cookie => {
+    intlResponse.cookies.set(cookie.name, cookie.value)
+  })
 
-  // 🌐 Run i18n handling
-  return intlMiddleware(request)
+  return intlResponse
 }
 
 export const config = {
   matcher: [
     // Match all routes except:
     // - API routes (/api/...)
-    // - Static files (/_next/static, /favicon.ico, etc.)  
+    // - Static files (/_next/static, /favicon.ico, etc.)
     // - Files with extensions (.png, .js, etc.)
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)' 
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)'
   ]
 };
-
-

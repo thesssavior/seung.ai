@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { auth } from '@/auth';
+import { getUser } from '@/lib/supabase/auth';
 
 const model = 'gpt-5-mini';
 

@@ -1,88 +1,63 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
-import { supabase } from '@/lib/supabaseClient';
+import { getUser } from '@/lib/supabase/auth';
+import { supabaseAdmin } from '@/lib/supabaseClient';
 
-export async function DELETE(req: Request) {
+export async function DELETE() {
   try {
-    const session = await auth();
+    const user = await getUser();
 
-    if (!session || !session.user || !session.user.id) {
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized. User not authenticated.' }, { status: 401 });
     }
 
-    const userId = session.user.id;
-    console.log('userId', userId);
+    const userId = user.id;
+    console.log('Deleting user:', userId);
 
-    // Delete related data
-    // Step 1: Get all folder IDs owned by the user
-    const { data: foldersToDelete, error: foldersError } = await supabase
-    .from('folders')
-    .select('id')
-    .eq('user_id', userId);
-
-    if (foldersError) {
-    return NextResponse.json({ error: 'Failed to fetch user folders', details: foldersError.message }, { status: 500 });
-    }
-
-    const folderIds = foldersToDelete?.map(f => f.id) ?? [];
-
-    // Step 2: Delete summaries referencing those folders
-    if (folderIds.length > 0) {
-    const { error: deleteSummariesByFolderError } = await supabase
-    .from('summaries')
-    .delete()
-    .in('folder_id', folderIds);
-
-    if (deleteSummariesByFolderError) {
-    return NextResponse.json({ error: 'Failed to delete summaries by folder_id', details: deleteSummariesByFolderError.message }, { status: 500 });
-    }
-    }
-
-    // Step 3: Delete summaries by user_id
-    const { error: deleteUserSummariesError } = await supabase
-    .from('summaries')
-    .delete()
-    .eq('user_id', userId);
+    // Delete related data using admin client (to bypass RLS for cleanup)
+    // Step 1: Delete summaries by user_id
+    const { error: deleteUserSummariesError } = await supabaseAdmin
+      .from('summaries')
+      .delete()
+      .eq('user_id', userId);
 
     if (deleteUserSummariesError) {
-        return NextResponse.json({ error: 'Failed to delete user summaries', details: deleteUserSummariesError.message }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to delete user summaries', details: deleteUserSummariesError.message }, { status: 500 });
     }
 
-    // Step 4: Delete user_reports by user_id
-    const { error: deleteUserReportsError } = await supabase
-    .from('user_reports')
-    .delete()
-    .eq('user_id', userId);
-
-    if (deleteUserReportsError) {
-        return NextResponse.json({ error: 'Failed to delete user reports', details: deleteUserReportsError.message }, { status: 500 });
-    }
-
-    // Step 5: Delete folders by user_id
-    const { error: deleteFoldersError } = await supabase
-    .from('folders')
-    .delete()
-    .eq('user_id', userId);
+    // Step 2: Delete folders by user_id
+    const { error: deleteFoldersError } = await supabaseAdmin
+      .from('folders')
+      .delete()
+      .eq('user_id', userId);
 
     if (deleteFoldersError) {
-    return NextResponse.json({ error: 'Failed to delete folders', details: deleteFoldersError.message }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to delete folders', details: deleteFoldersError.message }, { status: 500 });
     }
 
-    // ✅ Step 6: Delete user from `users` table
-    const { data: deletedUsers, error: deleteUserRowError } = await supabase
-    .from('users')
-    .delete()
-    .eq('id', userId)
-    .select(); // Will return deleted rows
-  
-    if (deleteUserRowError) {
-        console.error('❌ Failed to delete user:', deleteUserRowError);
-        return NextResponse.json({ error: 'Failed to delete user record', details: deleteUserRowError.message }, { status: 500 });
+    // Step 3: Delete profile
+    const { error: deleteProfileError } = await supabaseAdmin
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (deleteProfileError) {
+      console.error('Failed to delete profile:', deleteProfileError);
+      return NextResponse.json({ error: 'Failed to delete profile', details: deleteProfileError.message }, { status: 500 });
     }
+
+    // Step 4: Delete the auth user (requires admin API)
+    const { error: deleteAuthUserError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+    if (deleteAuthUserError) {
+      console.error('Failed to delete auth user:', deleteAuthUserError);
+      return NextResponse.json({ error: 'Failed to delete auth user', details: deleteAuthUserError.message }, { status: 500 });
+    }
+
     return NextResponse.json({ success: true, message: 'User account deleted successfully.' }, { status: 200 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('API Route /api/home/user/delete error:', error);
-    return NextResponse.json({ error: 'An unexpected error occurred during account deletion.', details: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: 'An unexpected error occurred during account deletion.', details: message }, { status: 500 });
   }
-} 
+}

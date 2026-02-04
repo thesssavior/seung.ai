@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { YoutubeIcon, AlertCircle, X, Loader2, ArrowUp } from "lucide-react";
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { signIn, useSession } from "next-auth/react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useFolder } from '../home/SidebarLayout';
 import { useSummaryGeneration } from '@/contexts/SummaryGenerationContext';
 import { LanguageSwitcher } from '../home/LanguageSwitcher';
@@ -33,7 +33,24 @@ export function VideoInputForm() {
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const { data: session } = useSession();
+  const { user, signInWithGoogle } = useAuth();
+  const [userPlan, setUserPlan] = useState<string>('free');
+
+  // Fetch user plan
+  useEffect(() => {
+    const fetchPlan = async () => {
+      if (user) {
+        try {
+          const res = await fetch('/api/home/user/plan');
+          const data = await res.json();
+          setUserPlan(data.plan || 'free');
+        } catch {
+          setUserPlan('free');
+        }
+      }
+    };
+    fetchPlan();
+  }, [user]);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [trialUsed, setTrialUsed] = useState(false);
   const [inAppBrowser, setInAppBrowser] = useState(false);
@@ -93,13 +110,13 @@ export function VideoInputForm() {
     setShowTokenLimitUpgrade(false);
     setDailyLimitExceeded(false);
 
-    if (!session && trialUsed) {
+    if (!user && trialUsed) {
       setShowLoginPrompt(true);
       return;
     }
-    
+
     // Check daily limit for signed-in free users - only after hydration
-    if (session && session.user.plan !== 'premium' && isHydrated && typeof window !== 'undefined') {
+    if (user && userPlan !== 'premium' && isHydrated && typeof window !== 'undefined') {
       const today = new Date().toDateString();
       const lastGenerationDate = localStorage.getItem('freeUserLastGenerationDate');
 
@@ -158,13 +175,13 @@ export function VideoInputForm() {
         fetcher: fetcher || 'unknown'
       };
       
-      if (!session && tokenCount > 32768) {
+      if (!user && tokenCount > 32768) {
         setError(t('guestInputTooLong'));
         setIsLoading(false);
         return;
       }
 
-      if (session?.user?.plan === 'free' && tokenCount > 65536) {
+      if (user && userPlan === 'free' && tokenCount > 65536) {
         setShowTokenLimitUpgrade(true); 
         setError(t('unpaidInputTooLong'));
         setIsLoading(false);
@@ -178,12 +195,12 @@ export function VideoInputForm() {
       });
 
       // Mark trial as used if not logged in - only after hydration
-      if (!session && isHydrated) {
+      if (!user && isHydrated) {
         setTrialUsed(true);
         if (typeof window !== 'undefined') {
             localStorage.setItem('trialUsed', 'true');
         }
-      } else if (session && session.user.plan !== 'premium' && isHydrated) {
+      } else if (user && userPlan !== 'premium' && isHydrated) {
         // Record generation date for free users - only after hydration
         if (typeof window !== 'undefined') {
           localStorage.setItem('freeUserLastGenerationDate', new Date().toDateString());
@@ -215,26 +232,11 @@ export function VideoInputForm() {
               <p className="mb-6">{t('trialUsedPrompt')}</p>
               <Button
                 className="w-full bg-foreground hover:opacity-90 text-background mb-2"
-                onClick={() => { setShowLoginPrompt(false); signIn("google"); }}
+                onClick={() => { setShowLoginPrompt(false); signInWithGoogle(); }}
               >
                 {t('signInWithGoogle')}
               </Button>
-              {isDevMode && (
-                <Button
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white mb-2"
-                  onClick={() => { 
-                    setShowLoginPrompt(false); 
-                    signIn("test-account", { 
-                      username: "testuser", 
-                      password: "test123",
-                      callbackUrl: "/" 
-                    }); 
-                  }}
-                >
-                  🧪 Test Account
-                </Button>
-              )}
-              <Button
+                            <Button
                 variant="outline"
                 className="w-full"
                 onClick={() => setShowLoginPrompt(false)}
@@ -286,7 +288,7 @@ export function VideoInputForm() {
       </form>
 
       <div>
-        {!session && (
+        {!user && (
             <p className="text-sm text-zinc-500 text-center mt-4 mb-4">{t('trialInfo')}</p>
         )}
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/contexts/AuthContext';
 import { ScrollToTopButton } from '@/components/home/ScrollToTopButton';
 import SummaryContent from '@/components/SummaryContent';
 import { Loader2 } from 'lucide-react';
@@ -13,7 +13,7 @@ export default function SummaryDetailPage() {
   const params = useParams();
   const locale = params.locale as string;
   const summaryId = params.summaryId as string | undefined;
-  const { data: session, status } = useSession();
+  const { user, isLoading: authLoading } = useAuth();
   const { generationData } = useSummaryGeneration();
   const [summary, setSummary] = useState<any>(null);
   const [folder, setFolder] = useState<any>(null);
@@ -48,8 +48,8 @@ export default function SummaryDetailPage() {
   }, [derivedLockedLayout]);
 
   useEffect(() => {
-    // Wait for session to load
-    if (status === 'loading') {
+    // Wait for auth to load
+    if (authLoading) {
       setLoading(true);
       return;
     }
@@ -87,10 +87,10 @@ export default function SummaryDetailPage() {
         setFolder(folderForSummary);
         setLoading(false);
       }
-    } else if (summaryId && session?.user && !summary) {
+    } else if (summaryId && user && !summary) {
       // Existing summary mode - fetch from DB (only if authenticated and we don't already have data)
       fetchExistingSummary(summaryId);
-    } else if (summaryId && !session?.user) {
+    } else if (summaryId && !user) {
       // User is not authenticated
       setError('Please sign in to view this summary');
       setLoading(false);
@@ -98,7 +98,7 @@ export default function SummaryDetailPage() {
       // No summaryId - might be initial load, keep loading
       setLoading(true);
     }
-  }, [summaryId, generationData, locale, session?.user?.id, status]);
+  }, [summaryId, generationData, locale, user?.id, authLoading]);
 
   const fetchExistingSummary = async (id: string) => {
     try {

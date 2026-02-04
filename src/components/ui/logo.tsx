@@ -16,7 +16,7 @@ export function Logo({
   width = 100, 
   height = 100, 
   className = "", 
-  alt = "Lumary Logo",
+  alt = "Seung Logo",
   small = false
 }: LogoProps) {
   const { theme, systemTheme } = useTheme();
@@ -42,7 +42,7 @@ export function Logo({
   const isDark = (theme === 'system' ? systemTheme : theme) === 'dark';
   
   // Choose the appropriate logo
-  const logoSrc = small ? (isDark ? '/small_white.png' : '/small.png') : (isDark ? '/lumary_white.png' : '/lumary.png');
+  const logoSrc = small ? (isDark ? '/small_white.png' : '/small.png') : (isDark ? '/seung_white.png' : '/seung.png');
 
   return (
     <Image 
