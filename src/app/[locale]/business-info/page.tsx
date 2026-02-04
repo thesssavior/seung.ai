@@ -116,6 +116,52 @@ export default function BusinessInfoPage() {
           </div>
         </div>
 
+        {/* US Entity Information */}
+        <div className="mt-12 pt-8 border-t border-border">
+          <h2 className="text-xl font-semibold mb-6">
+            US Entity Information
+          </h2>
+
+          <div className="bg-accent rounded-lg p-6">
+            <p className="text-sm text-muted-foreground mb-4">
+              AI-powered software products.
+            </p>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex items-start gap-3">
+                <Building2 className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <dt className="font-medium">Operated by</dt>
+                  <dd className="text-muted-foreground">Seung, LLC</dd>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <dt className="font-medium">Address</dt>
+                  <dd className="text-muted-foreground">
+                    131 Continental Drive, Suite 305<br />
+                    Newark, DE 19713, United States
+                  </dd>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <Mail className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <dt className="font-medium">Contact</dt>
+                  <dd className="text-muted-foreground">
+                    <a href="mailto:support@seung.ai" className="text-blue-600 hover:text-blue-800 underline">
+                      support@seung.ai
+                    </a>
+                  </dd>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Terms of Service */}
         <div className="mt-12 pt-8 border-t border-border">
           <h1 className="text-2xl font-bold mb-6 flex items-center gap-3">
