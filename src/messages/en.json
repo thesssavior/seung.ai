@@ -112,7 +112,12 @@
     "weekly": "Weekly",
     "yearly": "Yearly",
     "monthly": "Monthly",
-    "save": "Save {percentage}%"
+    "save": "Save {percentage}%",
+    "valueProposition": "Save 10+ hours every week. Turn long videos into clear summaries in seconds.",
+    "socialProof": {
+      "timeSaved": "10,000+ hours saved",
+      "rating": "4.9 rating"
+    }
   },
   "PaymentSuccess": {
     "title": "Payment Successful!",
@@ -354,5 +359,79 @@
     "savingSummary": "Saving summary...",
     "savingSummaryDescription": "Saving to database...",
     "errorTitle": "Error generating summary"
+  },
+  "PricingPage": {
+    "badge": "Save hours every week",
+    "heroTitle": "Stop watching. Start learning.",
+    "heroSubtitle": "Turn hours of video content into clear, actionable summaries in seconds. Get back the time you deserve.",
+    "valueProp1": "Save 10+ hours/week",
+    "valueProp2": "Learn 5x faster",
+    "valueProp3": "Instant AI summaries",
+    "stats": [
+      { "value": "50,000+", "label": "Videos summarized" },
+      { "value": "10,000+", "label": "Hours saved" },
+      { "value": "4.9/5", "label": "User rating" },
+      { "value": "98%", "label": "Satisfaction rate" }
+    ],
+    "pricingTitle": "Simple, transparent pricing",
+    "pricingSubtitle": "Choose the plan that works for you. Cancel anytime.",
+    "billing": {
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "save": "Save 55%",
+      "week": "week",
+      "month": "month",
+      "year": "year"
+    },
+    "freePlan": {
+      "title": "Free",
+      "description": "Perfect for trying out",
+      "cta": "Get started free"
+    },
+    "freeFeatures": [
+      "3 video summaries",
+      "Basic AI model",
+      "Standard processing speed",
+      "Community support"
+    ],
+    "premiumPlan": {
+      "badge": "Most Popular",
+      "title": "Premium",
+      "description": "For serious learners",
+      "cta": "Upgrade now"
+    },
+    "premiumFeatures": [
+      "Unlimited video summaries",
+      "Best-in-class AI (GPT-4 level)",
+      "Priority processing speed",
+      "Longer videos supported",
+      "Chapters, quizzes & mind maps",
+      "24/7 priority support",
+      "Early access to new features"
+    ],
+    "testimonials": [
+      {
+        "name": "Sarah K.",
+        "role": "Graduate Student",
+        "quote": "I used to spend 3 hours watching lecture videos. Now I get the key points in 5 minutes. This literally saved my semester."
+      },
+      {
+        "name": "James L.",
+        "role": "Software Engineer",
+        "quote": "I watch a lot of tech talks and tutorials. Seung lets me quickly decide which ones are worth my full attention."
+      },
+      {
+        "name": "Mina P.",
+        "role": "Content Creator",
+        "quote": "Research for my videos used to take forever. Now I can review 10x more content in the same time. Game changer."
+      }
+    ],
+    "testimonialsTitle": "Loved by learners worldwide",
+    "testimonialsSubtitle": "Join thousands who are learning smarter, not harder",
+    "ctaTitle": "Ready to get your time back?",
+    "ctaSubtitle": "Start summarizing videos in seconds. No credit card required for free plan.",
+    "ctaButton": "Start learning smarter",
+    "ctaNote": "Cancel anytime. No questions asked."
   }
 } 

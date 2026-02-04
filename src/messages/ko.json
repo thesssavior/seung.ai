@@ -96,12 +96,11 @@
     "loadingPlans": "플랜 로딩 중...",
     "featureListTitle": "무료 플랜의 모든 기능 포함 및:",
     "features": [
-      "영상 길이, 요약 퀄리티 ⬆️",
-      "무제한 노트 생성",
+      "무제한 요약 생성",
+      "최고 수준의 AI 성능",
       "무제한 팟캐스트 및 유튜브 동영상",
-      "최고 수준의 받아쓰기 및 요약",
       "연중무휴 고객 지원",
-      "신규 기능 우선 이용권: 오디오, 퀴즈, 대화 등등",
+      "신규 기능 우선 이용권: 오디오, 퀴즈, 대화...",
       "기타 등등..."
     ],
     "pricePerMonth": "/ 월",
@@ -115,7 +114,12 @@
     "weekly": "주간",
     "yearly": "연간",
     "monthly": "월간",
-    "save": "{percentage}% 할인"
+    "save": "{percentage}% 할인",
+    "valueProposition": "매주 10시간 이상 절약. 긴 영상을 몇 초 만에 명확한 요약으로 변환하세요.",
+    "socialProof": {
+      "timeSaved": "10,000시간 이상 절약",
+      "rating": "4.9점 평점"
+    }
   },
   "PaymentSuccess": {
     "title": "결제 성공!",
@@ -361,5 +365,79 @@
     "savingSummary": "요약 저장 중...",
     "savingSummaryDescription": "요약을 저장하는 중입니다. 잠시만 기다려 주세요...",
     "errorTitle": "요약 생성 오류"
+  },
+  "PricingPage": {
+    "badge": "매주 수 시간 절약",
+    "heroTitle": "영상 시청은 그만. 학습을 시작하세요.",
+    "heroSubtitle": "몇 시간짜리 영상을 몇 초 만에 핵심 요약으로 변환하세요. 소중한 시간을 되찾으세요.",
+    "valueProp1": "주 10시간 이상 절약",
+    "valueProp2": "5배 빠른 학습",
+    "valueProp3": "즉시 AI 요약",
+    "stats": [
+      { "value": "50,000+", "label": "요약된 영상" },
+      { "value": "10,000+", "label": "절약된 시간" },
+      { "value": "4.9/5", "label": "사용자 평점" },
+      { "value": "98%", "label": "만족도" }
+    ],
+    "pricingTitle": "심플하고 투명한 가격",
+    "pricingSubtitle": "나에게 맞는 플랜을 선택하세요. 언제든 해지 가능.",
+    "billing": {
+      "weekly": "주간",
+      "monthly": "월간",
+      "yearly": "연간",
+      "save": "55% 할인",
+      "week": "주",
+      "month": "월",
+      "year": "년"
+    },
+    "freePlan": {
+      "title": "무료",
+      "description": "체험용으로 딱",
+      "cta": "무료로 시작하기"
+    },
+    "freeFeatures": [
+      "영상 요약 3회",
+      "기본 AI 모델",
+      "일반 처리 속도",
+      "커뮤니티 지원"
+    ],
+    "premiumPlan": {
+      "badge": "인기",
+      "title": "프리미엄",
+      "description": "진지한 학습자를 위한",
+      "cta": "지금 업그레이드"
+    },
+    "premiumFeatures": [
+      "무제한 영상 요약",
+      "최고 성능 AI (GPT-4급)",
+      "빠른 처리 속도",
+      "긴 영상 지원",
+      "챕터, 퀴즈 & 마인드맵",
+      "24/7 우선 지원",
+      "신규 기능 조기 이용"
+    ],
+    "testimonials": [
+      {
+        "name": "김서연",
+        "role": "대학원생",
+        "quote": "3시간짜리 강의 영상을 보던 시간이 5분으로 줄었어요. 학기를 살린 앱입니다."
+      },
+      {
+        "name": "이준혁",
+        "role": "개발자",
+        "quote": "기술 강연이나 튜토리얼 영상이 많은데, 어떤 영상이 볼 만한지 빠르게 판단할 수 있어요."
+      },
+      {
+        "name": "박지민",
+        "role": "유튜버",
+        "quote": "콘텐츠 리서치에 시간이 너무 많이 걸렸는데, 이제 같은 시간에 10배 더 많은 자료를 검토할 수 있어요."
+      }
+    ],
+    "testimonialsTitle": "전 세계 학습자들의 사랑을 받고 있습니다",
+    "testimonialsSubtitle": "더 스마트하게 학습하는 수천 명과 함께하세요",
+    "ctaTitle": "시간을 되찾을 준비 되셨나요?",
+    "ctaSubtitle": "몇 초 만에 영상 요약을 시작하세요. 무료 플랜은 신용카드 필요 없음.",
+    "ctaButton": "스마트한 학습 시작하기",
+    "ctaNote": "언제든 해지 가능. 질문 없이 환불."
   }
 } 
