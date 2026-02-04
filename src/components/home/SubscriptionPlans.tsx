@@ -127,8 +127,8 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
             <div className="flex flex-col w-full md:w-1/3">
               <div className="flex items-center mb-4">
                 <Logo
-                  width={48}
-                  height={48}
+                  width={24}
+                  height={24}
                   className="mr-3 rounded-md"
                 />
                 <div>
