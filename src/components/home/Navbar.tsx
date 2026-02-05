@@ -20,7 +20,7 @@ export function Navbar() {
       <nav className="bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-16 items-center justify-between px-4 sm:px-12">
           <Link href={`/${locale}`} className="flex items-center space-x-2 ml-12 sm:ml-6">
-            <Logo width={100} height={100} small={true} />
+            <Logo width={92} height={92} small={true} />
           </Link>
 
           <div className="flex items-center space-x-2 sm:space-x-6">
