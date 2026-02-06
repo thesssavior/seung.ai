@@ -221,7 +221,8 @@
       "voteFailed": "Vote failed",
       "voteFailedUnexpected": "Vote failed unexpectedly",
       "fetchFeaturesFailed": "Failed to load roadmap",
-      "fetchFeaturesFailedUnexpected": "An unexpected error occurred while loading the roadmap"
+      "fetchFeaturesFailedUnexpected": "An unexpected error occurred while loading the roadmap",
+      "fetchFeaturesError": "Error loading roadmap: {error}"
     },
     "expectedDate": "Expected: {date}",
     "shippedDate": "Shipped: {date}",

@@ -227,7 +227,8 @@
       "voteFailed": "투표에 실패했습니다",
       "voteFailedUnexpected": "예기치 않은 오류로 투표에 실패했습니다",
       "fetchFeaturesFailed": "로드맵을 불러오지 못했습니다",
-      "fetchFeaturesFailedUnexpected": "로드맵을 불러오는 중 예기치 않은 오류가 발생했습니다"
+      "fetchFeaturesFailedUnexpected": "로드맵을 불러오는 중 예기치 않은 오류가 발생했습니다",
+      "fetchFeaturesError": "로드맵 로딩 오류: {error}"
     },
     "expectedDate": "예상: {date}",
     "shippedDate": "출시: {date}",

@@ -59,9 +59,9 @@
     "renameFolder": "Renombrar Carpeta",
     "confirmDeleteFolder": "¿Estás seguro de que deseas eliminar esta carpeta?",
     "noFolder": "Ninguna carpeta seleccionada",
-    "loadingSummaries": "Cargando resúmenes...",
+    "loadingSummaries": "Cargando archivos...",
     "loadingFolders": "Cargando carpetas...",
-    "noSummaries": "Sin resúmenes",
+    "noSummaries": "Sin archivos",
     "deleteFolder": "Eliminar Carpeta",
     "editFolder": "Editar Carpeta",
     "expandFolder": "Expandir Carpeta",
@@ -72,20 +72,20 @@
     "upgrade": "Mejorar plan",
     "upgradeSubtitle": "Obtén más funciones y acceso ilimitado",
     "premiumActive": "Plan Premium activo",
-    "premiumActiveSubtitle": "IA de primera clase, resúmenes ilimitados",
-    "editSummary": "Editar Nombre del Resumen",
-    "deleteSummary": "Eliminar Archivo de Resumen",
-    "confirmDeleteSummary": "¿Estás seguro de que deseas eliminar este archivo de resumen?"
+    "premiumActiveSubtitle": "IA de primera clase, archivos ilimitados",
+    "editSummary": "Editar Nombre del Archivo",
+    "deleteSummary": "Eliminar Archivo",
+    "confirmDeleteSummary": "¿Estás seguro de que deseas eliminar este archivo?"
   },
   "SearchModal": {
-    "placeholder": "Buscar resúmenes y carpetas...",
+    "placeholder": "Buscar archivos y carpetas...",
     "searching": "Buscando...",
     "noResults": "No se encontraron resultados",
     "tryDifferent": "Intenta con otras palabras clave o revisa la ortografía",
     "folders": "Carpetas",
-    "summaries": "Resúmenes",
+    "summaries": "Archivos",
     "startTyping": "Empieza a escribir para buscar",
-    "searchDescription": "Busca entre tus resúmenes y carpetas",
+    "searchDescription": "Busca entre tus archivos y carpetas",
     "tips": "Consejo: Presiona Escape para cerrar"
   },
   "PaymentPage": {
@@ -219,7 +219,10 @@
     "statusConsidering": "En Consideración",
     "errors": {
       "voteFailed": "Error al votar",
-      "voteFailedUnexpected": "Error inesperado al votar"
+      "voteFailedUnexpected": "Error inesperado al votar",
+      "fetchFeaturesFailed": "Error al cargar la hoja de ruta",
+      "fetchFeaturesFailedUnexpected": "Ocurrió un error inesperado al cargar la hoja de ruta",
+      "fetchFeaturesError": "Error al cargar la hoja de ruta: {error}"
     },
     "expectedDate": "Previsto: {date}",
     "shippedDate": "Lanzado: {date}",
