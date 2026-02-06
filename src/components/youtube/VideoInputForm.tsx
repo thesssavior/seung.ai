@@ -4,15 +4,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { YoutubeIcon, AlertCircle, X, Loader2, ArrowUp } from "lucide-react";
+import { YoutubeIcon, AlertCircle, X, Loader2 } from "lucide-react";
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from "@/contexts/AuthContext";
 import { useFolder } from '../home/SidebarLayout';
 import { useSummaryGeneration } from '@/contexts/SummaryGenerationContext';
-import { LanguageSwitcher } from '../home/LanguageSwitcher';
 import { useHydration } from '@/hooks/useHydration';
-import { useDevMode } from '@/hooks/useDevMode';
 
 interface FolderType {
   id: string;
@@ -28,8 +26,7 @@ export function VideoInputForm() {
   const { activeFolder, openSubscriptionModal } = useFolder();
   const { setGenerationData } = useSummaryGeneration();
   const isHydrated = useHydration();
-  const isDevMode = useDevMode();
-  
+
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -129,10 +126,11 @@ export function VideoInputForm() {
         setTrialLimitExceeded(true);
         setError(t('trialLimitExceededError'));
         setIsLoading(false);
+        openSubscriptionModal();
         return;
       }
     }
-    
+
     setIsLoading(true);
 
     try {
@@ -142,15 +140,20 @@ export function VideoInputForm() {
       }
 
       // Get content language from LanguageSwitcher (localStorage), fallback to UI locale
-      const contentLanguage = typeof window !== 'undefined' 
-        ? localStorage.getItem('contentLanguage') || locale 
+      const contentLanguage = typeof window !== 'undefined'
+        ? localStorage.getItem('contentLanguage') || locale
         : locale;
 
-      // Step 1: Call /api/transcript
-      const transcriptResponse = await fetch('/api/summaries/transcript', {
+      // Call /api/transcript with optional folderId
+      const transcriptResponse = await fetch('/api/files/transcript', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoId, locale, contentLanguage }),
+        body: JSON.stringify({
+          videoId,
+          locale,
+          contentLanguage,
+          folderId: activeFolder?.id || null, // Pass folderId if user has a folder selected
+        }),
       });
 
       if (!transcriptResponse.ok) {
@@ -166,20 +169,10 @@ export function VideoInputForm() {
         description,
         tokenCount,
         fetcher,
+        fileId, // New: returned if DB row was created
       } = transcriptDataJSON;
-      
-      // Ensure all expected fields are present, providing defaults if necessary
-      const data = {
-        videoId: videoId,
-        locale: locale,
-        contentLanguage: contentLanguage,
-        transcriptText: transcript || '',
-        title: title || 'Untitled Summary',
-        videoDescription: description || '',
-        tokenCount: tokenCount || 0,
-        fetcher: fetcher || 'unknown'
-      };
-      
+
+      // Token limit checks
       if (!user && tokenCount > 32768) {
         setError(t('guestInputTooLong'));
         setIsLoading(false);
@@ -187,23 +180,17 @@ export function VideoInputForm() {
       }
 
       if (user && userPlan === 'free' && tokenCount > 65536) {
-        setShowTokenLimitUpgrade(true); 
+        setShowTokenLimitUpgrade(true);
         setError(t('unpaidInputTooLong'));
         setIsLoading(false);
         return;
-      } 
+      }
 
-      // Store data in context
-      setGenerationData({
-        transcriptData: data,
-        folderForSummary: activeFolder ? { id: activeFolder.id, name: activeFolder.name } : null
-      });
-
-      // Mark trial as used if not logged in - only after hydration
+      // Mark trial as used
       if (!user && isHydrated) {
         setTrialUsed(true);
         if (typeof window !== 'undefined') {
-            localStorage.setItem('trialUsed', 'true');
+          localStorage.setItem('trialUsed', 'true');
         }
       } else if (user && userPlan !== 'premium' && isHydrated) {
         // Increment trial count for free users (3 free trials total)
@@ -215,9 +202,41 @@ export function VideoInputForm() {
           setFreeTrialsRemaining(3 - newCount);
         }
       }
-      
-      // Redirect to the new summary generation page
-      router.push(`/${locale}/summaries/new`);
+
+      // If we got a fileId (logged-in user with folder), redirect directly
+      if (fileId) {
+        // Store minimal data in context for streaming
+        setGenerationData({
+          transcriptData: {
+            videoId,
+            locale,
+            contentLanguage,
+            transcriptText: transcript,
+            title: title || 'Untitled',
+            videoDescription: description || '',
+            tokenCount,
+            fetcher,
+          },
+          folderForSummary: activeFolder ? { id: activeFolder.id, name: activeFolder.name } : null,
+        });
+        router.push(`/${locale}/summaries/${fileId}`);
+      } else {
+        // Guest mode: store data in context and use "preview" as fileId
+        setGenerationData({
+          transcriptData: {
+            videoId,
+            locale,
+            contentLanguage,
+            transcriptText: transcript,
+            title: title || 'Untitled',
+            videoDescription: description || '',
+            tokenCount,
+            fetcher,
+          },
+          folderForSummary: null,
+        });
+        router.push(`/${locale}/summaries/preview`);
+      }
 
     } catch (err: any) {
       if (!showTokenLimitUpgrade && !trialLimitExceeded) {
@@ -230,9 +249,6 @@ export function VideoInputForm() {
 
   return (
     <div className="w-full max-w-4xl mx-auto py-2 space-y-2">
-      {/* <div className="flex justify-end mb-6">
-        <LanguageSwitcher />
-      </div> */}
       {/* Login Modal/Overlay */}
       {showLoginPrompt && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -267,7 +283,6 @@ export function VideoInputForm() {
               className="border-input bg-background text-foreground placeholder:text-muted-foreground border pr-10 w-full"
               required
               pattern="^https?://(www\.|m\.)?(youtube\.com/(watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/).+" // eslint-disable-line no-useless-escape
-              // title={t('youtubeUrlHint')}
             />
             {url && (
               <button
@@ -290,8 +305,8 @@ export function VideoInputForm() {
             ) : (
               <YoutubeIcon className="mr-2 h-4 w-4" />
             )}
-            <span className="block sm:hidden">{isLoading ? t('loadingShort') : t('getSummaryShort')}</span>
-            <span className="hidden sm:block">{isLoading ? t('loading') : t('getSummary')}</span>
+            <span className="block sm:hidden">{isLoading ? t('loadingShort') : t('submitUrlShort')}</span>
+            <span className="hidden sm:block">{isLoading ? t('loading') : t('submitUrl')}</span>
           </Button>
         </div>
       </form>
@@ -345,4 +360,4 @@ export function VideoInputForm() {
       )}
     </div>
   );
-} 
+}

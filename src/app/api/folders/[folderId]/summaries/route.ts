@@ -105,15 +105,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ folder
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const body = await req.json();
-    const { summaryId, targetFolderId } = body;
-    if (!summaryId || !targetFolderId) {
-      return NextResponse.json({ error: 'Missing summaryId or targetFolderId' }, { status: 400 });
+    const { fileId, targetFolderId } = body;
+    if (!fileId || !targetFolderId) {
+      return NextResponse.json({ error: 'Missing fileId or targetFolderId' }, { status: 400 });
     }
     // Update the summary's folder_id
     const { data: updated, error: updateError } = await supabase
       .from('summaries')
       .update({ folder_id: targetFolderId })
-      .eq('id', summaryId)
+      .eq('id', fileId)
       .select()
       .single();
     if (updateError) {
@@ -129,24 +129,24 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ folder
 // DELETE /api/folders/[folderId]/summaries
 export async function DELETE(req: Request, { params }: { params: Promise<{ folderId: string }> }) {
   try {
-    // const { folderId } = await params; // folderId might not be strictly necessary if summaryId is unique
+    // const { folderId } = await params; // folderId might not be strictly necessary if fileId is unique
     const user = await getUser();
     if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await req.json();
-    const { summaryId } = body;
+    const { fileId } = body;
 
-    if (!summaryId) {
-      return NextResponse.json({ error: 'Missing summaryId' }, { status: 400 });
+    if (!fileId) {
+      return NextResponse.json({ error: 'Missing fileId' }, { status: 400 });
     }
 
     // Ensure the summary belongs to the user attempting to delete it
     const { error: deleteError } = await supabase
       .from('summaries')
       .delete()
-      .eq('id', summaryId)
+      .eq('id', fileId)
       .eq('user_id', user.id);
 
     if (deleteError) {

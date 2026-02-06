@@ -7,25 +7,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Layout preference utilities
-export const getLayoutPreference = (): 'default' | 'split' => {
-  if (typeof window === 'undefined') return 'default';
-  const savedLayoutMode = localStorage.getItem('layoutMode');
-  return (savedLayoutMode === 'split' || savedLayoutMode === 'default') 
-    ? savedLayoutMode 
-    : 'default';
-};
-
-export const setLayoutPreference = (mode: 'default' | 'split') => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('layoutMode', mode);
-  
-  // Dispatch custom event to notify other components
-  window.dispatchEvent(new CustomEvent('layoutChanged', { 
-    detail: { layoutMode: mode } 
-  }));
-};
-
 // Format seconds into M:SS or H:MM:SS (only shows hours if > 0)
 export function formatTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600);

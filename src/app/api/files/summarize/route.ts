@@ -1,29 +1,24 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import enMessages from '@/messages/en.json';
 import koMessages from '@/messages/ko.json';
 import jaMessages from '@/messages/ja.json';
 import frMessages from '@/messages/fr.json';
 import thMessages from '@/messages/th.json';
 
-// Constants
-const model = 'gpt-4.1-mini'; 
+const model = 'gemini-2.5-flash';
 
-// POST request to summarize a video
 export async function POST(req: Request) {
   try {
-    console.log("model: ", model);
-    // Get videoId, locale, transcriptText, title, and videoDescription from request
-    const { 
-      videoId, 
+    const {
+      videoId,
       contentLanguage = 'ko',
-      transcriptText, 
-      title, 
+      transcriptText,
+      title,
       videoDescription,
       tokenCount,
-      currentFetcher
     } = await req.json();
-    
+
     let messages;
     switch (contentLanguage) {
       case 'ko': messages = koMessages; break;
@@ -32,32 +27,28 @@ export async function POST(req: Request) {
       case 'fr': messages = frMessages; break;
       default:   messages = enMessages;
     }
-    
-    const videoTitle = title || ''; 
 
-    if (!videoId || !transcriptText) { 
+    const videoTitle = title || '';
+
+    if (!videoId || !transcriptText) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
-    // Summarize with OpenAI
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const encoder = new TextEncoder();
-    
+
     const stream = new ReadableStream({
       async start(controller) {
-        const completion = await openai.chat.completions.create({
-            model: model,
-            messages: [
-              { role: "system", content: `Important: Respond in ${contentLanguage} language. ${messages.systemPrompts}` },
-              { role: "user", content: `${messages.userPrompts} \n\nVideo Title: ${videoTitle}\n\nVideo Description: ${videoDescription}\n\nTranscript:\n${transcriptText}` }
-            ],
-            stream: true,
-          });
-          for await (const part of completion) {
-            const content = part.choices[0]?.delta?.content;
-            if (content) {
-              controller.enqueue(encoder.encode(content));
-            }
+        const response = await client.models.generateContentStream({
+          model: model,
+          contents: `Important: Respond in ${contentLanguage} language. ${messages.systemPrompts}\n\n${messages.userPrompts}\n\nVideo Title: ${videoTitle}\n\nVideo Description: ${videoDescription}\n\nTranscript:\n${transcriptText}`,
+        });
+
+        for await (const chunk of response) {
+          const content = chunk.text;
+          if (content) {
+            controller.enqueue(encoder.encode(content));
+          }
         }
         controller.close();
       }
@@ -68,12 +59,11 @@ export async function POST(req: Request) {
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
         'input_token_count': `${tokenCount}`,
-        'fetcher': `${currentFetcher}`,
         'video_title': encodeURIComponent(`${videoTitle}`),
       }
     });
   } catch (error: any) {
-    console.error("General error:", error.message);
+    console.error("Gemini API error:", error.message);
     return NextResponse.json({ error: `${error.message}` }, { status: 500 });
   }
-} 
+}

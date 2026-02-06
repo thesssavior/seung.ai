@@ -3,22 +3,22 @@ import { getUser } from '@/lib/supabase/auth';
 import { getSupabase } from '@/lib/supabaseClient';
 import { calculateTokenCount } from '@/lib/utils';
 
-// GET /api/summaries/[summaryId]
-export async function GET(req: NextRequest, { params }: { params: Promise<{ summaryId: string }> }) {
+// GET /api/files/[fileId]
+export async function GET(req: NextRequest, { params }: { params: Promise<{ fileId: string }> }) {
   try {
     const user = await getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { summaryId } = await params;
+    const { fileId } = await params;
     const supabase = await getSupabase();
 
     // Fetch summary (RLS will filter by user_id automatically)
     const { data: summaryData, error: summaryError } = await supabase
       .from('summaries')
       .select('*')
-      .eq('id', summaryId)
+      .eq('id', fileId)
       .single();
 
     if (summaryError) {
@@ -56,15 +56,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ summ
   }
 }
 
-// POST /api/summaries/[summaryId] - Create new summary with basic metadata
-export async function POST(req: NextRequest, { params }: { params: Promise<{ summaryId: string }> }) {
+// POST /api/files/[fileId] - Create new summary with basic metadata
+export async function POST(req: NextRequest, { params }: { params: Promise<{ fileId: string }> }) {
   try {
     const user = await getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { summaryId } = await params;
+    const { fileId } = await params;
     const {
       folderId,
       videoId,
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sum
 
     const supabase = await getSupabase();
     const insertData = {
-      id: summaryId,
+      id: fileId,
       folder_id: folderId,
       user_id: user.id,
       video_id: videoId,
@@ -120,15 +120,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ sum
   }
 }
 
-// PATCH /api/summaries/[summaryId] - Update summary metadata
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ summaryId: string }> }) {
+// PATCH /api/files/[fileId] - Update summary metadata
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ fileId: string }> }) {
   try {
     const user = await getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { summaryId } = await params;
+    const { fileId } = await params;
     const updateData = await req.json();
 
     // Remove any fields that shouldn't be updated directly
@@ -143,7 +143,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ su
     const { data, error } = await supabase
       .from('summaries')
       .update(updateData)
-      .eq('id', summaryId)
+      .eq('id', fileId)
       .select('id, video_id, name')
       .single();
 
@@ -168,21 +168,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ su
   }
 }
 
-// DELETE /api/summaries/[summaryId]
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ summaryId: string }> }) {
+// DELETE /api/files/[fileId]
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ fileId: string }> }) {
   try {
     const user = await getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { summaryId } = await params;
+    const { fileId } = await params;
     const supabase = await getSupabase();
 
     const { error } = await supabase
       .from('summaries')
       .delete()
-      .eq('id', summaryId);
+      .eq('id', fileId);
 
     if (error) {
       console.error('Supabase error deleting summary:', error);

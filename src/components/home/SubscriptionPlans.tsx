@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Check, Loader2, Clock, Zap, Star } from 'lucide-react';
+import { Check, Loader2, Clock, Zap, Star, Crown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Logo } from '@/components/ui/logo';
 
@@ -167,12 +167,13 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
                 {checkingOut ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    {t('loading')}
+                    {/* {t('loading')} */}
                   </>
                 ) : (
                   <>
+                    <Crown className="w-4 h-4" />
                     {t('subscribeButton')}
-                    <span aria-hidden="true">→</span>
+                    {/* <span aria-hidden="true">→</span> */}
                   </>
                 )}
               </button>

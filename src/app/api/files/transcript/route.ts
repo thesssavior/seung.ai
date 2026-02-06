@@ -7,10 +7,12 @@ import {
 import enMessages from '@/messages/en.json';
 import koMessages from '@/messages/ko.json';
 import { calculateTokenCount } from '@/lib/utils';
+import { getUser } from '@/lib/supabase/auth';
+import { supabase } from '@/lib/supabaseClient';
 
 export async function POST(req: Request) {
   try {
-    const { videoId, locale = 'ko' } = await req.json();
+    const { videoId, locale = 'ko', contentLanguage, folderId } = await req.json();
     const messages = locale === 'ko' ? koMessages : enMessages;
 
     if (!videoId) {
@@ -19,40 +21,39 @@ export async function POST(req: Request) {
 
     let title = '';
     let description = '';
-    let rawTranscript: any[] = [];
     let formattedTranscriptText = '';
     let fetcherUsed = 'unknown';
-    
+
     const supadata = new Supadata({
       apiKey: process.env.SUPADATA_API_KEY || '',
     });
-    
+
     let supadataTranscript: Transcript | null = null;
-    
+
     try {
       const transcript = await supadata.youtube.transcript({
         videoId: videoId,
       });
       supadataTranscript = transcript;
-            
+
       // Convert Supadata transcript format to standard format
       const standardTranscript = Array.isArray(supadataTranscript.content) ? supadataTranscript.content : [];
-      
+
       formattedTranscriptText = formatTranscript(standardTranscript, 'offset');
-      
+
       // Check if Supadata returned empty content
       if (standardTranscript.length === 0) {
         console.warn(`[DEBUG] Supadata returned empty content for ${videoId}, falling back to primary method`);
         throw new Error('Supadata returned empty transcript content');
       }
-      
+
       fetcherUsed = "supadata";
     } catch (supadataError: any) {
       console.warn(
         `Supadata transcript fetch for ${videoId} failed: ${supadataError.message}.`
       );
     }
-    
+
     try {
         const videoInfo = await fetchYoutubeInfo(videoId);
         if (videoInfo) {
@@ -62,13 +63,13 @@ export async function POST(req: Request) {
     } catch (e: any) {
     console.warn(`Failed to fetch video info for ${videoId}: ${e.message}. Proceeding without it.`);
     }
-  
-  
+
+
     // Check if transcript is empty (considering different fetcher formats)
-    const transcriptEmpty = fetcherUsed === "supadata" 
+    const transcriptEmpty = fetcherUsed === "supadata"
       ? !formattedTranscriptText || formattedTranscriptText.trim().length === 0
-      : !rawTranscript || rawTranscript.length === 0;
-      
+      : true;
+
     if (transcriptEmpty) {
       console.warn(`Transcript for ${videoId} resulted in empty items, possibly disabled.`);
       return NextResponse.json({ error: messages.transcriptDisabled }, { status: 400 });
@@ -76,17 +77,53 @@ export async function POST(req: Request) {
 
     const tokenCount = calculateTokenCount(formattedTranscriptText);
 
-    return NextResponse.json({ 
-      transcript: formattedTranscriptText, 
-      title: title, 
+    // If folderId is provided, create a DB row with empty summary
+    let fileId = null;
+    if (folderId) {
+      const user = await getUser();
+      if (user?.id) {
+        const insertData = {
+          folder_id: folderId,
+          user_id: user.id,
+          video_id: videoId,
+          summary: '', // Empty - will be filled by streaming
+          name: title || 'Untitled',
+          input_token_count: tokenCount,
+          output_token_count: 0,
+          transcript: formattedTranscriptText,
+          description: description,
+          locale: locale,
+          content_language: contentLanguage || locale,
+          layout: 'default',
+        };
+
+        const { data: summaryData, error: summaryError } = await supabase
+          .from('summaries')
+          .insert(insertData)
+          .select('id')
+          .single();
+
+        if (summaryError) {
+          console.error('Summary creation error:', summaryError.message);
+          // Don't fail the request, just don't return fileId
+        } else {
+          fileId = summaryData.id;
+        }
+      }
+    }
+
+    return NextResponse.json({
+      transcript: formattedTranscriptText,
+      title: title,
       description: description,
       tokenCount: tokenCount,
-      fetcher: fetcherUsed
+      fetcher: fetcherUsed,
+      fileId: fileId, // Will be null for guests or if no folderId
     }, { status: 200 });
 
   } catch (error: any) {
     console.error("[API /summaries/transcript] General error:", error.message);
-    const messagesForError = error.locale === 'ko' ? koMessages : enMessages; 
+    const messagesForError = error.locale === 'ko' ? koMessages : enMessages;
     return NextResponse.json({ error: messagesForError.error || 'An unexpected error occurred.' }, { status: 500 });
   }
-} 
+}

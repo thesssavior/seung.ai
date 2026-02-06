@@ -7,10 +7,9 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Crown, Layout, Grid, Moon, Sun, Monitor } from 'lucide-react';
+import { Loader2, Crown, Moon, Sun, Monitor } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useFolder } from '@/components/home/SidebarLayout';
-import { getLayoutPreference, setLayoutPreference } from '@/lib/utils';
 import { LanguageSwitcher } from '@/components/home/LanguageSwitcher';
 
 const SettingsPage = () => {
@@ -21,15 +20,9 @@ const SettingsPage = () => {
   const [isPending, startTransition] = useTransition();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isManagingSubscription, setIsManagingSubscription] = useState(false);
-  const [layoutMode, setLayoutMode] = useState<'default' | 'split'>('default');
   const [userPlan, setUserPlan] = useState<string>('free');
   const { openSubscriptionModal } = useFolder();
   const { theme, setTheme } = useTheme();
-
-  // Load layout preference on component mount
-  useEffect(() => {
-    setLayoutMode(getLayoutPreference());
-  }, []);
 
   // Fetch user plan
   useEffect(() => {
@@ -73,11 +66,6 @@ const SettingsPage = () => {
     startTransition(() => {
       router.replace(`/${newLocale}/settings`);
     });
-  };
-
-  const handleLayoutChange = (newLayoutMode: 'default' | 'split') => {
-    setLayoutMode(newLayoutMode);
-    setLayoutPreference(newLayoutMode);
   };
 
   const handleSignOut = async () => {
@@ -186,38 +174,6 @@ const SettingsPage = () => {
             </div>
             <LanguageSwitcher />
             {isPending && <Loader2 className="mt-2 h-4 w-4 animate-spin" />}
-          </div>
-
-          {/* Layout Preference */}
-          <div>
-            <label htmlFor="layout-select" className="text-sm font-medium text-muted-foreground">
-              {t('preferencesSection.modeLabel')}
-            </label>
-            <Select value={layoutMode} onValueChange={handleLayoutChange}>
-              <SelectTrigger id="layout-select" className="w-full sm:w-[180px] mt-1">
-                <SelectValue placeholder={t('preferencesSection.selectModePlaceholder')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">
-                  <div className="flex items-center gap-2">
-                    <Layout className="h-4 w-4" />
-                    {t('preferencesSection.defaultLayout')}
-                  </div>
-                </SelectItem>
-                <SelectItem value="split">
-                  <div className="flex items-center gap-2">
-                    <Grid className="h-4 w-4" />
-                    {t('preferencesSection.splitLayout')}
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1 p-2">
-              {layoutMode === 'split'
-                ? t('preferencesSection.splitLayoutDescription')
-                : t('preferencesSection.defaultLayoutDescription')
-              }
-            </p>
           </div>
 
           {/* Theme Preference */}

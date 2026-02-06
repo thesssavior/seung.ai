@@ -2,7 +2,7 @@
 
 import { useSearchParams, useParams } from 'next/navigation';
 import { Suspense } from "react";
-import { VideoInputForm } from '@/components/yt_videos/VideoInputForm';
+import { VideoInputForm } from '@/components/youtube/VideoInputForm';
 import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 

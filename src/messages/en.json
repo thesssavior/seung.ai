@@ -3,23 +3,21 @@
     "title": "AI Video Summary",
     "description": "Enter the URL of the video you want summarized and get an easy video summary."
   },
-  "title": "What do you want to learn?",
+  "title": "Learn 100x faster with AI",
   "subtitle": "Get instant AI-powered summaries of any YouTube video",
   "videoUrl": "Enter YouTube URL",
   "getSummary": "Get Summary",
   "getSummaryShort": "Summarize",
+  "submitUrl": "Learn",
+  "submitUrlShort": "Learn",
   "loading": "Loading...",
   "loadingShort": "Loading...",
   "error": "An error occurred",
   "language": "Language",
   "korean": "Korean",
   "english": "English",
-  "systemPrompts": "You are an upbeat and concise YouTube video summariser. You respond in a warm, engaging tone using clear explanations, chronologically ordered subheadings, bullet points, and emojis where appropriate. Structure your responses with helpful formatting, Markdown-style **bold**, _italics_, `code`, and numbered or bulleted lists. NO greetings, intro lines at the beginning, straight to the point. Two sentences of brief summary at the beginning, then table of contents at the beginning (do not use bold for table of contents),  and a paragraph of wrap-up summary at the end. For each subheadings in your summary, always include a relevant emoji at the beginning and the relevant timestamp at the end of the subheading from the transcript in the format [HH:MM:SS] to help viewers locate the specific content in the video.",
+  "systemPrompts": "You are an YouTube video summariser. You respond using clear explanations, chronologically ordered subheadings, bullet points, and emojis where appropriate. Structure your responses with helpful formatting, Markdown-style **bold**, _italics_, `code`, and numbered or bulleted lists. NO greetings, intro lines at the beginning, straight to the point. Two sentences of brief summary at the beginning, then table of contents at the beginning (do not use bold for table of contents),  and a paragraph of wrap-up summary at the end. For each subheadings in your summary, always include a relevant emoji at the beginning and the relevant timestamp at the end of the subheading from the transcript in the format [HH:MM:SS] to help viewers locate the specific content in the video.",
   "userPrompts": "Please summarize this youtube video using the transcript:",
-  "systemPromptsChunked": "You are an upbeat and concise YouTube-segment summariser. ** Do not include introductory phrases like 'Here is the summary...', 'In this summary...', or similar conversational openers about the summary itself. Structure the detailed summary using chronologically ordered subheadings with clear explanations and bullet points. Use helpful formatting like Markdown-style **bold**, _italics_, `code`, and lists. Include relevant emojis at the beginning of each subheading. For each subheading, include the relevant timestamp from the transcript at the end in the format [HH:MM:SS].",
-  "userPromptsChunked": "Summarize the following segment of the video transcript. Maintain timestamps format [HH:MM:SS]. Do not add any introduction, conclusion, or table of contents for this specific segment.",
-  "systemPromptsFinal": "You are an expert editor. You have been provided with a series of summaries from a video. Your task is to generate ONLY an engaging introduction, a table of contents based on these summaries, and a concise concluding statement or outro for the video. Do NOT repeat or re-summarize the content of the provided summaries themselves. Focus solely on creating the introductory, navigational, and concluding elements. Output in clean markdown format.",
-  "userPromptsFinal": "Based on the following collected summaries, please generate an introduction, a table of contents, and a concluding statement. Do not include the summaries themselves in your response, only these three elements. Table of contents should not be bold. Table of contents should include the timestamps and relevant emojis. Collected Summaries: {collectedSummaries}",
   "signIn": "Sign In",
   "signOut": "Sign Out",
   "signInWithGoogle": "Sign in with Google",
@@ -34,7 +32,7 @@
   "guestInputTooLong": "The video is too long to summarize. Please try a shorter video.",
   "dailyLimitExceededError": "You have reached your daily limit. Please try again tomorrow.",
   "trialLimitExceededError": "You have used all 3 free trials.",
-  "subCTA": "Upgrade to Premium for unlimited summaries and more features.",
+  "subCTA": "Upgrade to Premium for unlimited generations and more features.",
   "upgrade": "Upgrade plan",
   "startForFree": "Start for free",
   "getHelp": "Support",
@@ -43,6 +41,13 @@
   "transcriptRequiredError": "This video does not have a transcript. Please try another video.",
   "videoLink": "Video Link",
   "videoId": "Video ID",
+  "generatingSummary": "Generating summary...",
+  "invalidUrl": "Invalid URL",
+  "failedToFetchTranscript": "Failed to fetch transcript",
+  "cancel": "Cancel",
+  "copyCurrentUrl": "Copy current URL",
+  "noTranscriptAvailableOrNotProcessed": "No transcript available or not processed",
+  "transcriptCouldNotBeParsed": "Transcript could not be parsed",
   "Sidebar": {
     "newNote": "New Note",
     "home": "Home",
@@ -212,6 +217,10 @@
     "statusInProgress": "In Progress",
     "statusShipped": "Shipped",
     "statusConsidering": "Considering",
+    "errors": {
+      "voteFailed": "Vote failed",
+      "voteFailedUnexpected": "Vote failed unexpectedly"
+    },
     "expectedDate": "Expected: {date}",
     "shippedDate": "Shipped: {date}",
     "productRoadmapTitle": "Product Roadmap",
@@ -277,6 +286,12 @@
     "generateMindmapButton": "Generate Mindmap",
     "noSummaryAvailable": "A complete summary is required to generate a mind map."
   },
+  "Chat": {
+    "title": "Ask about the video",
+    "description": "Ask questions about the content, request explanations, or explore key concepts.",
+    "noContent": "Video content is required to start a conversation.",
+    "placeholder": "Ask a question..."
+  },
   "Quiz": {
     "title": "Quiz",
     "description": "Quiz to test your knowledge.",
@@ -336,13 +351,6 @@
     "videoTitle": "Video Title:",
     "videoDescription": "Video Description:",
     "transcript": "Transcript:"
-  },
-  "Summarize2": {
-    "systemPrompts": "You are SummaryWeaver-v2, an advanced AI that creates comprehensive video summaries with built-in citation and indexing systems. CORE RESPONSIBILITIES: 1. Create a comprehensive summary from chapter data 2. Include proper citations referencing specific chapters 3. Generate index keywords for searchability 4. Maintain narrative flow while preserving source attribution CITATION FORMAT: - Use [CH#@timestamp] to cite specific chapters - Example: \"The main concept discussed [CH1@2:30] shows that...\" - Always cite when referencing specific points from chapters - Integrate citations naturally within the text flow INDEXING REQUIREMENTS: - Extract and highlight key concepts, terms, and topics - Create cross-references between related ideas across chapters - Include relevant keywords from source chapters - Build searchable content structure OUTPUT STRUCTURE: 1. **Executive Summary** (2-3 sentences with key citations) 2. **Main Content** (detailed summary with proper citations throughout) 3. **Key Topics Index** (list of main topics with chapter references) 4. **Keywords** (searchable terms extracted from all chapters) QUALITY STANDARDS: - Maintain factual accuracy with proper attribution - Ensure logical flow between cited concepts - Create value-added insights while preserving source integrity - Make content easily searchable and navigable - Use natural language integration of citations",
-    "videoTitle": "Video Title:",
-    "videoDescription": "Video Description:",
-    "chaptersContent": "Video Chapters:",
-    "userPrompts": "Please summarize the video using the given data:"
   },
   "Summary": {
     "title": "Summary",

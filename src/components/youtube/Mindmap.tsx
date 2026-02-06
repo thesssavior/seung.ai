@@ -8,7 +8,6 @@ import ReactFlow, {
   useEdgesState,
   addEdge,
   Node,
-  Edge,
   Position,
   ReactFlowProvider,
   useReactFlow,
@@ -19,21 +18,25 @@ import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 
-// No custom nodeTypes or edgeTypes needed - removing empty objects to prevent React Flow warnings
-
 interface MindmapProps {
-  summary?: string;
-  chapters?: { title: string; summary: string }[];
+  transcript?: string;
+  title?: string;
   mindmap: any | null;
   locale: string;
-  contentLanguage?: string; // Content language for mindmap generation
-  summaryId: string | null | undefined;
+  contentLanguage?: string;
+  fileId: string | null | undefined;
   isActive: boolean | null;
-  isStreaming?: boolean;
-  layout?: 'default' | 'split';
 }
 
-const MindmapComponent: React.FC<MindmapProps> = ({ summary, mindmap, locale, contentLanguage, summaryId, isActive, isStreaming = false, chapters, layout = 'default' }) => {
+const MindmapComponent: React.FC<MindmapProps> = ({
+  transcript,
+  title,
+  mindmap,
+  locale,
+  contentLanguage,
+  fileId,
+  isActive
+}) => {
   const t = useTranslations();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -60,8 +63,7 @@ const MindmapComponent: React.FC<MindmapProps> = ({ summary, mindmap, locale, co
       }
     }
   }, [mindmap]);
-  
-  // fitView runs after reactflow mounts and states are updated
+
   useEffect(() => {
     if (reactFlowReady && nodes.length && !hasFit.current && isActive) {
       requestAnimationFrame(() => {
@@ -69,16 +71,11 @@ const MindmapComponent: React.FC<MindmapProps> = ({ summary, mindmap, locale, co
       });
       hasFit.current = true;
     }
-  }, [reactFlowReady, nodes]);
-  
+  }, [reactFlowReady, nodes, isActive, fitView]);
 
   const generateMindmap = async () => {
-    const content = chapters && chapters.length > 0
-      ? chapters.map(c => `${c.title}\n${c.summary}`).join('\n\n')
-      : summary;
-
-    if (!content) {
-      setError("No summary or chapters provided to generate mind map.");
+    if (!transcript) {
+      setError("No transcript available to generate mind map.");
       return;
     }
 
@@ -86,10 +83,14 @@ const MindmapComponent: React.FC<MindmapProps> = ({ summary, mindmap, locale, co
     setError(null);
 
     try {
-      const response = await fetch('/api/summaries/mindmap', {
+      const response = await fetch('/api/files/mindmap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ summaryText: content, locale: locale, contentLanguage: contentLanguage }),
+        body: JSON.stringify({
+          transcript,
+          title,
+          contentLanguage: contentLanguage || locale
+        }),
       });
 
       if (!response.ok) {
@@ -110,40 +111,26 @@ const MindmapComponent: React.FC<MindmapProps> = ({ summary, mindmap, locale, co
         setIsGenerated(true);
         setIsLoading(false);
 
-        // Save only when the user is logged in and we have a valid summaryId
-        if (!user) {
+        if (!user || !fileId) {
           setIsSaving(false);
           return;
         }
 
-        // Only save if we have a valid summaryId (not "new" or undefined)
-        if (!summaryId || summaryId === 'new') {
-          console.log("Mindmap generated but not saved - no valid summaryId yet");
-          setIsSaving(false);
-          return;
-        }
-
-        // Save the mindmap to the database
         setIsSaving(true);
-
         try {
-          const saveResponse = await fetch('/api/summaries/mindmap', {
+          const saveResponse = await fetch('/api/files/mindmap', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ summaryId, mindmap: { nodes: validatedNodes, edges: data.edges } }),
+            body: JSON.stringify({ fileId, mindmap: { nodes: validatedNodes, edges: data.edges } }),
           });
 
           if (!saveResponse.ok) {
             const saveErrData = await saveResponse.json();
-            console.error("Failed to save mindmap:", saveErrData.error || 'Failed to save mindmap to database');
-            setError(saveErrData.error || 'Failed to save mindmap to database');
-          } else {
-            console.log("Mindmap saved successfully");
+            console.error("Failed to save mindmap:", saveErrData.error);
           }
         } finally {
           setIsSaving(false);
         }
-
       } else {
         throw new Error('Invalid data structure received from mindmap API');
       }
@@ -154,9 +141,7 @@ const MindmapComponent: React.FC<MindmapProps> = ({ summary, mindmap, locale, co
     }
   };
 
-  const hasContent = summary || (chapters && chapters.length > 0);
-
-  if (!hasContent) {
+  if (!transcript) {
     return (
       <div className="h-full w-full flex items-center justify-center border rounded-md">
         <p className="text-gray-500">{t('Mindmap.noSummaryAvailable')}</p>
@@ -164,42 +149,25 @@ const MindmapComponent: React.FC<MindmapProps> = ({ summary, mindmap, locale, co
     );
   }
 
-  if (!isGenerated && !isLoading && !error && !isSaving && !isStreaming) {
+  if (!isGenerated && !isLoading && !error && !isSaving) {
     return (
-      <div className={`flex flex-col items-center justify-center h-full min-h-[300px] p-10 text-center rounded-md ${layout === 'split' ? 'mt-[-20%]' : ''}`}>
-        <Brain className="h-12 w-12 mb-6" />
-        <h3 className="text-xl font-semibold mb-2">{t('Mindmap.title')}</h3>
-        <p className="text-sm text-gray-500 text-center max-w-md mb-6">
+      <div className="flex flex-col items-center pt-36 h-full text-center px-4">
+        <Brain className="h-10 w-10 text-foreground mb-4" />
+        <h3 className="text-lg font-medium mb-2">{t('Mindmap.title')}</h3>
+        <p className="text-sm text-muted-foreground max-w-sm mb-6">
           {t('Mindmap.generateMindmapDescription')}
         </p>
-        <Button 
-          onClick={generateMindmap}
-          size="lg"
-          disabled={!hasContent}
-        >
+        <Button onClick={generateMindmap}>
           {t('Mindmap.generateMindmapButton')}
         </Button>
       </div>
     );
   }
 
-  // Show loading state when streaming
-  if (isStreaming) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[300px] p-10 text-center rounded-md">
-        <Loader2 className="h-8 w-8 animate-spin mb-4" />
-        <h3 className="text-xl font-semibold mb-2">Summary in Progress</h3>
-        <p className="text-sm text-gray-500 text-center max-w-md">
-          Please wait for the summary to complete before generating the mind map.
-        </p>
-      </div>
-    );
-  }
-
   if (isLoading) {
     return (
-      <div className="h-full w-full flex items-center justify-center rounded-md mt-20">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex flex-col items-center pt-36 h-full p-6">
+        <Loader2 className="h-8 w-8 animate-spin text-foreground" />
       </div>
     );
   }
@@ -210,12 +178,7 @@ const MindmapComponent: React.FC<MindmapProps> = ({ summary, mindmap, locale, co
         <AlertTriangle className="h-10 w-10 text-red-500 mb-4" />
         <h3 className="text-lg font-semibold text-red-600">Error Generating Mind Map</h3>
         <p className="text-sm text-red-500 text-center">{error}</p>
-        <Button 
-          onClick={generateMindmap}
-          className="mt-4"
-          variant="outline"
-          disabled={!hasContent}
-        >
+        <Button onClick={generateMindmap} className="mt-4" variant="outline">
           Try Again
         </Button>
       </div>
@@ -242,6 +205,7 @@ const MindmapComponent: React.FC<MindmapProps> = ({ summary, mindmap, locale, co
     </div>
   );
 };
+
 const Mindmap: React.FC<MindmapProps> = (props) => (
   <ReactFlowProvider>
     <MindmapComponent {...props} />

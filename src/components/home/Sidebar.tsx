@@ -43,7 +43,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
   const { user, isLoading, signInWithGoogle } = useAuth();
   const { activeFolder, setActiveFolder, openSubscriptionModal } = useFolder();
   const [folderOpen, setFolderOpen] = useState<{ [folderId: string]: boolean }>({});
-  const [hoveredSummaryId, setHoveredSummaryId] = useState<string | null>(null);
+  const [hoveredFileId, setHoveredSummaryId] = useState<string | null>(null);
   const [hoveredFolderId, setHoveredFolderId] = useState<string | null>(null);
   const [isMac, setIsMac] = useState(false);
   const [userPlan, setUserPlan] = useState<string>('free');
@@ -174,20 +174,20 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
     fetchFolders();
   };
 
-  const handleDeleteSummary = async (folderId: string, summaryId: string) => {
+  const handleDeleteSummary = async (folderId: string, fileId: string) => {
     if (!confirm(t('Sidebar.confirmDeleteSummary', { defaultValue: 'Delete this file?' }))) return;
 
     try {
       const res = await fetch(`/api/folders/${folderId}/summaries`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ summaryId }),
+        body: JSON.stringify({ fileId }),
       });
 
       if (res.ok) {
         setFolderSummaries(prev => ({
           ...prev,
-          [folderId]: prev[folderId]?.filter(s => s.id !== summaryId) || [],
+          [folderId]: prev[folderId]?.filter(s => s.id !== fileId) || [],
         }));
       } else {
         const errorData = await res.json();
@@ -228,7 +228,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
         const response = await fetch(`/api/folders/${sourceFolderId}/summaries`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ summaryId: summaryToMove.id, targetFolderId: destFolderId }),
+          body: JSON.stringify({ fileId: summaryToMove.id, targetFolderId: destFolderId }),
         });
 
         if (!response.ok) {
@@ -300,7 +300,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="flex flex-col items-center justify-center px-4 py-[16px] border-b">
+      <div className="flex flex-col items-center justify-center px-4 py-3">
         <span className="w-full flex justify-start">
           <Link href={`/${locale}`} className="flex items-center w-full justify-start">
             <Logo width={20} height={20} className="w-full h-auto max-w-[24px]" />
@@ -444,7 +444,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                                                   <Link href={`/${locale}/summaries/${s.id}`} className="truncate flex-grow px-1 hover:underline cursor-pointer block">
                                                     {s.name}
                                                   </Link>
-                                                  {hoveredSummaryId === s.id && (
+                                                  {hoveredFileId === s.id && (
                                                     <button
                                                       onClick={(e) => {
                                                         e.stopPropagation();

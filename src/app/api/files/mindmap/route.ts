@@ -1,24 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import { getUser } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabaseClient';
- 
-const model = 'gpt-4.1-mini';
+
+const model = 'gemini-2.5-flash';
 
 export async function POST(req: NextRequest) {
   try {
-    const { summaryText, contentLanguage } = await req.json();
+    const { transcript, title, contentLanguage } = await req.json();
 
-    if (!summaryText) {
-      return NextResponse.json({ error: 'Summary text is required' }, { status: 400 });
+    if (!transcript) {
+      return NextResponse.json({ error: 'Transcript is required' }, { status: 400 });
     }
 
-    // left to right. sometimes spits out radially, gotta fix
     const systemInstruction = `
     You are an API that returns **only** valid JSON for a React-Flow mind-map.
     Goal → Give learners a concise, birds-eye structure of the content so they can comprehend the main points at a glance.
 
-    Return only valid JSON (no markdown).
+    Return only valid JSON (no markdown, no code blocks).
     Schema: {
       "nodes": RFNode[],
       "edges": RFEdge[]
@@ -29,40 +28,47 @@ export async function POST(req: NextRequest) {
     The deepest level of nodes (leaf nodes) for any branch should be limited to 3 items.
     Use emojis and concise labels (max 4 words)
     Maximum 16 total nodes (including root)
-    Left to right layout: top node at the left, children to the right
+    Left to right layout: root node at the left, children to the right
     Example:
-    {"nodes":[{"id":"root","data":{"label":"Central"},"position":{"x":0,"y":0},"type":"input"}],"edges":[]}
+    {"nodes":[{"id":"root","data":{"label":"📚 Central"},"position":{"x":0,"y":0},"type":"input"}],"edges":[]}
     `;
-    
-    const prompt = `
-      IMPORTANT: Provide the mindmap in ${contentLanguage} language
 
-      Summary Text:
+    const prompt = `
+      IMPORTANT: Provide the mindmap in ${contentLanguage || 'en'} language
+
+      Video Title: ${title || 'Unknown'}
+
+      Transcript:
       --- --- --- --- ---
-      ${summaryText}
+      ${transcript}
       --- --- --- --- ---
 
       JSON Output:
     `;
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const completion = await openai.chat.completions.create({
+    const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const response = await client.models.generateContent({
       model,
-      messages: [
-        { role: 'system', content: systemInstruction },
-        { role: 'user', content: prompt },
-      ],
+      contents: systemInstruction + '\n\n' + prompt,
     });
 
-    const resultJsonString = completion.choices[0]?.message?.content || '';
+    const resultJsonString = response.text || '';
 
     if (!resultJsonString) {
       return NextResponse.json({ error: 'Failed to generate mind map' }, { status: 500 });
     }
 
     try {
-      const mindmapData = JSON.parse(resultJsonString);
-      // Basic validation of the structure
+      // Clean up the response - remove markdown code blocks if present
+      let cleanedResponse = resultJsonString.trim();
+      cleanedResponse = cleanedResponse.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleanedResponse = jsonMatch[0];
+      }
+
+      const mindmapData = JSON.parse(cleanedResponse);
       if (!mindmapData.nodes || !mindmapData.edges) {
         console.error("Mindmap response missing nodes or edges:", mindmapData);
         return NextResponse.json({ error: 'Invalid mind map structure' }, { status: 500 });
@@ -79,7 +85,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PATCH /api/summaries/mindmap
 export async function PATCH(req: NextRequest) {
   try {
     const user = await getUser();
@@ -87,47 +92,37 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { summaryId, mindmap } = await req.json();
+    const { fileId, mindmap } = await req.json();
 
-    if (!summaryId) {
+    if (!fileId) {
       return NextResponse.json({ error: 'Summary ID is required' }, { status: 400 });
     }
 
-    if (!mindmap) {
-      return NextResponse.json({ error: 'Mindmap data is required' }, { status: 400 });
-    }
-
-    // Validate mindmap data structure
-    if (!mindmap.nodes || !mindmap.edges) {
+    if (!mindmap || !mindmap.nodes || !mindmap.edges) {
       return NextResponse.json({ error: 'Mindmap data (nodes and edges) is required' }, { status: 400 });
     }
 
-    // Update the summary with mindmap data, ensuring user owns the summary
     const { data, error } = await supabase
       .from('summaries')
       .update({ mindmap: mindmap })
-      .eq('id', summaryId)
-      .eq('user_id', user.id) // Ensure user owns this summary
+      .eq('id', fileId)
+      .eq('user_id', user.id)
       .select('id, video_id')
       .single();
 
     if (error) {
       console.error('Supabase error saving mindmap:', error);
-      return NextResponse.json({ error: error.message || 'Failed to save mindmap data to database' }, { status: 500 });
+      return NextResponse.json({ error: error.message || 'Failed to save mindmap' }, { status: 500 });
     }
 
     if (!data) {
-      return NextResponse.json({ error: 'Summary not found or you do not have permission to update it' }, { status: 404 });
+      return NextResponse.json({ error: 'Summary not found or unauthorized' }, { status: 404 });
     }
 
-    return NextResponse.json({ 
-      message: 'Mindmap saved successfully', 
-      summaryId: data.id, 
-      videoId: data.video_id 
-    }, { status: 200 });
+    return NextResponse.json({ message: 'Mindmap saved', fileId: data.id }, { status: 200 });
 
   } catch (error: any) {
-    console.error('Error processing request to save mindmap:', error);
-    return NextResponse.json({ error: error.message || 'Internal server error while saving mindmap' }, { status: 500 });
+    console.error('Error saving mindmap:', error);
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
-} 
+}

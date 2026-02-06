@@ -81,3 +81,7 @@
     word-break: keep-all;
   }
 }
+
+.dark .react-flow__node {
+  @apply bg-accent text-accent-foreground;
+}

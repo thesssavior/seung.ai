@@ -132,10 +132,8 @@ export function FullTranscriptViewer({ transcript }: { transcript: string }) {
   }
   
   return (
-    <div className="h-full"> 
-      {/* <h3 className="text-lg font-medium mb-4 text-zinc-700">{t('fullTranscriptTitle')}</h3> */}
-      {/* Removed space-y-3 from here, mb-4 on group div will handle inter-group spacing */}
-      <div className="pr-2 h-full">
+    <div>
+      <div className="pr-2">
         {finalGroups.map((group, index) => (
           <div 
             key={index} 
