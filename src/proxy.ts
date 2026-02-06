@@ -11,16 +11,19 @@ const intlMiddleware = createIntlMiddleware({
   localeDetection: true
 })
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip internal or static files
+  // Skip internal or static files (but not YouTube URL paths like /https:/www.youtube.com/...)
+  const isEmbeddedUrl = pathname.match(/^\/(ko|en|es)?\/?https?:/) || pathname.match(/^\/https?:/);
   if (
-    pathname.startsWith('/api') ||
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/auth/callback') ||
-    pathname === '/favicon.ico' ||
-    pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|mjs|js|css)$/)
+    !isEmbeddedUrl && (
+      pathname.startsWith('/api') ||
+      pathname.startsWith('/_next') ||
+      pathname.startsWith('/auth/callback') ||
+      pathname === '/favicon.ico' ||
+      pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|mjs|js|css)$/)
+    )
   ) {
     return NextResponse.next();
   }
@@ -49,7 +52,6 @@ export const config = {
     // Match all routes except:
     // - API routes (/api/...)
     // - Static files (/_next/static, /favicon.ico, etc.)
-    // - Files with extensions (.png, .js, etc.)
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)'
+    '/((?!api|_next/static|_next/image|favicon.ico).*)'
   ]
 };
