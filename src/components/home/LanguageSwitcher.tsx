@@ -46,17 +46,26 @@ export function LanguageSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
 
   // Load saved content language from localStorage on mount
+  // If user hasn't manually set a content language, follow the UI locale
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('contentLanguage');
-    if (savedLanguage && CONTENT_LANGUAGES.find(lang => lang.code === savedLanguage)) {
-      setContentLanguage(savedLanguage);
+    const manuallySet = localStorage.getItem('contentLanguageManuallySet');
+    if (manuallySet) {
+      const savedLanguage = localStorage.getItem('contentLanguage');
+      if (savedLanguage && CONTENT_LANGUAGES.find(lang => lang.code === savedLanguage)) {
+        setContentLanguage(savedLanguage);
+      }
+    } else {
+      // Follow UI locale
+      setContentLanguage(currentLocale);
+      localStorage.setItem('contentLanguage', currentLocale);
     }
-  }, []);
+  }, [currentLocale]);
 
   // Save content language to localStorage when changed
   const handleContentLanguageChange = (languageCode: string) => {
     setContentLanguage(languageCode);
     localStorage.setItem('contentLanguage', languageCode);
+    localStorage.setItem('contentLanguageManuallySet', 'true');
     setIsOpen(false); // Close the dropdown after selection
     // Emit custom event to notify other components
     window.dispatchEvent(new CustomEvent('contentLanguageChanged', { 

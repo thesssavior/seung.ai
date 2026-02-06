@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
-import enMessages from '@/messages/en.json';
-import koMessages from '@/messages/ko.json';
-import jaMessages from '@/messages/ja.json';
-import frMessages from '@/messages/fr.json';
-import thMessages from '@/messages/th.json';
+import messages from '@/messages/en.json';
 
 const model = 'gemini-2.5-flash';
 
@@ -18,15 +14,6 @@ export async function POST(req: Request) {
       videoDescription,
       tokenCount,
     } = await req.json();
-
-    let messages;
-    switch (contentLanguage) {
-      case 'ko': messages = koMessages; break;
-      case 'th': messages = thMessages; break;
-      case 'ja': messages = jaMessages; break;
-      case 'fr': messages = frMessages; break;
-      default:   messages = enMessages;
-    }
 
     const videoTitle = title || '';
 

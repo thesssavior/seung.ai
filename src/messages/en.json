@@ -59,9 +59,9 @@
     "renameFolder": "Rename Folder",
     "confirmDeleteFolder": "Are you sure you want to delete this folder?",
     "noFolder": "No folder selected",
-    "loadingSummaries": "Loading summaries...",
+    "loadingSummaries": "Loading files...",
     "loadingFolders": "Loading folders...",
-    "noSummaries": "No summaries",
+    "noSummaries": "No files",
     "deleteFolder": "Delete Folder",
     "editFolder": "Edit Folder",
     "expandFolder": "Expand Folder",
@@ -72,20 +72,20 @@
     "upgrade": "Upgrade plan",
     "upgradeSubtitle": "Get more features and unlimited access",
     "premiumActive": "Premium plan active",
-    "premiumActiveSubtitle": "Best-in-class AI, unlimited summaries",
-    "editSummary": "Edit Summary File Name",
-    "deleteSummary": "Delete Summary File",
-    "confirmDeleteSummary": "Are you sure you want to delete this summary file?"
+    "premiumActiveSubtitle": "Best-in-class AI, unlimited files",
+    "editSummary": "Edit File Name",
+    "deleteSummary": "Delete File",
+    "confirmDeleteSummary": "Are you sure you want to delete this file?"
   },
   "SearchModal": {
-    "placeholder": "Search summaries and folders...",
+    "placeholder": "Search files and folders...",
     "searching": "Searching...",
     "noResults": "No results found",
     "tryDifferent": "Try different keywords or check spelling",
     "folders": "Folders",
-    "summaries": "Summaries",
+    "summaries": "Files",
     "startTyping": "Start typing to search",
-    "searchDescription": "Search through your summaries and folders",
+    "searchDescription": "Search through your files and folders",
     "tips": "Tip: Press Escape to close"
   },
   "PaymentPage": {
@@ -219,7 +219,9 @@
     "statusConsidering": "Considering",
     "errors": {
       "voteFailed": "Vote failed",
-      "voteFailedUnexpected": "Vote failed unexpectedly"
+      "voteFailedUnexpected": "Vote failed unexpectedly",
+      "fetchFeaturesFailed": "Failed to load roadmap",
+      "fetchFeaturesFailedUnexpected": "An unexpected error occurred while loading the roadmap"
     },
     "expectedDate": "Expected: {date}",
     "shippedDate": "Shipped: {date}",

@@ -6,6 +6,7 @@ import {
 } from '@/lib/youtube-utils';
 import enMessages from '@/messages/en.json';
 import koMessages from '@/messages/ko.json';
+import esMessages from '@/messages/es.json';
 import { calculateTokenCount } from '@/lib/utils';
 import { getUser } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabaseClient';
@@ -13,7 +14,7 @@ import { supabase } from '@/lib/supabaseClient';
 export async function POST(req: Request) {
   try {
     const { videoId, locale = 'ko', contentLanguage, folderId } = await req.json();
-    const messages = locale === 'ko' ? koMessages : enMessages;
+    const messages = locale === 'ko' ? koMessages : locale === 'es' ? esMessages : enMessages;
 
     if (!videoId) {
       return NextResponse.json({ error: messages.error }, { status: 400 });
@@ -30,24 +31,50 @@ export async function POST(req: Request) {
 
     let supadataTranscript: Transcript | null = null;
 
+    // Try fetching transcript with preferred language first, then fallback to any available
+    const langToTry = contentLanguage || locale || undefined;
+
     try {
-      const transcript = await supadata.youtube.transcript({
-        videoId: videoId,
-      });
-      supadataTranscript = transcript;
-
-      // Convert Supadata transcript format to standard format
-      const standardTranscript = Array.isArray(supadataTranscript.content) ? supadataTranscript.content : [];
-
-      formattedTranscriptText = formatTranscript(standardTranscript, 'offset');
-
-      // Check if Supadata returned empty content
-      if (standardTranscript.length === 0) {
-        console.warn(`[DEBUG] Supadata returned empty content for ${videoId}, falling back to primary method`);
-        throw new Error('Supadata returned empty transcript content');
+      if (langToTry) {
+        try {
+          const transcript = await supadata.youtube.transcript({
+            videoId: videoId,
+            lang: langToTry,
+          });
+          supadataTranscript = transcript;
+          const standardTranscript = Array.isArray(supadataTranscript.content) ? supadataTranscript.content : [];
+          if (standardTranscript.length === 0) {
+            console.warn(`[DEBUG] Supadata returned empty content for ${videoId} with lang=${langToTry}, falling back to default`);
+            throw new Error('Empty transcript for requested language');
+          }
+          formattedTranscriptText = formatTranscript(standardTranscript, 'offset');
+          fetcherUsed = "supadata";
+        } catch (langError: any) {
+          console.warn(`Supadata transcript fetch for ${videoId} with lang=${langToTry} failed: ${langError.message}. Trying without lang preference.`);
+          // Fallback: fetch without lang (first available)
+          const transcript = await supadata.youtube.transcript({
+            videoId: videoId,
+          });
+          supadataTranscript = transcript;
+          const standardTranscript = Array.isArray(supadataTranscript.content) ? supadataTranscript.content : [];
+          if (standardTranscript.length === 0) {
+            throw new Error('Supadata returned empty transcript content');
+          }
+          formattedTranscriptText = formatTranscript(standardTranscript, 'offset');
+          fetcherUsed = "supadata";
+        }
+      } else {
+        const transcript = await supadata.youtube.transcript({
+          videoId: videoId,
+        });
+        supadataTranscript = transcript;
+        const standardTranscript = Array.isArray(supadataTranscript.content) ? supadataTranscript.content : [];
+        if (standardTranscript.length === 0) {
+          throw new Error('Supadata returned empty transcript content');
+        }
+        formattedTranscriptText = formatTranscript(standardTranscript, 'offset');
+        fetcherUsed = "supadata";
       }
-
-      fetcherUsed = "supadata";
     } catch (supadataError: any) {
       console.warn(
         `Supadata transcript fetch for ${videoId} failed: ${supadataError.message}.`
@@ -123,7 +150,7 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error("[API /summaries/transcript] General error:", error.message);
-    const messagesForError = error.locale === 'ko' ? koMessages : enMessages;
+    const messagesForError = error.locale === 'ko' ? koMessages : error.locale === 'es' ? esMessages : enMessages;
     return NextResponse.json({ error: messagesForError.error || 'An unexpected error occurred.' }, { status: 500 });
   }
 }
