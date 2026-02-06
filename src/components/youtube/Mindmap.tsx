@@ -48,6 +48,7 @@ const MindmapComponent: React.FC<MindmapProps> = ({
   const { fitView } = useReactFlow();
   const hasFit = useRef(false);
   const { user } = useAuth();
+  const hasStartedGeneration = useRef(false);
 
   const onConnect = useCallback(
     (params: any) => setEdges((eds) => addEdge(params, eds)),
@@ -72,6 +73,13 @@ const MindmapComponent: React.FC<MindmapProps> = ({
       hasFit.current = true;
     }
   }, [reactFlowReady, nodes, isActive, fitView]);
+
+  useEffect(() => {
+    if (transcript && !isGenerated && !isLoading && !hasStartedGeneration.current) {
+      hasStartedGeneration.current = true;
+      generateMindmap();
+    }
+  }, [transcript, isGenerated, isLoading]);
 
   const generateMindmap = async () => {
     if (!transcript) {

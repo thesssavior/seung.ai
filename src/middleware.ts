@@ -5,7 +5,7 @@ import createIntlMiddleware from 'next-intl/middleware'
 
 // i18n middleware
 const intlMiddleware = createIntlMiddleware({
-  locales: ['ko', 'en'],
+  locales: ['ko', 'en', 'es'],
   defaultLocale: 'ko',
   localePrefix: 'always',
   localeDetection: true

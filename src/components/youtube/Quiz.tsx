@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Loader2, Lightbulb, ChevronDown } from 'lucide-react';
@@ -35,6 +35,7 @@ const QuizComponent: React.FC<QuizProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isGenerated, setIsGenerated] = useState(!!initialQuizData && initialQuizData.length > 0);
   const [revealedAnswers, setRevealedAnswers] = useState<{ [index: number]: boolean }>({});
+  const hasStartedGeneration = useRef(false);
 
   useEffect(() => {
     if (initialQuizData) {
@@ -46,6 +47,13 @@ const QuizComponent: React.FC<QuizProps> = ({
       setIsGenerated(false);
     }
   }, [initialQuizData]);
+
+  useEffect(() => {
+    if (transcript && !isGenerated && !isLoading && !hasStartedGeneration.current) {
+      hasStartedGeneration.current = true;
+      generateQuiz();
+    }
+  }, [transcript, isGenerated, isLoading]);
 
   const generateQuiz = async () => {
     if (!transcript) {

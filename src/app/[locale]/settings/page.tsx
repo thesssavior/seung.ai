@@ -132,14 +132,14 @@ const SettingsPage = () => {
           <Button onClick={handleSignOut} variant="outline">
             {t('accountSection.signOutButton')}
           </Button>
-          <Button
+          {/* <Button
             onClick={handleDeleteAccount}
             variant="destructive"
             disabled={isDeleting}
           >
             {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {t('accountSection.deleteAccountButton')}
-          </Button>
+          </Button> */}
         </CardFooter>
       </Card>
 
@@ -162,6 +162,7 @@ const SettingsPage = () => {
               <SelectContent>
                 <SelectItem value="en">{t('preferencesSection.english')}</SelectItem>
                 <SelectItem value="ko">{t('preferencesSection.korean')}</SelectItem>
+                <SelectItem value="es">{t('preferencesSection.spanish')}</SelectItem>
               </SelectContent>
             </Select>
             {isPending && <Loader2 className="mt-2 h-4 w-4 animate-spin" />}

@@ -13,7 +13,8 @@ import { ClientLayoutWrapper } from '@/components/ClientLayoutWrapper';
 export function generateStaticParams() {
   return [
     { locale: 'ko' },
-    { locale: 'en' }
+    { locale: 'en' },
+    { locale: 'es' }
   ];
 }
 

@@ -19,7 +19,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check localStorage for saved preference
     const savedLanguage = localStorage.getItem('uiLanguage');
-    if (savedLanguage && ['ko', 'en'].includes(savedLanguage)) {
+    if (savedLanguage && ['ko', 'en', 'es'].includes(savedLanguage)) {
       setPreferredLocale(savedLanguage);
     } else {
       setPreferredLocale(routeLocale);
@@ -28,7 +28,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [routeLocale]);
 
   const setLanguagePreference = (locale: string) => {
-    if (['ko', 'en'].includes(locale)) {
+    if (['ko', 'en', 'es'].includes(locale)) {
       localStorage.setItem('uiLanguage', locale);
       setPreferredLocale(locale);
       
