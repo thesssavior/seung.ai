@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import messages from '@/messages/en.json';
 import { getPostHogClient } from '@/lib/posthog-server';
 import { getUser } from '@/lib/supabase/auth';
@@ -46,6 +46,48 @@ export async function POST(req: Request) {
         const response = await client.models.generateContentStream({
           model: model,
           contents: `Important: Respond in ${contentLanguage} language. ${messages.systemPrompts}\n\n${messages.userPrompts}\n\nVideo Title: ${videoTitle}\n\nVideo Description: ${videoDescription}\n\nTranscript:\n${transcriptText}`,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                intro: {
+                  type: Type.STRING,
+                  description: 'Brief 2-3 sentence overview of the video content',
+                },
+                body: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      emoji: {
+                        type: Type.STRING,
+                        description: 'A single relevant emoji for this section',
+                      },
+                      heading: {
+                        type: Type.STRING,
+                        description: 'Concise subheading for this section',
+                      },
+                      timestamp: {
+                        type: Type.STRING,
+                        description: 'Timestamp from the transcript in MM:SS format, or H:MM:SS if the video is over an hour',
+                      },
+                      content: {
+                        type: Type.STRING,
+                        description: 'Detailed summary using markdown: bullet points, numbered lists, **bold**, _italics_, `code` where appropriate',
+                      },
+                    },
+                    required: ['emoji', 'heading', 'timestamp', 'content'],
+                  },
+                },
+                outro: {
+                  type: Type.STRING,
+                  description: 'Concluding paragraph summarizing key takeaways',
+                },
+              },
+              required: ['intro', 'body', 'outro'],
+            },
+          },
         });
 
         for await (const chunk of response) {
@@ -60,7 +102,7 @@ export async function POST(req: Request) {
 
     return new Response(stream, {
       headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
+        'Content-Type': 'application/json; charset=utf-8',
         'Transfer-Encoding': 'chunked',
         'input_token_count': `${tokenCount}`,
         'video_title': encodeURIComponent(`${videoTitle}`),

@@ -17,8 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import SummaryContent from '@/components/youtube/SummaryContent';
 import { useMediaQuery } from '@/hooks/use-media-query';
 
 export default function SummaryDetailPage() {
@@ -277,14 +276,7 @@ export default function SummaryDetailPage() {
                 </div>
               )}
               {summaryText && (
-                <article className="prose prose-sm dark:prose-invert max-w-none prose-hr:my-4 prose-hr:border-muted prose-th:border-transparent prose-td:border-transparent prose-img:border-0">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {summaryText}
-                  </ReactMarkdown>
-                </article>
-              )}
-              {isStreaming && summaryText && (
-                <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1" />
+                <SummaryContent summaryText={summaryText} isStreaming={isStreaming} />
               )}
             </div>
           </ScrollArea>

@@ -77,6 +77,7 @@
     "node-fetch": "^3.3.2",
     "nprogress": "^0.2.0",
     "openai": "^4.93.0",
+    "partial-json": "^0.1.7",
     "pdfjs-dist": "^4.8.69",
     "postcss": "^8.5.3",
     "posthog-js": "^1.342.1",
