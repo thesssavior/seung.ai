@@ -42,7 +42,9 @@ const MindmapComponent: React.FC<MindmapProps> = ({
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isGenerated, setIsGenerated] = useState(false);
+  const [isGenerated, setIsGenerated] = useState(
+    !!(mindmap?.nodes && Array.isArray(mindmap.nodes) && mindmap.nodes.length > 0)
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [reactFlowReady, setReactFlowReady] = useState(false);
   const { fitView } = useReactFlow();
@@ -75,11 +77,11 @@ const MindmapComponent: React.FC<MindmapProps> = ({
   }, [reactFlowReady, nodes, isActive, fitView]);
 
   useEffect(() => {
-    if (transcript && !isGenerated && !isLoading && !hasStartedGeneration.current) {
+    if (transcript && !isGenerated && !isLoading && !hasStartedGeneration.current && !(mindmap?.nodes?.length)) {
       hasStartedGeneration.current = true;
       generateMindmap();
     }
-  }, [transcript, isGenerated, isLoading]);
+  }, [transcript, isGenerated, isLoading, mindmap]);
 
   const generateMindmap = async () => {
     if (!transcript) {

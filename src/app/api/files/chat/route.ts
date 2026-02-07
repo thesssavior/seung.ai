@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { getPostHogClient } from '@/lib/posthog-server';
+import { getUser } from '@/lib/supabase/auth';
 
 const model = 'gemini-2.5-flash';
 
@@ -21,6 +23,20 @@ export async function POST(req: NextRequest) {
 
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+    }
+
+    // Track chat message event in PostHog
+    const user = await getUser();
+    if (user?.id) {
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: user.id,
+        event: 'chat_message_sent',
+        properties: {
+          content_language: contentLanguage,
+          has_conversation_history: !!(conversationHistory && conversationHistory.length > 0),
+        },
+      });
     }
 
     // Build context from available video data

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUser } from '@/lib/supabase/auth';
 import { supabaseAdmin } from '@/lib/supabaseClient';
+import { getPostHogClient } from '@/lib/posthog-server';
 
 export async function DELETE() {
   try {
@@ -12,6 +13,16 @@ export async function DELETE() {
 
     const userId = user.id;
     console.log('Deleting user:', userId);
+
+    // Track account deletion event in PostHog before deleting user data
+    const posthog = getPostHogClient();
+    posthog.capture({
+      distinctId: userId,
+      event: 'account_deleted',
+      properties: {
+        email: user.email,
+      },
+    });
 
     // Delete related data using admin client (to bypass RLS for cleanup)
     // Step 1: Delete summaries by user_id

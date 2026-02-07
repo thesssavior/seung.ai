@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { getUser } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabaseClient';
+import { getPostHogClient } from '@/lib/posthog-server';
 
 const model = 'gemini-2.5-flash';
 
@@ -16,6 +17,19 @@ export async function POST(req: NextRequest) {
 
     if (!transcript) {
       return NextResponse.json({ error: 'Transcript is required' }, { status: 400 });
+    }
+
+    // Track quiz generation event in PostHog
+    const user = await getUser();
+    if (user?.id) {
+      const posthog = getPostHogClient();
+      posthog.capture({
+        distinctId: user.id,
+        event: 'quiz_generated',
+        properties: {
+          content_language: contentLanguage,
+        },
+      });
     }
 
     const systemInstruction = `

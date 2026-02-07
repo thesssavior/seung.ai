@@ -58,9 +58,14 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
         }), 
       });
 
+      if (!res.ok) {
+        console.error('Checkout error: non-OK response');
+        setCheckingOut(false);
+        return;
+      }
       const data = await res.json();
 
-      if (res.ok && data.url) {
+      if (data.url) {
         window.location.href = data.url;
       } else {
         console.error('Checkout error:', data.error);

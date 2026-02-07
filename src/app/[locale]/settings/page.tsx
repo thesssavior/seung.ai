@@ -11,6 +11,7 @@ import { Loader2, Crown, Moon, Sun, Monitor } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useFolder } from '@/components/home/SidebarLayout';
 import { LanguageSwitcher } from '@/components/home/LanguageSwitcher';
+import posthog from 'posthog-js';
 
 const SettingsPage = () => {
   const t = useTranslations('SettingsPage');
@@ -30,6 +31,7 @@ const SettingsPage = () => {
       if (user) {
         try {
           const res = await fetch('/api/home/user/plan');
+          if (!res.ok) { setUserPlan('free'); return; }
           const data = await res.json();
           setUserPlan(data.plan || 'free');
         } catch {
@@ -42,6 +44,7 @@ const SettingsPage = () => {
 
   const handleManageSubscription = async () => {
     setIsManagingSubscription(true);
+    posthog.capture('subscription_portal_opened');
     try {
       const res = await fetch('/api/stripe/portal', {
         method: 'POST',
@@ -63,9 +66,21 @@ const SettingsPage = () => {
 
   const handleLanguageChange = (newLocale: string) => {
     localStorage.setItem('uiLanguage', newLocale);
+    posthog.capture('language_changed', {
+      language: newLocale,
+      previous_language: locale,
+    });
     startTransition(() => {
       router.replace(`/${newLocale}/settings`);
     });
+  };
+
+  const handleThemeChange = (newTheme: string) => {
+    posthog.capture('theme_changed', {
+      theme: newTheme,
+      previous_theme: theme,
+    });
+    setTheme(newTheme);
   };
 
   const handleSignOut = async () => {
@@ -182,7 +197,7 @@ const SettingsPage = () => {
             <label htmlFor="theme-select" className="text-sm font-medium text-muted-foreground">
               {t('preferencesSection.themeLabel', { defaultValue: 'Theme' })}
             </label>
-            <Select value={theme} onValueChange={setTheme}>
+            <Select value={theme} onValueChange={handleThemeChange}>
               <SelectTrigger id="theme-select" className="w-full sm:w-[180px] mt-1">
                 <SelectValue placeholder={t('preferencesSection.selectThemePlaceholder', { defaultValue: 'Select theme' })} />
               </SelectTrigger>

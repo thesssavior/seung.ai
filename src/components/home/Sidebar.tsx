@@ -49,6 +49,25 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
   const [userPlan, setUserPlan] = useState<string>('free');
   const { openSearchModal } = useSearch();
 
+  // Restore sidebar toggle states from localStorage after mount
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    const savedRecent = localStorage.getItem('sidebar-recent-open');
+    if (savedRecent !== null) setRecentOpen(savedRecent === 'true');
+    const savedKnowledge = localStorage.getItem('sidebar-knowledge-open');
+    if (savedKnowledge !== null) setKnowledgeOpen(savedKnowledge === 'true');
+    try {
+      const savedFolders = localStorage.getItem('sidebar-folder-open');
+      if (savedFolders) setFolderOpen(JSON.parse(savedFolders));
+    } catch {}
+    setHydrated(true);
+  }, []);
+
+  // Persist sidebar toggle states after hydration
+  useEffect(() => { if (hydrated) localStorage.setItem('sidebar-recent-open', String(recentOpen)); }, [recentOpen, hydrated]);
+  useEffect(() => { if (hydrated) localStorage.setItem('sidebar-knowledge-open', String(knowledgeOpen)); }, [knowledgeOpen, hydrated]);
+  useEffect(() => { if (hydrated) localStorage.setItem('sidebar-folder-open', JSON.stringify(folderOpen)); }, [folderOpen, hydrated]);
+
   const isSignedIn = !isLoading && !!user;
 
   // Fetch user plan
@@ -57,6 +76,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
       if (user) {
         try {
           const res = await fetch('/api/home/user/plan');
+          if (!res.ok) { setUserPlan('free'); return; }
           const data = await res.json();
           setUserPlan(data.plan || 'free');
         } catch {

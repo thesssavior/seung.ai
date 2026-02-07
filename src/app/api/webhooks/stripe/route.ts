@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStripe, PREMIUM_STATUSES } from '@/lib/stripe'
 import { supabaseAdmin } from '@/lib/supabaseClient'
 import Stripe from 'stripe'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
@@ -44,6 +45,20 @@ export async function POST(req: NextRequest) {
           )
 
           await updateUserSubscription(userId, subscription)
+
+          // Track subscription completed event in PostHog
+          const posthog = getPostHogClient()
+          posthog.capture({
+            distinctId: userId,
+            event: 'subscription_completed',
+            properties: {
+              subscription_id: subscription.id,
+              subscription_status: subscription.status,
+              amount_total: session.amount_total,
+              currency: session.currency,
+              $set: { plan: 'premium' },
+            },
+          })
         }
         break
       }
@@ -81,11 +96,22 @@ export async function POST(req: NextRequest) {
             })
             .eq('id', userId)
 
+          // Track subscription canceled event in PostHog
+          const posthog = getPostHogClient()
+          posthog.capture({
+            distinctId: userId,
+            event: 'subscription_canceled',
+            properties: {
+              subscription_id: subscription.id,
+              $set: { plan: 'free' },
+            },
+          })
+
           console.log(`[Stripe] User ${userId} downgraded to free plan`)
         } else {
           // Try by customer ID
           const customerId = subscription.customer as string
-          await supabaseAdmin
+          const { data } = await supabaseAdmin
             .from('profiles')
             .update({
               plan: 'free',
@@ -93,6 +119,20 @@ export async function POST(req: NextRequest) {
               stripe_subscription_status: 'canceled',
             })
             .eq('stripe_customer_id', customerId)
+            .select('id')
+
+          // Track subscription canceled event in PostHog if we found the user
+          if (data && data.length > 0) {
+            const posthog = getPostHogClient()
+            posthog.capture({
+              distinctId: data[0].id,
+              event: 'subscription_canceled',
+              properties: {
+                subscription_id: subscription.id,
+                $set: { plan: 'free' },
+              },
+            })
+          }
         }
         break
       }
@@ -104,12 +144,27 @@ export async function POST(req: NextRequest) {
         const customerId = invoice.customer as string
 
         // Mark as past_due but don't immediately downgrade
-        await supabaseAdmin
+        const { data } = await supabaseAdmin
           .from('profiles')
           .update({
             stripe_subscription_status: 'past_due',
           })
           .eq('stripe_customer_id', customerId)
+          .select('id')
+
+        // Track payment failed event in PostHog
+        if (data && data.length > 0) {
+          const posthog = getPostHogClient()
+          posthog.capture({
+            distinctId: data[0].id,
+            event: 'payment_failed',
+            properties: {
+              invoice_id: invoice.id,
+              amount_due: invoice.amount_due,
+              currency: invoice.currency,
+            },
+          })
+        }
         break
       }
 

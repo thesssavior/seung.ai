@@ -289,7 +289,9 @@
     "generateMindmap": "Generar Mapa Mental",
     "generateMindmapDescription": "Genera un mapa mental visual del contenido del resumen.",
     "generateMindmapButton": "Generar Mapa Mental",
-    "noSummaryAvailable": "Se requiere un resumen completo para generar un mapa mental."
+    "noSummaryAvailable": "Se requiere un resumen completo para generar un mapa mental.",
+    "addNode": "Agregar nodo",
+    "deleteSelected": "Eliminar selección"
   },
   "Chat": {
     "title": "Pregunta sobre el video",

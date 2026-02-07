@@ -289,7 +289,9 @@
     "generateMindmap": "Generate Mindmap",
     "generateMindmapDescription": "Generate a visual mind map of the summary content.",
     "generateMindmapButton": "Generate Mindmap",
-    "noSummaryAvailable": "A complete summary is required to generate a mind map."
+    "noSummaryAvailable": "A complete summary is required to generate a mind map.",
+    "addNode": "Add node",
+    "deleteSelected": "Delete selected"
   },
   "Chat": {
     "title": "Ask about the video",

@@ -6,6 +6,7 @@ import { Check, Clock, Zap, BookOpen, Star, ArrowRight, Loader2 } from 'lucide-r
 import { useAuth } from '@/contexts/AuthContext';
 import { Logo } from '@/components/ui/logo';
 import Link from 'next/link';
+import posthog from 'posthog-js';
 
 const PRICING = {
   weekly: { price: 4, priceFormatted: '$4' },
@@ -26,6 +27,13 @@ export default function PricingPage() {
       return;
     }
 
+    // Track checkout initiation
+    posthog.capture('checkout_initiated', {
+      billing_cycle: billingCycle,
+      price: PRICING[billingCycle].price,
+      currency: 'USD',
+    });
+
     setCheckingOut(true);
     try {
       const res = await fetch('/api/stripe/checkout', {
@@ -33,13 +41,15 @@ export default function PricingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ billingCycle, locale }),
       });
+      if (!res.ok) { setCheckingOut(false); return; }
       const data = await res.json();
-      if (res.ok && data.url) {
+      if (data.url) {
         window.location.href = data.url;
       } else {
         setCheckingOut(false);
       }
-    } catch {
+    } catch (error) {
+      posthog.captureException(error);
       setCheckingOut(false);
     }
   };
@@ -110,7 +120,13 @@ export default function PricingPage() {
               {(['weekly', 'monthly', 'yearly'] as const).map((cycle) => (
                 <button
                   key={cycle}
-                  onClick={() => setBillingCycle(cycle)}
+                  onClick={() => {
+                    setBillingCycle(cycle);
+                    posthog.capture('billing_cycle_changed', {
+                      billing_cycle: cycle,
+                      price: PRICING[cycle].price,
+                    });
+                  }}
                   className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
                     billingCycle === cycle
                       ? 'bg-foreground text-background shadow'

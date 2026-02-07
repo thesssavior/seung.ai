@@ -39,6 +39,7 @@ export function VideoInputForm() {
       if (user) {
         try {
           const res = await fetch('/api/home/user/plan');
+          if (!res.ok) { setUserPlan('free'); return; }
           const data = await res.json();
           setUserPlan(data.plan || 'free');
         } catch {

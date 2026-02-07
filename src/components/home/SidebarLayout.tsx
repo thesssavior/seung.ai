@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import SubscriptionPlans from './SubscriptionPlans';
 import { ChevronLeft, Menu } from 'lucide-react';
@@ -29,8 +29,14 @@ export const SidebarRefreshContext = createContext<() => void>(() => {});
 
 export default function SidebarLayout({ children }: { children: React.ReactNode }) {
 
-  // open by default
   const [open, setOpen] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebar-open');
+    if (saved !== null) setOpen(saved === 'true');
+    setHydrated(true);
+  }, []);
+  useEffect(() => { if (hydrated) localStorage.setItem('sidebar-open', String(open)); }, [open, hydrated]);
   const [refreshKey, setRefreshKey] = useState(0);
   const refreshSidebar = () => setRefreshKey(k => k + 1);
 
