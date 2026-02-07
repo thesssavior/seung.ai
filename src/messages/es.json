@@ -94,8 +94,9 @@
     "description_line2": "Elige el plan de suscripción que mejor se adapte a ti."
   },
   "SubscriptionPlans": {
-    "title": "Elige Tu Plan",
-    "description": "Selecciona el plan que mejor se adapte a tus necesidades.",
+    "title": "Aprende Rápido y Eficiente",
+    "description": "Ahorra tiempo con IA de última generación.",
+    "description2": "Más de 100,000 usuarios nos eligen.",
     "loadingPlans": "Cargando planes...",
     "featureListTitle": "Todo del plan gratis más",
     "features": [
@@ -103,7 +104,7 @@
       "Podcasts y videos de YouTube ilimitados",
       "Transcripción y resumen de primera clase",
       "Soporte al cliente 24/7",
-      "Acceso prioritario a nuevas funciones: audio, quiz, conversación y más",
+      "Acceso prioritario a nuevas funciones: audio, quiz, conversación, etc.",
       "Y más..."
     ],
     "pricePerMonth": "/ por mes",

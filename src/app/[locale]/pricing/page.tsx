@@ -10,7 +10,7 @@ import Link from 'next/link';
 const PRICING = {
   weekly: { price: 4, priceFormatted: '$4' },
   monthly: { price: 9, priceFormatted: '$9' },
-  yearly: { price: 49, priceFormatted: '$49' },
+  yearly: { price: 59, priceFormatted: '$59' },
 };
 
 export default function PricingPage() {

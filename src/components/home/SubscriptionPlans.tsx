@@ -29,8 +29,8 @@ const PRICING = {
     priceFormatted: '$9',
   },
   yearly: {
-    price: 49,
-    priceFormatted: '$49',
+    price: 59,
+    priceFormatted: '$59',
   },
 };
 
@@ -78,10 +78,11 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
       <DialogContent className="sm:max-w-[800px]">
-        <DialogHeader>
-          <DialogTitle className="text-center">{t('title')}</DialogTitle>
+        <DialogHeader className="mb-8">
+          <DialogTitle className="text-2xl font-bold text-center">{t('title')}</DialogTitle>
           <DialogDescription className="text-center">
-            {t('description')}
+            {t('description')} <br />
+            {t('description2')}
           </DialogDescription>
         </DialogHeader>
 
@@ -100,8 +101,8 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
           </div>
         </div> */}
 
-        {/* Billing Cycle Toggle */}
-        <div className="flex justify-center my-4">
+        {/* Billing Cycle Toggle */} 
+        <div className="flex justify-center">
           <div className="inline-flex bg-gray-100 dark:bg-gray-800 p-1 rounded-full">
             <button
               onClick={() => setBillingCycle('weekly')}
@@ -136,7 +137,7 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
           </div>
         </div>
 
-        <div className="py-4">
+        <div>
           <div className="border border-border p-6 rounded-lg shadow-sm bg-card text-card-foreground flex flex-col md:flex-row gap-6">
             {/* Left Column */}
             <div className="flex flex-col w-full md:w-1/3">

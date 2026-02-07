@@ -75,7 +75,7 @@ const ContactSection = () => {
         </Card>
       </div>
       
-      <div className="space-y-4">
+      {/* <div className="space-y-4">
         <div>
             <h2 className="text-xl font-semibold text-foreground my-2">{t('contactSection.directContactTitle')}</h2>
             <p className="text-muted-foreground">{t('contactSection.directContactDescription')}</p>
@@ -109,7 +109,7 @@ const ContactSection = () => {
             </Card>
           
         </div>
-      </div>
+      </div> */}
 
       <div className="space-y-6 lg:w-3/5">
         <h2 className="text-xl font-semibold text-foreground">{t('contactSection.contactFeedbackTitle')}</h2>

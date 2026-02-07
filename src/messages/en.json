@@ -94,8 +94,9 @@
     "description_line2": "Choose the subscription plan that fits you best."
   },
   "SubscriptionPlans": {
-    "title": "Choose Your Plan",
-    "description": "Select the plan that best suits your needs.",
+    "title": "Learn Fast & Efficient",
+    "description": "Save your time with state-of-the-art AI.",
+    "description2": "Loved by 100,000+ users.",
     "loadingPlans": "Loading plans...",
     "featureListTitle": "Everything in free plan plus",
     "features": [
@@ -103,7 +104,7 @@
       "Unlimited podcasts and youtube videos",
       "Best-in-class Transcription and Summarization",
       "Customer support 24/7",
-      "Priority Access to new features: audio, quiz, conversation, and more",
+      "Priority Access to new features: audio, quiz, conversation, etc.",
       "And more..."
     ],
     "pricePerMonth": "/ per month",

@@ -148,29 +148,29 @@ const FeatureCard = ({ feature }: { feature: Feature }) => {
 const FeatureBoard = () => {
   const t = useTranslations('FeatureBoard');
   const [features, setFeatures] = useState<Feature[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchFeatures = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch('/api/home/feature-board');
-        if (!response.ok) {
-          throw new Error(t('errors.fetchFeaturesFailed'));
-        }
-        const data = await response.json();
-        setFeatures(data);
-      } catch (err: any) {
-        setError(err.message || t('errors.fetchFeaturesFailedUnexpected'));
-        console.error("Fetch features error:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchFeatures = async () => {
+  //     try {
+  //       setIsLoading(true);
+  //       const response = await fetch('/api/home/feature-board');
+  //       if (!response.ok) {
+  //         throw new Error(t('errors.fetchFeaturesFailed'));
+  //       }
+  //       const data = await response.json();
+  //       setFeatures(data);
+  //     } catch (err: any) {
+  //       setError(err.message || t('errors.fetchFeaturesFailedUnexpected'));
+  //       console.error("Fetch features error:", err);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
 
-    fetchFeatures();
-  }, [t]);
+  //   fetchFeatures();
+  // }, [t]);
 
 
   if (isLoading) {
