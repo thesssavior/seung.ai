@@ -72,4 +72,8 @@ export function useVideoPlayer() {
     throw new Error('useVideoPlayer must be used within a VideoPlayerProvider');
   }
   return context;
+}
+
+export function useVideoPlayerOptional() {
+  return useContext(VideoPlayerContext) ?? null;
 } 

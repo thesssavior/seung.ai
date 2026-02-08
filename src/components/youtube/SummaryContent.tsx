@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { parse as parsePartialJson } from 'partial-json';
+import { useVideoPlayerOptional } from '@/contexts/VideoPlayerContext';
+import { timeStringToSeconds, formatTimeString } from '@/lib/utils';
 
 interface SummarySection {
   emoji?: string;
@@ -37,7 +39,14 @@ function tryParseStructured(text: string): StructuredSummary | null {
 const proseClasses = "prose prose-sm dark:prose-invert max-w-none prose-hr:my-4 prose-hr:border-muted prose-th:border-transparent prose-td:border-transparent prose-img:border-0";
 
 const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreaming }) => {
+  const videoPlayer = useVideoPlayerOptional();
   const parsed = useMemo(() => tryParseStructured(summaryText), [summaryText]);
+
+  const handleTimestampClick = useCallback((timestamp: string) => {
+    if (videoPlayer) {
+      videoPlayer.seekTo(timeStringToSeconds(timestamp));
+    }
+  }, [videoPlayer]);
 
   // Legacy markdown fallback (old saved summaries)
   if (!parsed) {
@@ -66,9 +75,18 @@ const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreamin
           <ul className="space-y-1 text-sm text-muted-foreground">
             {parsed.body.map((section, i) => (
               section.heading && (
-                <li key={i}>
+                <li
+                  key={i}
+                  className={videoPlayer && section.timestamp ? 'cursor-pointer hover:text-foreground transition-colors' : ''}
+                  onClick={() => section.timestamp && handleTimestampClick(section.timestamp)}
+                >
                   {section.emoji && <span className="mr-1.5">{section.emoji}</span>}
                   {section.heading}
+                  {section.timestamp && (
+                    <span className="ml-1.5 text-xs opacity-70">
+                      {formatTimeString(section.timestamp)}
+                    </span>
+                  )}
                 </li>
               )
             ))}
@@ -84,9 +102,13 @@ const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreamin
               {section.emoji && <span className="mr-1.5">{section.emoji}</span>}
               {section.heading}
               {section.timestamp && (
-                <span className="ml-2 text-sm font-normal text-muted-foreground">
-                  [{section.timestamp}]
-                </span>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleTimestampClick(section.timestamp!); }}
+                  className="ml-2 text-sm font-normal text-muted-foreground hover:text-primary cursor-pointer transition-colors"
+                >
+                  {formatTimeString(section.timestamp)}
+                </button>
               )}
             </h2>
           )}

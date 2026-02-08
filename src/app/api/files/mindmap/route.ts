@@ -64,6 +64,9 @@ export async function POST(req: NextRequest) {
     const response = await client.models.generateContent({
       model,
       contents: systemInstruction + '\n\n' + prompt,
+      config: {
+        responseMimeType: 'application/json',
+      },
     });
 
     const resultJsonString = response.text || '';
