@@ -9,7 +9,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { data, error } = await supabase
-      .from('summaries')
+      .from('files')
       .select('id, folder_id, video_id, summary, created_at, name')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })

@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
 
     // Fetch summary (RLS will filter by user_id automatically)
     const { data: summaryData, error: summaryError } = await supabase
-      .from('summaries')
+      .from('files')
       .select('*')
       .eq('id', fileId)
       .single();
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ fil
     };
 
     const { data: summaryData, error: summaryError } = await supabase
-      .from('summaries')
+      .from('files')
       .insert(insertData)
       .select()
       .single();
@@ -141,7 +141,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ fi
 
     const supabase = await getSupabase();
     const { data, error } = await supabase
-      .from('summaries')
+      .from('files')
       .update(updateData)
       .eq('id', fileId)
       .select('id, video_id, name')
@@ -180,7 +180,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ f
     const supabase = await getSupabase();
 
     const { error } = await supabase
-      .from('summaries')
+      .from('files')
       .delete()
       .eq('id', fileId);
 

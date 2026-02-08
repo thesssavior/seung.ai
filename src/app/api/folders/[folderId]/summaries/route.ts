@@ -8,7 +8,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ fold
   try {
     const { folderId } = await params;
     const { data, error } = await supabase
-      .from('summaries')
+      .from('files')
       .select('id, folder_id, video_id, summary, created_at, name')
       .eq('folder_id', folderId)
       .order('created_at', { ascending: false });
@@ -76,7 +76,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ folderI
     };
 
     const { data: summaryData, error: summaryError } = await supabase
-      .from('summaries')
+      .from('files')
       .insert(insertData)
       .select()
       .single();
@@ -111,7 +111,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ folder
     }
     // Update the summary's folder_id
     const { data: updated, error: updateError } = await supabase
-      .from('summaries')
+      .from('files')
       .update({ folder_id: targetFolderId })
       .eq('id', fileId)
       .select()
@@ -144,7 +144,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ folde
 
     // Ensure the summary belongs to the user attempting to delete it
     const { error: deleteError } = await supabase
-      .from('summaries')
+      .from('files')
       .delete()
       .eq('id', fileId)
       .eq('user_id', user.id);

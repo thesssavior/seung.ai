@@ -125,7 +125,7 @@ export async function POST(req: Request) {
         };
 
         const { data: summaryData, error: summaryError } = await supabase
-          .from('summaries')
+          .from('files')
           .insert(insertData)
           .select('id')
           .single();

@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
     // Search summaries by name, summary content, and description (excluding transcript for efficiency)
     const { data: summaries, error: summariesError } = await supabase
-      .from('summaries')
+      .from('files')
       .select('id, name, summary, description, video_id, folder_id, created_at')
       .eq('user_id', user.id)
       .or(`name.ilike.${searchTerm},summary.ilike.${searchTerm},description.ilike.${searchTerm}`)

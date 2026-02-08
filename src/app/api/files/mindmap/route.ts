@@ -117,7 +117,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const { data, error } = await supabase
-      .from('summaries')
+      .from('files')
       .update({ mindmap: mindmap })
       .eq('id', fileId)
       .eq('user_id', user.id)

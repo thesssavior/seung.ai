@@ -47,7 +47,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ f
   if (!user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   // Remove all summaries in the folder
-  await supabase.from('summaries').delete().eq('folder_id', folderId);
+  await supabase.from('files').delete().eq('folder_id', folderId);
   // Delete the folder itself
   const { error } = await supabase
     .from('folders')

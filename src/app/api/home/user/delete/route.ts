@@ -27,7 +27,7 @@ export async function DELETE() {
     // Delete related data using admin client (to bypass RLS for cleanup)
     // Step 1: Delete summaries by user_id
     const { error: deleteUserSummariesError } = await supabaseAdmin
-      .from('summaries')
+      .from('files')
       .delete()
       .eq('user_id', userId);
 
