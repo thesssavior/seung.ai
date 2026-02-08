@@ -266,7 +266,7 @@ export default function SummaryDetailPage() {
       </div>
 
       <div className="flex-1 overflow-hidden w-full relative">
-        <div className={`absolute inset-0 bg-background ${activeTab === 'summary' ? '' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`absolute inset-0 bg-background ${activeTab === 'summary' ? 'z-10' : 'opacity-0 pointer-events-none select-none'}`}>
           <ScrollArea className="h-full p-6">
             <div className="max-w-4xl mx-auto">
               {isStreaming && !summaryText && (
@@ -282,7 +282,7 @@ export default function SummaryDetailPage() {
           </ScrollArea>
         </div>
 
-        <div className={`absolute inset-0 bg-background ${activeTab === 'mindmap' ? '' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`absolute inset-0 bg-background ${activeTab === 'mindmap' ? 'z-10' : 'opacity-0 pointer-events-none select-none'}`}>
           <Mindmap
             transcript={summary.transcript}
             title={summary.name}
@@ -294,7 +294,7 @@ export default function SummaryDetailPage() {
           />
         </div>
 
-        <div className={`absolute inset-0 bg-background ${activeTab === 'quiz' ? '' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`absolute inset-0 bg-background ${activeTab === 'quiz' ? 'z-10' : 'opacity-0 pointer-events-none select-none'}`}>
           <Quiz
             transcript={summary.transcript}
             quizData={summary.quiz}
@@ -306,7 +306,7 @@ export default function SummaryDetailPage() {
         </div>
 
         {(isFullscreen || !isDesktop) && (
-          <div className={`absolute inset-0 bg-background ${activeTab === 'transcript' ? '' : 'opacity-0 pointer-events-none'}`}>
+          <div className={`absolute inset-0 bg-background ${activeTab === 'transcript' ? 'z-10' : 'opacity-0 pointer-events-none select-none'}`}>
             <ScrollArea className="h-full p-6">
               <div className="max-w-4xl mx-auto">
                 <TranscriptPanel transcript={summary.transcript} />
@@ -315,7 +315,7 @@ export default function SummaryDetailPage() {
           </div>
         )}
 
-        <div className={`absolute inset-0 bg-background ${activeTab === 'chat' ? '' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`absolute inset-0 bg-background ${activeTab === 'chat' ? 'z-10' : 'opacity-0 pointer-events-none select-none'}`}>
           <Chat
             summary={summaryText}
             transcript={summary.transcript}
