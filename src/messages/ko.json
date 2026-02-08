@@ -380,6 +380,10 @@
     "savingSummaryDescription": "요약을 저장하는 중입니다. 잠시만 기다려 주세요...",
     "errorTitle": "요약 생성 오류"
   },
+  "SummaryContent": {
+    "tableOfContents": "목차",
+    "takeaways": "핵심 정리"
+  },
   "PricingPage": {
     "badge": "매주 수 시간 절약",
     "heroTitle": "영상 시청은 그만. 학습을 시작하세요.",

@@ -375,6 +375,10 @@
     "savingSummaryDescription": "Saving to database...",
     "errorTitle": "Error generating summary"
   },
+  "SummaryContent": {
+    "tableOfContents": "Table of Contents",
+    "takeaways": "Takeaways"
+  },
   "PricingPage": {
     "badge": "Save hours every week",
     "heroTitle": "Stop watching. Start learning.",

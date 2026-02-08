@@ -307,8 +307,10 @@ export default function SummaryDetailPage() {
 
         {(isFullscreen || !isDesktop) && (
           <div className={`absolute inset-0 bg-background ${activeTab === 'transcript' ? '' : 'opacity-0 pointer-events-none'}`}>
-            <ScrollArea className="h-full">
-              <TranscriptPanel transcript={summary.transcript} />
+            <ScrollArea className="h-full p-6">
+              <div className="max-w-4xl mx-auto">
+                <TranscriptPanel transcript={summary.transcript} />
+              </div>
             </ScrollArea>
           </div>
         )}

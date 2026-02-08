@@ -375,6 +375,10 @@
     "savingSummaryDescription": "Guardando en la base de datos...",
     "errorTitle": "Error al generar el resumen"
   },
+  "SummaryContent": {
+    "tableOfContents": "Tabla de Contenidos",
+    "takeaways": "Conclusiones"
+  },
   "PricingPage": {
     "badge": "Ahorra horas cada semana",
     "heroTitle": "Deja de ver. Empieza a aprender.",
