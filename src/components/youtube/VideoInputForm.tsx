@@ -32,6 +32,7 @@ export function VideoInputForm() {
   const [error, setError] = useState("");
   const { user, signInWithGoogle } = useAuth();
   const [userPlan, setUserPlan] = useState<string>('free');
+  const [planLoaded, setPlanLoaded] = useState(false);
 
   // Fetch user plan
   useEffect(() => {
@@ -39,16 +40,25 @@ export function VideoInputForm() {
       if (user) {
         try {
           const res = await fetch('/api/home/user/plan');
-          if (!res.ok) { setUserPlan('free'); return; }
+          if (!res.ok) { setUserPlan('free'); setPlanLoaded(true); return; }
           const data = await res.json();
           setUserPlan(data.plan || 'free');
         } catch {
           setUserPlan('free');
         }
       }
+      setPlanLoaded(true);
     };
     fetchPlan();
   }, [user]);
+
+  // Clear trial-related states when plan is confirmed as premium
+  useEffect(() => {
+    if (userPlan === 'premium') {
+      setTrialLimitExceeded(false);
+      setShowTokenLimitUpgrade(false);
+    }
+  }, [userPlan]);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [trialUsed, setTrialUsed] = useState(false);
   const [inAppBrowser, setInAppBrowser] = useState(false);
@@ -119,7 +129,7 @@ export function VideoInputForm() {
     }
 
     // Check trial limit for signed-in free users (3 free trials total)
-    if (user && userPlan !== 'premium' && isHydrated && typeof window !== 'undefined') {
+    if (user && planLoaded && userPlan !== 'premium' && isHydrated && typeof window !== 'undefined') {
       const storedTrialCount = localStorage.getItem('freeUserTrialCount');
       const count = storedTrialCount ? parseInt(storedTrialCount, 10) : 0;
 
@@ -298,7 +308,7 @@ export function VideoInputForm() {
           </div>
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || (!!user && !planLoaded)}
             className="bg-red-600 hover:bg-red-700 text-white whitespace-nowrap"
           >
             {isLoading ? (
