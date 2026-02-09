@@ -26,7 +26,8 @@ export default function RootLayout({
             gtag('config', 'G-C64P1CEGZR');
           `}
         </Script>
-        <link rel="icon" href="/seung_logo_white.png" type="image/png" />
+        <link rel="icon" href="/seung_logo.png" type="image/png" media="(prefers-color-scheme: light)" />
+        <link rel="icon" href="/seung_logo_white.png" type="image/png" media="(prefers-color-scheme: dark)" />
       </head>
       <body className={`${inter.className} h-screen flex flex-col bg-background text-foreground`} suppressHydrationWarning={true}>
         {children}
