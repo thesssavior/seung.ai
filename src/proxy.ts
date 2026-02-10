@@ -5,7 +5,7 @@ import createIntlMiddleware from 'next-intl/middleware'
 
 // i18n middleware
 const intlMiddleware = createIntlMiddleware({
-  locales: ['ko', 'en', 'es'],
+  locales: ['ko', 'en', 'es', 'ja', 'fr', 'pt', 'de'],
   defaultLocale: 'ko',
   localePrefix: 'always',
   localeDetection: true
@@ -15,7 +15,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip internal or static files (but not YouTube URL paths like /https:/www.youtube.com/...)
-  const isEmbeddedUrl = pathname.match(/^\/(ko|en|es)?\/?https?:/) || pathname.match(/^\/https?:/);
+  const isEmbeddedUrl = pathname.match(/^\/(ko|en|es|ja|fr|pt|de)?\/?https?:/) || pathname.match(/^\/https?:/);
   if (
     !isEmbeddedUrl && (
       pathname.startsWith('/api') ||

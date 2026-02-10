@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { getUser } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabaseClient';
 import { getPostHogClient } from '@/lib/posthog-server';
@@ -27,74 +27,94 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const systemInstruction = `
-    You are an API that returns **only** valid JSON for a React-Flow mind-map.
-    Goal → Give learners a concise, birds-eye structure of the content so they can comprehend the main points at a glance.
+    const systemInstruction = `You generate React-Flow mind-map JSON for learners to comprehend main points at a glance.
+Rules:
+- Use emojis and concise labels (max 4 words per node)
+- Maximum 16 total nodes (including root)
+- Left-to-right layout: root node at the left, children to the right
+- Leaf depth limit of 3 per branch
+- Root node type must be "input"`;
 
-    Return only valid JSON (no markdown, no code blocks).
-    Schema: {
-      "nodes": RFNode[],
-      "edges": RFEdge[]
-    }
+    const prompt = `IMPORTANT: Provide the mindmap in ${contentLanguage || 'en'} language
 
-    Each RFNode must have unique "id" and a "position".
-    Each RFEdge must reference existing node ids.
-    The deepest level of nodes (leaf nodes) for any branch should be limited to 3 items.
-    Use emojis and concise labels (max 4 words)
-    Maximum 16 total nodes (including root)
-    Left to right layout: root node at the left, children to the right
-    Example:
-    {"nodes":[{"id":"root","data":{"label":"📚 Central"},"position":{"x":0,"y":0},"type":"input"}],"edges":[]}
-    `;
+Video Title: ${title || 'Unknown'}
 
-    const prompt = `
-      IMPORTANT: Provide the mindmap in ${contentLanguage || 'en'} language
-
-      Video Title: ${title || 'Unknown'}
-
-      Transcript:
-      --- --- --- --- ---
-      ${transcript}
-      --- --- --- --- ---
-
-      JSON Output:
-    `;
+Transcript:
+${transcript}`;
 
     const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await client.models.generateContent({
-      model,
-      contents: systemInstruction + '\n\n' + prompt,
-      config: {
-        responseMimeType: 'application/json',
-      },
+    const encoder = new TextEncoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        const response = await client.models.generateContentStream({
+          model,
+          contents: systemInstruction + '\n\n' + prompt,
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                nodes: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      id: { type: Type.STRING },
+                      data: {
+                        type: Type.OBJECT,
+                        properties: {
+                          label: { type: Type.STRING },
+                        },
+                        required: ['label'],
+                      },
+                      position: {
+                        type: Type.OBJECT,
+                        properties: {
+                          x: { type: Type.NUMBER },
+                          y: { type: Type.NUMBER },
+                        },
+                        required: ['x', 'y'],
+                      },
+                      type: { type: Type.STRING },
+                    },
+                    required: ['id', 'data', 'position'],
+                  },
+                },
+                edges: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      id: { type: Type.STRING },
+                      source: { type: Type.STRING },
+                      target: { type: Type.STRING },
+                    },
+                    required: ['id', 'source', 'target'],
+                  },
+                },
+              },
+              required: ['nodes', 'edges'],
+            },
+          },
+        });
+
+        for await (const chunk of response) {
+          const content = chunk.text;
+          if (content) {
+            controller.enqueue(encoder.encode(content));
+          }
+        }
+        controller.close();
+      }
     });
 
-    const resultJsonString = response.text || '';
-
-    if (!resultJsonString) {
-      return NextResponse.json({ error: 'Failed to generate mind map' }, { status: 500 });
-    }
-
-    try {
-      // Clean up the response - remove markdown code blocks if present
-      let cleanedResponse = resultJsonString.trim();
-      cleanedResponse = cleanedResponse.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
-
-      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        cleanedResponse = jsonMatch[0];
-      }
-
-      const mindmapData = JSON.parse(cleanedResponse);
-      if (!mindmapData.nodes || !mindmapData.edges) {
-        console.error("Mindmap response missing nodes or edges:", mindmapData);
-        return NextResponse.json({ error: 'Invalid mind map structure' }, { status: 500 });
-      }
-      return NextResponse.json(mindmapData, { status: 200 });
-    } catch (parseError) {
-      console.error("Failed to parse mind map response:", parseError, "Raw response:", resultJsonString);
-      return NextResponse.json({ error: 'Failed to parse mind map data' }, { status: 500 });
-    }
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+      },
+    });
 
   } catch (error: any) {
     console.error('Error generating mindmap:', error);

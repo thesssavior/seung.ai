@@ -104,11 +104,21 @@ const MindmapComponent: React.FC<MindmapProps> = ({
       });
 
       if (!response.ok) {
-        const errData = await response.json();
+        const errData = await response.json().catch(() => ({}));
         throw new Error(errData.error || 'Failed to fetch mindmap data');
       }
 
-      const data = await response.json();
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          fullResponse += decoder.decode(value, { stream: true });
+        }
+      }
+      const data = JSON.parse(fullResponse);
       if (data.nodes && data.edges) {
         const validatedNodes = data.nodes.map((node: Node) => ({
           ...node,
