@@ -78,7 +78,7 @@ const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreamin
           <button
             type="button"
             onClick={() => setTocOpen(!tocOpen)}
-            className="flex items-center gap-1.5 font-bold text-foreground cursor-pointer w-full text-left"
+            className="flex items-center gap-1.5 font-normal text-foreground cursor-pointer w-full text-left"
           >
             <span className="text-xs text-muted-foreground transition-transform" style={{ transform: tocOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
             {t('tableOfContents')}
@@ -111,7 +111,7 @@ const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreamin
       {parsed.body?.map((section, i) => (
         <section key={i}>
           {section.heading && (
-            <h2>
+            <h2 className="font-normal">
               {section.emoji && <span className="mr-1.5">{section.emoji}</span>}
               {section.heading}
               {section.timestamp && (
@@ -137,7 +137,7 @@ const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreamin
       {parsed.outro && (
         <>
           <hr />
-          <p className="not-prose font-bold text-foreground mb-2">{t('takeaways')}</p>
+          <p className="not-prose font-normal text-foreground mb-2">{t('takeaways')}</p>
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {parsed.outro}
           </ReactMarkdown>
