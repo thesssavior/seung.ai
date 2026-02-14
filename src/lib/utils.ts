@@ -64,6 +64,20 @@ export function formatTimeString(time: string | number): string {
   return sanitized || String(time);
 }
 
+// Extract YouTube video ID from various URL formats
+export function extractVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|m\.youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
 // Convert time string (hh:mm:ss) to seconds for video seeking
 export function timeStringToSeconds(timeString: string | number): number {
   if (typeof timeString === 'number') {

@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useRef, useContext } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { Loader2, Maximize2, Minimize2 } from 'lucide-react';
 import { useSummaryGeneration } from '@/contexts/SummaryGenerationContext';
 import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
-import { SidebarRefreshContext } from '@/components/home/SidebarLayout';
+import { SidebarRefreshContext, useFolder } from '@/components/home/SidebarLayout';
 import { VideoPlayer } from '@/components/youtube/VideoPlayer';
 import { TranscriptPanel } from '@/components/youtube/TranscriptPanel';
 import Mindmap from '@/components/youtube/Mindmap';
@@ -19,13 +19,16 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SummaryContent from '@/components/youtube/SummaryContent';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { extractVideoId } from '@/lib/utils';
 
 export default function SummaryDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const locale = params.locale as string;
   const fileId = params.fileId as string | undefined;
   const { user, isLoading: authLoading } = useAuth();
   const { generationData } = useSummaryGeneration();
+  const { activeFolder } = useFolder();
   const t = useTranslations();
   const refreshSidebar = useContext(SidebarRefreshContext);
 
@@ -39,6 +42,10 @@ export default function SummaryDetailPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const hasStartedStreaming = useRef(false);
 
+  // Bootstrap state (catch-all → summary page direct flow)
+  const bootstrapStarted = useRef(false);
+  const fileCreated = useRef(false);
+
   // UI state
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState('summary');
@@ -46,7 +53,83 @@ export default function SummaryDetailPage() {
 
   const isPreviewMode = fileId === 'preview';
 
+  // Bootstrap mode: when ?youtube= param is present (from catch-all redirect)
   useEffect(() => {
+    const youtubeUrl = searchParams.get('youtube');
+    if (!youtubeUrl || bootstrapStarted.current || authLoading) return;
+
+    let decoded: string;
+    try { decoded = decodeURIComponent(youtubeUrl); } catch { decoded = youtubeUrl; }
+
+    const videoId = extractVideoId(decoded);
+    if (!videoId) { setError('Invalid YouTube URL'); setLoading(false); return; }
+
+    // Guest trial check
+    if (!user) {
+      const trialUsed = localStorage.getItem('trialUsed') === 'true';
+      if (trialUsed) {
+        setError(t('trialUsedPrompt'));
+        setLoading(false);
+        return;
+      }
+    }
+
+    bootstrapStarted.current = true;
+
+    (async () => {
+      try {
+        const contentLanguage = localStorage.getItem('contentLanguage') || locale;
+        const res = await fetch('/api/files/transcript', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            videoId, locale, contentLanguage,
+            folderId: activeFolder?.id || null,
+            fileId: fileId,
+          }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to fetch transcript');
+        }
+        const data = await res.json();
+
+        fileCreated.current = !!data.fileId;
+
+        // Mark guest trial as used
+        if (!user) {
+          localStorage.setItem('trialUsed', 'true');
+        }
+
+        // Clean URL: remove ?youtube= param
+        window.history.replaceState({}, '', `/${locale}/summaries/${data.fileId || 'preview'}`);
+
+        setSummary({
+          id: data.fileId || null,
+          name: data.title || 'Untitled',
+          summary: '',
+          video_id: videoId,
+          created_at: null,
+          locale,
+          content_language: contentLanguage,
+          transcript: data.transcript,
+          description: data.description || '',
+          mindmap: null, quiz: null,
+          input_token_count: data.tokenCount,
+        });
+        setLoading(false);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load video');
+        setLoading(false);
+      }
+    })();
+  }, [searchParams, authLoading, locale, activeFolder?.id, user, t]);
+
+  // Existing data-loading effect (non-bootstrap)
+  useEffect(() => {
+    // Skip if in bootstrap mode
+    if (searchParams.get('youtube') || bootstrapStarted.current) return;
+
     if (authLoading) {
       setLoading(true);
       return;
@@ -137,6 +220,9 @@ export default function SummaryDetailPage() {
     }
   };
 
+  // Compute effective fileId for save operations + child components
+  const effectiveFileId = fileCreated.current ? (fileId || null) : (isPreviewMode ? null : fileId);
+
   // Start streaming summary generation if needed
   useEffect(() => {
     if (!summary || hasStartedStreaming.current) return;
@@ -194,9 +280,9 @@ export default function SummaryDetailPage() {
       }
 
       // Save the summary if we have a valid fileId
-      if (fileId && fileId !== 'preview' && user) {
+      if (effectiveFileId && user) {
         try {
-          await fetch(`/api/files/${fileId}`, {
+          await fetch(`/api/files/${effectiveFileId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ summary: fullSummary }),
@@ -289,7 +375,7 @@ export default function SummaryDetailPage() {
             mindmap={summary.mindmap}
             locale={locale}
             contentLanguage={contentLanguage}
-            fileId={isPreviewMode ? null : fileId}
+            fileId={effectiveFileId || null}
             isActive={activeTab === 'mindmap'}
           />
         </div>
@@ -300,7 +386,7 @@ export default function SummaryDetailPage() {
             quizData={summary.quiz}
             locale={locale}
             contentLanguage={contentLanguage}
-            fileId={isPreviewMode ? null : (fileId || null)}
+            fileId={effectiveFileId || null}
             title={summary.name}
           />
         </div>
@@ -321,7 +407,7 @@ export default function SummaryDetailPage() {
             transcript={summary.transcript}
             locale={locale}
             contentLanguage={contentLanguage}
-            fileId={isPreviewMode ? null : (fileId || null)}
+            fileId={effectiveFileId || null}
             title={summary.name}
           />
         </div>

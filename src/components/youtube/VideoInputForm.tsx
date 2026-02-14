@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useFolder } from '../home/SidebarLayout';
 import { useSummaryGeneration } from '@/contexts/SummaryGenerationContext';
 import { useHydration } from '@/hooks/useHydration';
+import { extractVideoId } from '@/lib/utils';
 
 interface FolderType {
   id: string;
@@ -104,21 +105,7 @@ export function VideoInputForm() {
     }
   }, [isHydrated]);
 
-  const extractVideoId = (url: string): string | null => {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|m\.youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/, // eslint-disable-line no-useless-escape
-      /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/, // YouTube Shorts support
-      /^([a-zA-Z0-9_-]{11})$/
-    ];
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitVideo = useCallback(async () => {
     setError("");
     setShowTokenLimitUpgrade(false);
     setTrialLimitExceeded(false);
@@ -256,6 +243,11 @@ export function VideoInputForm() {
     } finally {
       setIsLoading(false);
     }
+  }, [url, user, trialUsed, planLoaded, userPlan, isHydrated, locale, activeFolder, t, openSubscriptionModal, setGenerationData, router, showTokenLimitUpgrade, trialLimitExceeded]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    submitVideo();
   };
 
   return (

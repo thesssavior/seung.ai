@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 export async function POST(req: Request) {
   try {
-    const { videoId, locale = 'ko', contentLanguage, folderId } = await req.json();
+    const { videoId, locale = 'ko', contentLanguage, folderId, fileId: clientFileId } = await req.json();
     const messages = locale === 'ko' ? koMessages : locale === 'es' ? esMessages : enMessages;
 
     if (!videoId) {
@@ -110,6 +110,7 @@ export async function POST(req: Request) {
       const user = await getUser();
       if (user?.id) {
         const insertData = {
+          ...(clientFileId ? { id: clientFileId } : {}),
           folder_id: folderId,
           user_id: user.id,
           video_id: videoId,

@@ -31,7 +31,8 @@ export default function YoutubeCatchAllPage({ params }: YoutubeCatchAllPageProps
   useEffect(() => {
     if (fullYoutubeUrl) {
       // Encode the full URL to safely pass it as a query parameter
-      router.replace(`/${locale}?youtube=${encodeURIComponent(fullYoutubeUrl)}`);
+      const id = crypto.randomUUID();
+      router.replace(`/${locale}/summaries/${id}?youtube=${encodeURIComponent(fullYoutubeUrl)}`);
     } else {
       router.replace("/");
     }
