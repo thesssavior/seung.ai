@@ -21,7 +21,7 @@ export default function Home() {
       // Check localStorage first (user's saved preference)
       const savedLanguage = localStorage.getItem('uiLanguage');
       
-      if (savedLanguage && ['ko', 'en', 'es', 'ja', 'fr', 'pt', 'de'].includes(savedLanguage)) {
+      if (savedLanguage && ['ko', 'en', 'es', 'ja', 'fr', 'pt', 'de', 'id'].includes(savedLanguage)) {
         const targetUrl = `/${savedLanguage}`;
         setHasNavigated(true);
         
@@ -36,7 +36,7 @@ export default function Home() {
       }
 
       // Fallback to browser language detection
-      const supportedLocales = ['ko', 'en', 'es', 'ja', 'fr', 'pt', 'de'];
+      const supportedLocales = ['ko', 'en', 'es', 'ja', 'fr', 'pt', 'de', 'id'];
       const browserLanguages = navigator.languages || [navigator.language];
       
       for (const lang of browserLanguages) {
