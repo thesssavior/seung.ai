@@ -183,6 +183,7 @@ const SettingsPage = () => {
                 <SelectItem value="pt">{t('preferencesSection.portuguese')}</SelectItem>
                 <SelectItem value="de">{t('preferencesSection.german')}</SelectItem>
                 <SelectItem value="id">{t('preferencesSection.indonesian')}</SelectItem>
+                <SelectItem value="it">{t('preferencesSection.italian')}</SelectItem>
               </SelectContent>
             </Select>
             {isPending && <Loader2 className="mt-2 h-4 w-4 animate-spin" />}
