@@ -30,9 +30,9 @@ export async function POST(req: Request) {
     });
 
     // Language priority: 1. contentLanguage, 2. locale (system lang), 3. English fallback
-    const preferredLangs = [...new Set(
+    const preferredLangs = Array.from(new Set(
       [contentLanguage, locale, 'en'].filter((l): l is string => !!l && l.trim() !== '')
-    )];
+    ));
 
     console.log(`[Transcript] videoId=${videoId} contentLanguage=${contentLanguage} locale=${locale} preferredLangs=${JSON.stringify(preferredLangs)}`);
 
