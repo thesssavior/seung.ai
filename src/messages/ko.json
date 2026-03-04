@@ -115,6 +115,8 @@
     "pricePerWeekVat": "+VAT / 주",
     "pricePerYearVat": "+VAT / 년",
     "subscribeButton": "플랜 업그레이드",
+    "freeTrial": "7일 무료 체험",
+    "freeTrialCta": "무료 체험 시작",
     "loading": "처리 중...",
     "weekly": "주간",
     "yearly": "연간",
@@ -462,6 +464,8 @@
     "ctaTitle": "시간을 되찾을 준비 되셨나요?",
     "ctaSubtitle": "몇 초 만에 영상 요약을 시작하세요. 무료 플랜은 신용카드 필요 없음.",
     "ctaButton": "스마트한 학습 시작하기",
+    "freeTrial": "7일 무료 체험",
+    "freeTrialCta": "무료 체험 시작",
     "ctaNote": "언제든 해지 가능. 질문 없이 환불."
   },
   "SummaryFeedback": {

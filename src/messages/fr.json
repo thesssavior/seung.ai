@@ -118,6 +118,8 @@
     "pricePerYear": "/ par an",
     "pricePerYearVat": "+TVA / an",
     "subscribeButton": "Améliorer le plan",
+    "freeTrial": "7 jours d'essai gratuit",
+    "freeTrialCta": "Commencer l'essai gratuit",
     "loading": "Traitement en cours...",
     "weekly": "Hebdomadaire",
     "yearly": "Annuel",
@@ -462,6 +464,8 @@
     "ctaTitle": "Prêt à récupérer votre temps ?",
     "ctaSubtitle": "Commencez à résumer des vidéos en quelques secondes. Pas de carte bancaire requise pour le plan gratuit.",
     "ctaButton": "Apprendre plus efficacement",
+    "freeTrial": "7 jours d'essai gratuit",
+    "freeTrialCta": "Commencer l'essai gratuit",
     "ctaNote": "Annulez à tout moment. Sans engagement."
   },
   "SummaryFeedback": {

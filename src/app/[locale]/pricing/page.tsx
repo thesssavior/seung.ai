@@ -185,6 +185,11 @@ export default function PricingPage() {
                 <span className="text-muted-foreground">
                   /{billingCycle === 'weekly' ? t('billing.week') : billingCycle === 'monthly' ? t('billing.month') : t('billing.year')}
                 </span>
+                {billingCycle === 'yearly' && (
+                  <div className="mt-2 text-sm text-green-600 dark:text-green-400 font-medium">
+                    {t('freeTrial')}
+                  </div>
+                )}
               </div>
               <button
                 onClick={handleCheckout}
@@ -195,7 +200,7 @@ export default function PricingPage() {
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
-                    {t('premiumPlan.cta')}
+                    {billingCycle === 'yearly' ? t('freeTrialCta') : t('premiumPlan.cta')}
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}

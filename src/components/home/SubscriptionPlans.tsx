@@ -165,6 +165,11 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
                   {billingCycle === 'weekly' ? '/ week' : billingCycle === 'monthly' ? '/ month' : '/ year'}
                 </span>
               </p>
+              {billingCycle === 'yearly' && (
+                <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-1">
+                  {t('freeTrial')}
+                </p>
+              )}
               <button
                 onClick={handleCheckout}
                 disabled={checkingOut || !user}
@@ -178,7 +183,7 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
                 ) : (
                   <>
                     <Crown className="w-4 h-4" />
-                    {t('subscribeButton')}
+                    {billingCycle === 'yearly' ? t('freeTrialCta') : t('subscribeButton')}
                     {/* <span aria-hidden="true">→</span> */}
                   </>
                 )}

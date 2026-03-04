@@ -114,6 +114,8 @@
     "pricePerYear": "/ per tahun",
     "pricePerYearVat": "+PPN / tahun",
     "subscribeButton": "Upgrade paket",
+    "freeTrial": "Uji coba gratis 7 hari",
+    "freeTrialCta": "Mulai uji coba gratis",
     "loading": "Memproses...",
     "weekly": "Mingguan",
     "yearly": "Tahunan",
@@ -458,6 +460,8 @@
     "ctaTitle": "Siap untuk mendapatkan waktu Anda kembali?",
     "ctaSubtitle": "Mulai meringkas video dalam hitungan detik. Tidak perlu kartu kredit untuk paket gratis.",
     "ctaButton": "Mulai belajar lebih cerdas",
+    "freeTrial": "Uji coba gratis 7 hari",
+    "freeTrialCta": "Mulai uji coba gratis",
     "ctaNote": "Batalkan kapan saja. Tanpa pertanyaan."
   },
   "SummaryFeedback": {

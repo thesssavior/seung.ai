@@ -114,6 +114,8 @@
     "pricePerYear": "/ per year",
     "pricePerYearVat": "+VAT / year",
     "subscribeButton": "Upgrade plan",
+    "freeTrial": "7-day free trial",
+    "freeTrialCta": "Start free trial",
     "loading": "Processing...",
     "weekly": "Weekly",
     "yearly": "Yearly",
@@ -458,6 +460,8 @@
     "ctaTitle": "Ready to get your time back?",
     "ctaSubtitle": "Start summarizing videos in seconds. No credit card required for free plan.",
     "ctaButton": "Start learning smarter",
+    "freeTrial": "7-day free trial",
+    "freeTrialCta": "Start free trial",
     "ctaNote": "Cancel anytime. No questions asked."
   },
   "SummaryFeedback": {

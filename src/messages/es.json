@@ -114,6 +114,8 @@
     "pricePerYear": "/ por año",
     "pricePerYearVat": "+IVA / año",
     "subscribeButton": "Mejorar plan",
+    "freeTrial": "7 días de prueba gratis",
+    "freeTrialCta": "Iniciar prueba gratis",
     "loading": "Procesando...",
     "weekly": "Semanal",
     "yearly": "Anual",
@@ -458,6 +460,8 @@
     "ctaTitle": "¿Listo para recuperar tu tiempo?",
     "ctaSubtitle": "Empieza a resumir videos en segundos. No se requiere tarjeta de crédito para el plan gratis.",
     "ctaButton": "Empieza a aprender de forma inteligente",
+    "freeTrial": "7 días de prueba gratis",
+    "freeTrialCta": "Iniciar prueba gratis",
     "ctaNote": "Cancela en cualquier momento. Sin preguntas."
   },
   "SummaryFeedback": {

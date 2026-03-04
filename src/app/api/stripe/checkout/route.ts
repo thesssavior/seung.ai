@@ -72,7 +72,9 @@ export async function POST(req: NextRequest) {
         metadata: {
           user_id: user.id,
         },
+        ...(billingCycle === 'yearly' && { trial_period_days: 7 }),
       },
+      ...(billingCycle === 'yearly' && { payment_method_collection: 'always' as const }),
     })
 
     return NextResponse.json({ url: session.url })

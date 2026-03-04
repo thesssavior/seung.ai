@@ -118,6 +118,8 @@
     "pricePerYear": "/ 年",
     "pricePerYearVat": "+税 / 年",
     "subscribeButton": "プランをアップグレード",
+    "freeTrial": "7日間無料トライアル",
+    "freeTrialCta": "無料トライアルを始める",
     "loading": "処理中...",
     "weekly": "週間",
     "yearly": "年間",
@@ -462,6 +464,8 @@
     "ctaTitle": "時間を取り戻しませんか？",
     "ctaSubtitle": "数秒で動画のまとめを作成。無料プランはクレジットカード不要。",
     "ctaButton": "スマートな学習を始める",
+    "freeTrial": "7日間無料トライアル",
+    "freeTrialCta": "無料トライアルを始める",
     "ctaNote": "いつでも簡単にキャンセルできます。"
   },
   "SummaryFeedback": {

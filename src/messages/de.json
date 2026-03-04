@@ -114,6 +114,8 @@
     "pricePerYear": "/ pro Jahr",
     "pricePerYearVat": "+MwSt. / Jahr",
     "subscribeButton": "Plan upgraden",
+    "freeTrial": "7 Tage kostenlos testen",
+    "freeTrialCta": "Kostenlos testen",
     "loading": "Wird verarbeitet...",
     "weekly": "Wöchentlich",
     "yearly": "Jährlich",
@@ -458,6 +460,8 @@
     "ctaTitle": "Bereit, deine Zeit zurückzubekommen?",
     "ctaSubtitle": "Fang an, Videos in Sekunden zusammenzufassen. Keine Kreditkarte für den kostenlosen Plan nötig.",
     "ctaButton": "Smarter lernen starten",
+    "freeTrial": "7 Tage kostenlos testen",
+    "freeTrialCta": "Kostenlos testen",
     "ctaNote": "Jederzeit kündbar. Keine Fragen."
   },
   "SummaryFeedback": {

@@ -50,7 +50,7 @@ export function Navbar() {
             ) : (
               <Button
                 onClick={signInWithGoogle}
-                className="bg-foreground hover:opacity-90 text-background"
+                className="bg-background hover:bg-background hover:text-muted-foreground text-foreground"
                 title={t('signIn')}
               >
                 <span className="sm:hidden"><LogIn className="h-5 w-5" /></span>
