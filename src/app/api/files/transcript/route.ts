@@ -29,33 +29,37 @@ export async function POST(req: Request) {
       apiKey: process.env.SUPADATA_API_KEY || '',
     });
 
-    const langToTry = contentLanguage || locale || undefined;
+    // Language priority: 1. contentLanguage, 2. locale (system lang), 3. English fallback
+    const langsToTry = [...new Set(
+      [contentLanguage, locale, 'en'].filter((l): l is string => !!l && l.trim() !== '')
+    )];
 
     try {
-      // Try with preferred language first
-      if (langToTry) {
+      let transcriptFetched = false;
+
+      // Try each language in priority order
+      for (const lang of langsToTry) {
         try {
           const transcript = await supadata.youtube.transcript({
             videoId,
-            lang: langToTry,
+            lang,
           });
           const standardTranscript = Array.isArray(transcript.content) ? transcript.content : [];
           if (standardTranscript.length === 0) {
-            throw new Error('Empty transcript for requested language');
+            throw new Error(`Empty transcript for lang=${lang}`);
           }
           formattedTranscriptText = formatTranscript(standardTranscript, 'offset');
           fetcherUsed = "supadata";
+          transcriptFetched = true;
+          break;
         } catch (langError: any) {
-          console.warn(`Supadata transcript for ${videoId} with lang=${langToTry} failed: ${langError.message}. Trying without lang.`);
-          const transcript = await supadata.youtube.transcript({ videoId });
-          const standardTranscript = Array.isArray(transcript.content) ? transcript.content : [];
-          if (standardTranscript.length === 0) {
-            throw new Error('Supadata returned empty transcript content');
-          }
-          formattedTranscriptText = formatTranscript(standardTranscript, 'offset');
-          fetcherUsed = "supadata";
+          console.warn(`Supadata transcript for ${videoId} with lang=${lang} failed: ${langError.message}`);
         }
-      } else {
+      }
+
+      // Last resort: fetch without lang parameter (auto-select)
+      if (!transcriptFetched) {
+        console.warn(`All preferred languages failed for ${videoId}, fetching without lang parameter.`);
         const transcript = await supadata.youtube.transcript({ videoId });
         const standardTranscript = Array.isArray(transcript.content) ? transcript.content : [];
         if (standardTranscript.length === 0) {
