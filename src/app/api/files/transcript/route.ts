@@ -30,36 +30,47 @@ export async function POST(req: Request) {
     });
 
     // Language priority: 1. contentLanguage, 2. locale (system lang), 3. English fallback
-    const langsToTry = [...new Set(
+    const preferredLangs = [...new Set(
       [contentLanguage, locale, 'en'].filter((l): l is string => !!l && l.trim() !== '')
     )];
+
+    console.log(`[Transcript] videoId=${videoId} contentLanguage=${contentLanguage} locale=${locale} preferredLangs=${JSON.stringify(preferredLangs)}`);
 
     try {
       let transcriptFetched = false;
 
-      // Try each language in priority order
-      for (const lang of langsToTry) {
+      // Try each preferred language, verify the response actually matches
+      for (const lang of preferredLangs) {
         try {
-          const transcript = await supadata.youtube.transcript({
-            videoId,
-            lang,
-          });
+          console.log(`[Transcript] Trying lang=${lang} for ${videoId}...`);
+          const transcript = await supadata.youtube.transcript({ videoId, lang });
+          const returnedLang = transcript.lang;
+          console.log(`[Transcript] lang=${lang} returned lang=${returnedLang}, availableLangs=${JSON.stringify(transcript.availableLangs)}`);
+
+          // Supadata silently returns a different language if requested one isn't available
+          if (returnedLang && returnedLang !== lang) {
+            console.warn(`[Transcript] Rejected: requested lang=${lang} but got lang=${returnedLang}`);
+            continue;
+          }
+
           const standardTranscript = Array.isArray(transcript.content) ? transcript.content : [];
           if (standardTranscript.length === 0) {
-            throw new Error(`Empty transcript for lang=${lang}`);
+            console.warn(`[Transcript] lang=${lang} returned empty content`);
+            continue;
           }
           formattedTranscriptText = formatTranscript(standardTranscript, 'offset');
           fetcherUsed = "supadata";
           transcriptFetched = true;
+          console.log(`[Transcript] SUCCESS with lang=${lang}. Preview: ${formattedTranscriptText.substring(0, 200)}`);
           break;
         } catch (langError: any) {
-          console.warn(`Supadata transcript for ${videoId} with lang=${lang} failed: ${langError.message}`);
+          console.warn(`[Transcript] lang=${lang} FAILED: ${langError.message}`);
         }
       }
 
-      // Last resort: fetch without lang parameter (auto-select)
+      // Last resort: accept whatever language is available
       if (!transcriptFetched) {
-        console.warn(`All preferred languages failed for ${videoId}, fetching without lang parameter.`);
+        console.warn(`[Transcript] All preferred languages ${JSON.stringify(preferredLangs)} failed/mismatched, fetching without lang parameter`);
         const transcript = await supadata.youtube.transcript({ videoId });
         const standardTranscript = Array.isArray(transcript.content) ? transcript.content : [];
         if (standardTranscript.length === 0) {
@@ -67,6 +78,7 @@ export async function POST(req: Request) {
         }
         formattedTranscriptText = formatTranscript(standardTranscript, 'offset');
         fetcherUsed = "supadata";
+        console.log(`[Transcript] Fallback SUCCESS lang=${transcript.lang}. Preview: ${formattedTranscriptText.substring(0, 200)}`);
       }
     } catch (supadataError: any) {
       console.warn(
