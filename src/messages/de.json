@@ -459,5 +459,24 @@
     "ctaSubtitle": "Fang an, Videos in Sekunden zusammenzufassen. Keine Kreditkarte für den kostenlosen Plan nötig.",
     "ctaButton": "Smarter lernen starten",
     "ctaNote": "Jederzeit kündbar. Keine Fragen."
+  },
+  "SummaryFeedback": {
+    "good": "Gut",
+    "bad": "Schlecht",
+    "tryAgain": "Erneut versuchen",
+    "feedbackTitle": "Was war das Problem?",
+    "feedbackDescription": "Ihr Feedback hilft uns, besser zu werden.",
+    "reasonIncorrect": "Ungenau oder unvollständig",
+    "reasonNotAsked": "Nicht das, was ich gefragt habe",
+    "reasonSlow": "Langsam oder fehlerhaft",
+    "reasonStyle": "Stil oder Ton",
+    "reasonSafety": "Sicherheits- oder Rechtsbedenken",
+    "reasonOther": "Sonstiges",
+    "detailPlaceholder": "Erzählen Sie uns mehr (optional)...",
+    "submit": "Absenden",
+    "cancel": "Abbrechen",
+    "submitting": "Wird gesendet...",
+    "feedbackSuccess": "Vielen Dank für Ihr Feedback!",
+    "feedbackError": "Feedback konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
   }
 }

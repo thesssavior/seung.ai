@@ -459,5 +459,24 @@
     "ctaSubtitle": "Mulai meringkas video dalam hitungan detik. Tidak perlu kartu kredit untuk paket gratis.",
     "ctaButton": "Mulai belajar lebih cerdas",
     "ctaNote": "Batalkan kapan saja. Tanpa pertanyaan."
+  },
+  "SummaryFeedback": {
+    "good": "Bagus",
+    "bad": "Buruk",
+    "tryAgain": "Coba Lagi",
+    "feedbackTitle": "Apa yang salah?",
+    "feedbackDescription": "Masukan Anda membantu kami meningkatkan layanan.",
+    "reasonIncorrect": "Tidak akurat atau tidak lengkap",
+    "reasonNotAsked": "Bukan yang saya minta",
+    "reasonSlow": "Lambat atau bermasalah",
+    "reasonStyle": "Gaya atau nada",
+    "reasonSafety": "Keamanan atau masalah hukum",
+    "reasonOther": "Lainnya",
+    "detailPlaceholder": "Ceritakan lebih lanjut (opsional)...",
+    "submit": "Kirim",
+    "cancel": "Batal",
+    "submitting": "Mengirim...",
+    "feedbackSuccess": "Terima kasih atas masukan Anda!",
+    "feedbackError": "Gagal mengirim masukan. Silakan coba lagi."
   }
 }

@@ -459,5 +459,24 @@
     "ctaSubtitle": "Inizia a riassumere video in pochi secondi. Nessuna carta di credito richiesta per il piano gratuito.",
     "ctaButton": "Inizia a imparare in modo intelligente",
     "ctaNote": "Cancella quando vuoi. Senza domande."
+  },
+  "SummaryFeedback": {
+    "good": "Buono",
+    "bad": "Scarso",
+    "tryAgain": "Riprova",
+    "feedbackTitle": "Cosa è andato storto?",
+    "feedbackDescription": "Il tuo feedback ci aiuta a migliorare.",
+    "reasonIncorrect": "Impreciso o incompleto",
+    "reasonNotAsked": "Non è quello che ho chiesto",
+    "reasonSlow": "Lento o difettoso",
+    "reasonStyle": "Stile o tono",
+    "reasonSafety": "Sicurezza o preoccupazione legale",
+    "reasonOther": "Altro",
+    "detailPlaceholder": "Dicci di più (facoltativo)...",
+    "submit": "Invia",
+    "cancel": "Annulla",
+    "submitting": "Invio in corso...",
+    "feedbackSuccess": "Grazie per il tuo feedback!",
+    "feedbackError": "Invio del feedback non riuscito. Riprova."
   }
 }

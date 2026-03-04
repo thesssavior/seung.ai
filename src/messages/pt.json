@@ -459,5 +459,24 @@
     "ctaSubtitle": "Comece a resumir vídeos em segundos. Não é necessário cartão de crédito para o plano grátis.",
     "ctaButton": "Comece a estudar de forma inteligente",
     "ctaNote": "Cancele quando quiser. Sem burocracia."
+  },
+  "SummaryFeedback": {
+    "good": "Bom",
+    "bad": "Ruim",
+    "tryAgain": "Tentar novamente",
+    "feedbackTitle": "O que deu errado?",
+    "feedbackDescription": "Seu feedback nos ajuda a melhorar.",
+    "reasonIncorrect": "Incorreto ou incompleto",
+    "reasonNotAsked": "Não é o que pedi",
+    "reasonSlow": "Lento ou com bugs",
+    "reasonStyle": "Estilo ou tom",
+    "reasonSafety": "Segurança ou preocupação legal",
+    "reasonOther": "Outro",
+    "detailPlaceholder": "Conte-nos mais (opcional)...",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "submitting": "Enviando...",
+    "feedbackSuccess": "Obrigado pelo seu feedback!",
+    "feedbackError": "Falha ao enviar feedback. Tente novamente."
   }
 }

@@ -459,5 +459,24 @@
     "ctaSubtitle": "Empieza a resumir videos en segundos. No se requiere tarjeta de crédito para el plan gratis.",
     "ctaButton": "Empieza a aprender de forma inteligente",
     "ctaNote": "Cancela en cualquier momento. Sin preguntas."
+  },
+  "SummaryFeedback": {
+    "good": "Bueno",
+    "bad": "Malo",
+    "tryAgain": "Reintentar",
+    "feedbackTitle": "¿Qué salió mal?",
+    "feedbackDescription": "Tu opinión nos ayuda a mejorar.",
+    "reasonIncorrect": "Incorrecto o incompleto",
+    "reasonNotAsked": "No es lo que pedí",
+    "reasonSlow": "Lento o con errores",
+    "reasonStyle": "Estilo o tono",
+    "reasonSafety": "Seguridad o preocupación legal",
+    "reasonOther": "Otro",
+    "detailPlaceholder": "Cuéntanos más (opcional)...",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "submitting": "Enviando...",
+    "feedbackSuccess": "¡Gracias por tu opinión!",
+    "feedbackError": "No se pudo enviar la opinión. Inténtalo de nuevo."
   }
 }

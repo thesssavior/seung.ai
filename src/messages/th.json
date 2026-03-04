@@ -8,5 +8,24 @@
     "systemPromptsChunked": "You are a concise YouTube segment summarizer. **Do NOT** add conversational intro phrases (like 'Here is the summary…'). Structure the detail with chronologically ordered clear subheadings and bullet points. Markdown allowed: **bold**, _italics_, `code`, lists. Each subheading starts with a relevant emoji and ends with [HH:MM:SS].",
     "userPromptsChunked": "Please summarize the following transcript segment, keeping the [HH:MM:SS] timestamp format. Do not add an introduction, conclusion, or table of contents for this segment:",
     "systemPromptsFinal": "You are an expert editor. From the summaries already provided, produce ONLY an engaging introduction, a table of contents, and a concise conclusion. Do not repeat or re-summarize the summary content. Output in readable Markdown.",
-    "userPromptsFinal": "From the following summaries, generate an introduction, table of contents, and conclusion only. Do not include the summaries themselves. The table of contents should not be bold and must contain emojis and timestamps. Collected Summaries: {collectedSummaries}"
+    "userPromptsFinal": "From the following summaries, generate an introduction, table of contents, and conclusion only. Do not include the summaries themselves. The table of contents should not be bold and must contain emojis and timestamps. Collected Summaries: {collectedSummaries}",
+    "SummaryFeedback": {
+      "good": "ดี",
+      "bad": "ไม่ดี",
+      "tryAgain": "ลองอีกครั้ง",
+      "feedbackTitle": "มีอะไรผิดพลาด?",
+      "feedbackDescription": "ความคิดเห็นของคุณช่วยให้เราปรับปรุงได้ดีขึ้น",
+      "reasonIncorrect": "ไม่ถูกต้องหรือไม่สมบูรณ์",
+      "reasonNotAsked": "ไม่ใช่สิ่งที่ฉันขอ",
+      "reasonSlow": "ช้าหรือมีข้อผิดพลาด",
+      "reasonStyle": "สไตล์หรือน้ำเสียง",
+      "reasonSafety": "ความปลอดภัยหรือข้อกังวลทางกฎหมาย",
+      "reasonOther": "อื่นๆ",
+      "detailPlaceholder": "บอกเราเพิ่มเติม (ไม่บังคับ)...",
+      "submit": "ส่ง",
+      "cancel": "ยกเลิก",
+      "submitting": "กำลังส่ง...",
+      "feedbackSuccess": "ขอบคุณสำหรับความคิดเห็นของคุณ!",
+      "feedbackError": "ไม่สามารถส่งความคิดเห็นได้ กรุณาลองอีกครั้ง"
+    }
 }

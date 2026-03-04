@@ -459,5 +459,24 @@
     "ctaSubtitle": "Start summarizing videos in seconds. No credit card required for free plan.",
     "ctaButton": "Start learning smarter",
     "ctaNote": "Cancel anytime. No questions asked."
+  },
+  "SummaryFeedback": {
+    "good": "Good",
+    "bad": "Bad",
+    "tryAgain": "Try Again",
+    "feedbackTitle": "What went wrong?",
+    "feedbackDescription": "Your feedback helps us improve.",
+    "reasonIncorrect": "Incorrect or incomplete",
+    "reasonNotAsked": "Not what I asked for",
+    "reasonSlow": "Slow or buggy",
+    "reasonStyle": "Style or tone",
+    "reasonSafety": "Safety or legal concern",
+    "reasonOther": "Other",
+    "detailPlaceholder": "Tell us more (optional)...",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "submitting": "Submitting...",
+    "feedbackSuccess": "Thank you for your feedback!",
+    "feedbackError": "Failed to submit feedback. Please try again."
   }
-} 
+}

@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SummaryContent from '@/components/youtube/SummaryContent';
+import SummaryActionButtons from '@/components/youtube/SummaryActionButtons';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { extractVideoId } from '@/lib/utils';
 
@@ -300,6 +301,11 @@ export default function SummaryDetailPage() {
     }
   };
 
+  const handleTryAgain = () => {
+    hasStartedStreaming.current = false;
+    generateSummary();
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full mt-[20%]">
@@ -362,7 +368,15 @@ export default function SummaryDetailPage() {
                 </div>
               )}
               {summaryText && (
-                <SummaryContent summaryText={summaryText} isStreaming={isStreaming} />
+                <>
+                  <SummaryContent summaryText={summaryText} isStreaming={isStreaming} />
+                  <SummaryActionButtons
+                    summaryText={summaryText}
+                    fileId={effectiveFileId || null}
+                    isStreaming={isStreaming}
+                    onTryAgain={handleTryAgain}
+                  />
+                </>
               )}
             </div>
           </ScrollArea>

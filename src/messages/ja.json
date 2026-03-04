@@ -463,5 +463,24 @@
     "ctaSubtitle": "数秒で動画のまとめを作成。無料プランはクレジットカード不要。",
     "ctaButton": "スマートな学習を始める",
     "ctaNote": "いつでも簡単にキャンセルできます。"
+  },
+  "SummaryFeedback": {
+    "good": "良い",
+    "bad": "悪い",
+    "tryAgain": "再試行",
+    "feedbackTitle": "何が問題でしたか？",
+    "feedbackDescription": "フィードバックはサービス改善に役立ちます。",
+    "reasonIncorrect": "不正確または不完全",
+    "reasonNotAsked": "求めた内容と違う",
+    "reasonSlow": "遅いまたはバグがある",
+    "reasonStyle": "文体やトーン",
+    "reasonSafety": "安全性または法的懸念",
+    "reasonOther": "その他",
+    "detailPlaceholder": "詳しく教えてください（任意）...",
+    "submit": "送信",
+    "cancel": "キャンセル",
+    "submitting": "送信中...",
+    "feedbackSuccess": "フィードバックありがとうございます！",
+    "feedbackError": "フィードバックの送信に失敗しました。もう一度お試しください。"
   }
 }

@@ -463,5 +463,24 @@
     "ctaSubtitle": "Commencez à résumer des vidéos en quelques secondes. Pas de carte bancaire requise pour le plan gratuit.",
     "ctaButton": "Apprendre plus efficacement",
     "ctaNote": "Annulez à tout moment. Sans engagement."
+  },
+  "SummaryFeedback": {
+    "good": "Bien",
+    "bad": "Mauvais",
+    "tryAgain": "Réessayer",
+    "feedbackTitle": "Quel était le problème ?",
+    "feedbackDescription": "Vos commentaires nous aident à nous améliorer.",
+    "reasonIncorrect": "Incorrect ou incomplet",
+    "reasonNotAsked": "Ce n'est pas ce que j'ai demandé",
+    "reasonSlow": "Lent ou bogué",
+    "reasonStyle": "Style ou ton",
+    "reasonSafety": "Sécurité ou préoccupation juridique",
+    "reasonOther": "Autre",
+    "detailPlaceholder": "Dites-nous en plus (facultatif)...",
+    "submit": "Envoyer",
+    "cancel": "Annuler",
+    "submitting": "Envoi en cours...",
+    "feedbackSuccess": "Merci pour vos commentaires !",
+    "feedbackError": "Échec de l'envoi. Veuillez réessayer."
   }
 }
