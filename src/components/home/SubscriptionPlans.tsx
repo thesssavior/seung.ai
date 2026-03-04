@@ -34,6 +34,22 @@ const PRICING = {
   },
 };
 
+// Regional pricing for Indonesia
+const PRICING_ID = {
+  weekly: {
+    price: 3,
+    priceFormatted: '$3',
+  },
+  monthly: {
+    price: 7,
+    priceFormatted: '$7',
+  },
+  yearly: {
+    price: 47,
+    priceFormatted: '$47',
+  },
+};
+
 export default function SubscriptionPlans({ isOpen, onCloseAction }: SubscriptionPlansProps) {
   const t = useTranslations('SubscriptionPlans');
   const locale = useLocale();
@@ -77,7 +93,7 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
     }
   };
 
-  const currentPricing = PRICING[billingCycle];
+  const currentPricing = (locale === 'id' ? PRICING_ID : PRICING)[billingCycle];
   const planFeatures = t.raw('features');
 
   return (

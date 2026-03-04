@@ -26,5 +26,12 @@ export const STRIPE_PRICES = {
   yearly: process.env.STRIPE_PRICE_YEARLY,
 }
 
+// Regional pricing for Indonesia
+export const STRIPE_PRICES_ID = {
+  weekly: 'price_1T7C2sRNKLUBo7MiHthy4ctq',
+  monthly: 'price_1T7C38RNKLUBo7MiW2JTjANo',
+  yearly: 'price_1T7C44RNKLUBo7MiDVczcjZN',
+}
+
 // Subscription statuses that grant premium access
 export const PREMIUM_STATUSES = ['active', 'trialing', 'past_due']

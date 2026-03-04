@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getStripe, STRIPE_PRICES } from '@/lib/stripe'
+import { getStripe, STRIPE_PRICES, STRIPE_PRICES_ID } from '@/lib/stripe'
 import { getUser } from '@/lib/supabase/auth'
 import { supabaseAdmin } from '@/lib/supabaseClient'
 
@@ -12,12 +12,15 @@ export async function POST(req: NextRequest) {
 
     const { priceId, billingCycle, locale } = await req.json()
 
+    // Use regional pricing for Indonesia
+    const prices = locale === 'id' ? STRIPE_PRICES_ID : STRIPE_PRICES
+
     // Validate price ID
     let validPriceId = priceId
     if (!validPriceId) {
-      if (billingCycle === 'yearly') validPriceId = STRIPE_PRICES.yearly
-      else if (billingCycle === 'monthly') validPriceId = STRIPE_PRICES.monthly
-      else validPriceId = STRIPE_PRICES.weekly
+      if (billingCycle === 'yearly') validPriceId = prices.yearly
+      else if (billingCycle === 'monthly') validPriceId = prices.monthly
+      else validPriceId = prices.weekly
     }
 
     if (!validPriceId) {
