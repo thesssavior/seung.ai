@@ -28,9 +28,9 @@ export const STRIPE_PRICES = {
 
 // Regional pricing for Indonesia
 export const STRIPE_PRICES_ID = {
-  weekly: 'price_1T7C2sRNKLUBo7MiHthy4ctq',
-  monthly: 'price_1T7C38RNKLUBo7MiW2JTjANo',
-  yearly: 'price_1T7C44RNKLUBo7MiDVczcjZN',
+  weekly: 'price_1T7COFRNKLUBo7MiuY78s6Hx',
+  monthly: 'price_1T7COTRNKLUBo7Mib5i4GaYw',
+  yearly: 'price_1T7COhRNKLUBo7MiIex29hNa',
 }
 
 // Subscription statuses that grant premium access

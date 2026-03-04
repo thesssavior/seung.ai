@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Check, Loader2, Clock, Zap, Star, Crown } from 'lucide-react';
+import { Check, Loader2, Crown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Logo } from '@/components/ui/logo';
 
@@ -20,22 +20,6 @@ interface SubscriptionPlansProps {
 
 // Pricing configuration - update these values as needed
 const PRICING = {
-  weekly: {
-    price: 4,
-    priceFormatted: '$4',
-  },
-  monthly: {
-    price: 9,
-    priceFormatted: '$9',
-  },
-  yearly: {
-    price: 59,
-    priceFormatted: '$59',
-  },
-};
-
-// Regional pricing for Indonesia
-const PRICING_ID = {
   weekly: {
     price: 3,
     priceFormatted: '$3',
@@ -50,13 +34,28 @@ const PRICING_ID = {
   },
 };
 
+// Regional pricing for Indonesia
+const PRICING_ID = {
+  weekly: {
+    price: 2,
+    priceFormatted: '$2',
+  },
+  monthly: {
+    price: 5,
+    priceFormatted: '$5',
+  },
+  yearly: {
+    price: 35,
+    priceFormatted: '$35',
+  },
+};
+
 export default function SubscriptionPlans({ isOpen, onCloseAction }: SubscriptionPlansProps) {
   const t = useTranslations('SubscriptionPlans');
   const locale = useLocale();
   const [checkingOut, setCheckingOut] = useState(false);
   const [billingCycle, setBillingCycle] = useState<'weekly' | 'monthly' | 'yearly'>('monthly');
   const { user } = useAuth();
-
   const handleCheckout = async () => {
     if (!user) {
       console.error('User not authenticated');
@@ -71,7 +70,7 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
         body: JSON.stringify({
           billingCycle,
           locale,
-        }), 
+        }),
       });
 
       if (!res.ok) {
@@ -107,22 +106,7 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
           </DialogDescription>
         </DialogHeader>
 
-        {/* Social Proof Bar */}
-        {/* <div className="flex items-center justify-center gap-4 py-3 px-4 bg-muted/50 rounded-lg text-sm">
-          <div className="flex items-center gap-1.5">
-            <Clock className="w-4 h-4 text-green-500" />
-            <span className="text-muted-foreground">{t('socialProof.timeSaved')}</span>
-          </div>
-          <div className="h-4 w-px bg-border" />
-          <div className="flex items-center gap-1">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-            ))}
-            <span className="text-muted-foreground ml-1">{t('socialProof.rating')}</span>
-          </div>
-        </div> */}
-
-        {/* Billing Cycle Toggle */} 
+        {/* Billing Cycle Toggle */}
         <div className="flex justify-center">
           <div className="inline-flex bg-gray-100 dark:bg-gray-800 p-1 rounded-full">
             <button
