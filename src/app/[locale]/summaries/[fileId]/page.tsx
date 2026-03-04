@@ -332,7 +332,7 @@ export default function SummaryDetailPage() {
       <div className="relative flex items-center justify-center px-4 py-2">
         <TabsList className={`grid ${isFullscreen || !isDesktop ? 'grid-cols-5' : 'grid-cols-4'}`}>
           <TabsTrigger value="summary">{t('summaryTab')}</TabsTrigger>
-          <TabsTrigger value="mindmap">{t('mindmapTab')}</TabsTrigger>
+          <TabsTrigger value="mindmap">{!isDesktop ? t('mindmapTabShort') : t('mindmapTab')}</TabsTrigger>
           <TabsTrigger value="quiz">{t('quizTab')}</TabsTrigger>
           {(isFullscreen || !isDesktop) && (
             <TabsTrigger value="transcript">{t('transcriptTab')}</TabsTrigger>
