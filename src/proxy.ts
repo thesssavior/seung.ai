@@ -20,6 +20,7 @@ export async function proxy(request: NextRequest) {
     !isEmbeddedUrl && (
       pathname.startsWith('/api') ||
       pathname.startsWith('/_next') ||
+      pathname.startsWith('/ingest') ||
       pathname.startsWith('/auth/callback') ||
       pathname === '/favicon.ico' ||
       pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|mjs|js|css)$/)
