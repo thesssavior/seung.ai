@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
       summary,
       transcript,
       contentLanguage,
-      conversationHistory
+      conversationHistory,
+      sourceType,
     } = await req.json();
 
     if (!message) {
@@ -39,22 +40,44 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Build context from available video data
-    let videoContext = '';
+    // Build context from available data
+    const isPdf = sourceType === 'pdf';
+    let contentContext = '';
 
     if (videoTitle) {
-      videoContext += `Video Title: "${videoTitle}"\n\n`;
+      contentContext += `${isPdf ? 'Document' : 'Video'} Title: "${videoTitle}"\n\n`;
     }
 
     if (summary) {
-      videoContext += `Video Summary:\n${summary}\n\n`;
+      contentContext += `${isPdf ? 'Document' : 'Video'} Summary:\n${summary}\n\n`;
     }
 
     if (transcript) {
-      videoContext += `Full Transcript:\n${transcript}\n\n`;
+      contentContext += `Full ${isPdf ? 'Text' : 'Transcript'}:\n${transcript}\n\n`;
     }
 
-    const systemInstruction = `
+    const systemInstruction = isPdf
+      ? `
+You are an AI assistant specialized in helping users understand and discuss document content. You have access to the document's title, summary, and full text.
+
+Your role is to:
+1. Answer questions about the document content accurately and helpfully
+2. Provide insights and explanations based on the text
+3. Help users understand key concepts, themes, and takeaways
+4. Reference specific parts of the document when relevant
+5. Encourage deeper thinking and learning about the content
+
+Guidelines:
+- Be conversational and engaging
+- Use the document context to provide specific, relevant answers
+- If you don't have enough information, be honest about limitations
+- Respond in ${contentLanguage || 'en'} language
+- Keep responses focused (2-4 paragraphs typically)
+
+Document Context:
+${contentContext}
+`
+      : `
 You are an AI assistant specialized in helping users understand and discuss video content. You have access to the video's title, summary, and full transcript.
 
 Your role is to:
@@ -72,7 +95,7 @@ Guidelines:
 - Keep responses focused (2-4 paragraphs typically)
 
 Video Context:
-${videoContext}
+${contentContext}
 `;
 
     // Build conversation for Gemini

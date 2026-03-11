@@ -11,6 +11,8 @@ interface TranscriptData {
   videoDescription?: string;
   tokenCount: number;
   fetcher?: string;
+  sourceType?: 'youtube' | 'pdf';
+  pdfUrl?: string | null;
 }
 
 interface FolderData {
@@ -49,4 +51,4 @@ export const useSummaryGeneration = () => {
     throw new Error('useSummaryGeneration must be used within a SummaryGenerationProvider');
   }
   return context;
-}; 
+};

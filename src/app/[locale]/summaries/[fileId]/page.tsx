@@ -9,6 +9,7 @@ import { useSummaryGeneration } from '@/contexts/SummaryGenerationContext';
 import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
 import { SidebarRefreshContext, useFolder } from '@/components/home/SidebarLayout';
 import { VideoPlayer } from '@/components/youtube/VideoPlayer';
+import { PdfViewer } from '@/components/pdf/PdfViewer';
 import { TranscriptPanel } from '@/components/youtube/TranscriptPanel';
 import Mindmap from '@/components/youtube/Mindmap';
 import Quiz from '@/components/youtube/Quiz';
@@ -37,6 +38,10 @@ export default function SummaryDetailPage() {
   const [folder, setFolder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Source type tracking
+  const [sourceType, setSourceType] = useState<'youtube' | 'pdf'>('youtube');
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   // Streaming state
   const [summaryText, setSummaryText] = useState('');
@@ -105,6 +110,7 @@ export default function SummaryDetailPage() {
         // Clean URL: remove ?youtube= param
         window.history.replaceState({}, '', `/${locale}/summaries/${data.fileId || 'preview'}`);
 
+        setSourceType('youtube');
         setSummary({
           id: data.fileId || null,
           name: data.title || 'Untitled',
@@ -140,6 +146,8 @@ export default function SummaryDetailPage() {
       const { transcriptData, folderForSummary } = generationData;
 
       if (transcriptData) {
+        setSourceType(transcriptData.sourceType || 'youtube');
+        setPdfUrl(transcriptData.pdfUrl || null);
         setSummary({
           id: null,
           name: transcriptData.title,
@@ -169,6 +177,8 @@ export default function SummaryDetailPage() {
       } else {
         const { transcriptData, folderForSummary } = generationData;
         if (transcriptData) {
+          setSourceType(transcriptData.sourceType || 'youtube');
+          setPdfUrl(transcriptData.pdfUrl || null);
           setSummary({
             id: fileId,
             name: transcriptData.title,
@@ -214,6 +224,17 @@ export default function SummaryDetailPage() {
       const data = await response.json();
       setSummary(data.summary);
       setFolder(data.folder);
+
+      // Determine source type from loaded data
+      if (!data.summary.video_id) {
+        setSourceType('pdf');
+        // Use description as PDF URL if it looks like a URL
+        if (data.summary.description && data.summary.description.startsWith('http')) {
+          setPdfUrl(data.summary.description);
+        }
+      } else {
+        setSourceType('youtube');
+      }
     } catch (err) {
       setError('Failed to load summary');
     } finally {
@@ -252,12 +273,13 @@ export default function SummaryDetailPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          videoId: summary.video_id,
+          videoId: summary.video_id || '',
           contentLanguage: summary.content_language || locale,
           transcriptText: summary.transcript,
           title: summary.name,
           videoDescription: summary.description || '',
           tokenCount: summary.input_token_count || 0,
+          sourceType: sourceType,
         }),
       });
 
@@ -331,16 +353,21 @@ export default function SummaryDetailPage() {
   }
 
   const contentLanguage = summary.content_language || locale;
+  const isPdf = sourceType === 'pdf';
 
   // Service tabs content
   const serviceTabs = (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
       <div className="relative flex items-center justify-center px-4 py-2">
-        <TabsList className={`grid ${isFullscreen || !isDesktop ? 'grid-cols-5' : 'grid-cols-4'}`}>
+        <TabsList className={`grid ${
+          isPdf
+            ? 'grid-cols-4'
+            : (isFullscreen || !isDesktop ? 'grid-cols-5' : 'grid-cols-4')
+        }`}>
           <TabsTrigger value="summary">{t('summaryTab')}</TabsTrigger>
           <TabsTrigger value="mindmap">{!isDesktop ? t('mindmapTabShort') : t('mindmapTab')}</TabsTrigger>
           <TabsTrigger value="quiz">{t('quizTab')}</TabsTrigger>
-          {(isFullscreen || !isDesktop) && (
+          {!isPdf && (isFullscreen || !isDesktop) && (
             <TabsTrigger value="transcript">{t('transcriptTab')}</TabsTrigger>
           )}
           <TabsTrigger value="chat">{t('chatTab')}</TabsTrigger>
@@ -405,7 +432,7 @@ export default function SummaryDetailPage() {
           />
         </div>
 
-        {(isFullscreen || !isDesktop) && (
+        {!isPdf && (isFullscreen || !isDesktop) && (
           <div className={`absolute inset-0 bg-background ${activeTab === 'transcript' ? 'z-10' : 'opacity-0 pointer-events-none select-none'}`}>
             <ScrollArea className="h-full p-6">
               <div className="max-w-4xl mx-auto">
@@ -423,6 +450,7 @@ export default function SummaryDetailPage() {
             contentLanguage={contentLanguage}
             fileId={effectiveFileId || null}
             title={summary.name}
+            sourceType={sourceType}
           />
         </div>
       </div>
@@ -451,30 +479,45 @@ export default function SummaryDetailPage() {
     );
   }
 
-  // Desktop split layout: video+transcript left, tabs right
+  // Desktop split layout: viewer+transcript left, tabs right
   return (
     <VideoPlayerProvider>
       <div className="h-[calc(100vh-4rem)] overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Left panel: Video + Transcript */}
+          {/* Left panel: Video/PDF + Transcript */}
           <ResizablePanel defaultSize={46} minSize={25} maxSize={60}>
             <div className="h-full flex flex-col">
-              {/* Video player - fixed aspect ratio */}
-              <div className="flex-shrink-0 p-2">
-                <div className="aspect-video">
-                  <VideoPlayer videoId={summary.video_id} title={summary.name} />
+              {isPdf ? (
+                /* PDF viewer takes full height */
+                <div className="h-full p-2">
+                  {pdfUrl ? (
+                    <PdfViewer pdfUrl={pdfUrl} title={summary.name} />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      PDF preview not available
+                    </div>
+                  )}
                 </div>
-              </div>
-              {/* Transcript - fills remaining space */}
-              <div className="flex-1 overflow-hidden">
-                <ScrollArea className="h-full">
-                  <TranscriptPanel transcript={summary.transcript} />
-                </ScrollArea>
-              </div>
+              ) : (
+                <>
+                  {/* Video player - fixed aspect ratio */}
+                  <div className="flex-shrink-0 p-2">
+                    <div className="aspect-video">
+                      <VideoPlayer videoId={summary.video_id} title={summary.name} />
+                    </div>
+                  </div>
+                  {/* Transcript - fills remaining space */}
+                  <div className="flex-1 overflow-hidden">
+                    <ScrollArea className="h-full">
+                      <TranscriptPanel transcript={summary.transcript} />
+                    </ScrollArea>
+                  </div>
+                </>
+              )}
             </div>
           </ResizablePanel>
 
-          <ResizableHandle withHandle />
+          <ResizableHandle />
 
           {/* Right panel: Service tabs */}
           <ResizablePanel defaultSize={54} minSize={40}>

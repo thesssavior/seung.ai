@@ -92,7 +92,7 @@ const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreamin
                     className={videoPlayer && section.timestamp ? 'cursor-pointer hover:text-foreground transition-colors' : ''}
                     onClick={() => section.timestamp && handleTimestampClick(section.timestamp)}
                   >
-                    {section.emoji && <span className="mr-1.5">{section.emoji}</span>}
+                    {<span className="mr-1.5">{i + 1}.</span>}
                     {section.heading}
                     {section.timestamp && (
                       <span className="ml-1.5 text-xs opacity-70">

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { YoutubeIcon, AlertCircle, X, Loader2 } from "lucide-react";
+import { YoutubeIcon, AlertCircle, X, Loader2, FileText, Upload } from "lucide-react";
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,11 +12,16 @@ import { useFolder } from '../home/SidebarLayout';
 import { useSummaryGeneration } from '@/contexts/SummaryGenerationContext';
 import { useHydration } from '@/hooks/useHydration';
 import { extractVideoId } from '@/lib/utils';
+import * as pdfjsLib from 'pdfjs-dist';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 interface FolderType {
   id: string;
   name: string;
 }
+
+type InputMode = 'youtube' | 'pdf';
 
 export function VideoInputForm() {
   const t = useTranslations();
@@ -28,12 +33,15 @@ export function VideoInputForm() {
   const { setGenerationData } = useSummaryGeneration();
   const isHydrated = useHydration();
 
+  const [inputMode, setInputMode] = useState<InputMode>('youtube');
   const [url, setUrl] = useState("");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const { user, signInWithGoogle } = useAuth();
   const [userPlan, setUserPlan] = useState<string>('free');
   const [planLoaded, setPlanLoaded] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch user plan
   useEffect(() => {
@@ -105,17 +113,31 @@ export function VideoInputForm() {
     }
   }, [isHydrated]);
 
-  const submitVideo = useCallback(async () => {
-    setError("");
-    setShowTokenLimitUpgrade(false);
-    setTrialLimitExceeded(false);
+  const extractPdfText = async (file: File): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const textParts: string[] = [];
 
-    if (!user && trialUsed) {
-      setShowLoginPrompt(true);
-      return;
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item: any) => item.str)
+        .join(' ');
+      if (pageText.trim()) {
+        textParts.push(pageText);
+      }
     }
 
-    // Check trial limit for signed-in free users (3 free trials total)
+    return textParts.join('\n\n');
+  };
+
+  const checkTrialAndPlan = useCallback((): boolean => {
+    if (!user && trialUsed) {
+      setShowLoginPrompt(true);
+      return false;
+    }
+
     if (user && planLoaded && userPlan !== 'premium' && isHydrated && typeof window !== 'undefined') {
       const storedTrialCount = localStorage.getItem('freeUserTrialCount');
       const count = storedTrialCount ? parseInt(storedTrialCount, 10) : 0;
@@ -125,9 +147,49 @@ export function VideoInputForm() {
         setError(t('trialLimitExceededError'));
         setIsLoading(false);
         openSubscriptionModal();
-        return;
+        return false;
       }
     }
+
+    return true;
+  }, [user, trialUsed, planLoaded, userPlan, isHydrated, t, openSubscriptionModal]);
+
+  const markTrialUsed = useCallback(() => {
+    if (!user && isHydrated) {
+      setTrialUsed(true);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('trialUsed', 'true');
+      }
+    } else if (user && userPlan !== 'premium' && isHydrated) {
+      if (typeof window !== 'undefined') {
+        const storedTrialCount = localStorage.getItem('freeUserTrialCount');
+        const count = storedTrialCount ? parseInt(storedTrialCount, 10) : 0;
+        const newCount = count + 1;
+        localStorage.setItem('freeUserTrialCount', newCount.toString());
+        setFreeTrialsRemaining(3 - newCount);
+      }
+    }
+  }, [user, userPlan, isHydrated]);
+
+  const navigateToSummary = useCallback((fileId: string | null, transcriptData: any) => {
+    setGenerationData({
+      transcriptData,
+      folderForSummary: activeFolder ? { id: activeFolder.id, name: activeFolder.name } : null,
+    });
+
+    if (fileId) {
+      router.push(`/${locale}/summaries/${fileId}`);
+    } else {
+      router.push(`/${locale}/summaries/preview`);
+    }
+  }, [activeFolder, locale, router, setGenerationData]);
+
+  const submitVideo = useCallback(async () => {
+    setError("");
+    setShowTokenLimitUpgrade(false);
+    setTrialLimitExceeded(false);
+
+    if (!checkTrialAndPlan()) return;
 
     setIsLoading(true);
 
@@ -137,12 +199,10 @@ export function VideoInputForm() {
         throw new Error(t('error') + ": " + t('invalidUrl'));
       }
 
-      // Get content language from LanguageSwitcher (localStorage), fallback to UI locale
       const contentLanguage = typeof window !== 'undefined'
         ? localStorage.getItem('contentLanguage') || locale
         : locale;
 
-      // Call /api/transcript with optional folderId
       const transcriptResponse = await fetch('/api/files/transcript', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -150,7 +210,7 @@ export function VideoInputForm() {
           videoId,
           locale,
           contentLanguage,
-          folderId: activeFolder?.id || null, // Pass folderId if user has a folder selected
+          folderId: activeFolder?.id || null,
         }),
       });
 
@@ -161,14 +221,7 @@ export function VideoInputForm() {
       }
 
       const transcriptDataJSON = await transcriptResponse.json();
-      const {
-        transcript,
-        title,
-        description,
-        tokenCount,
-        fetcher,
-        fileId, // New: returned if DB row was created
-      } = transcriptDataJSON;
+      const { transcript, title, description, tokenCount, fetcher, fileId } = transcriptDataJSON;
 
       // Token limit checks
       if (!user && tokenCount > 32768) {
@@ -184,57 +237,19 @@ export function VideoInputForm() {
         return;
       }
 
-      // Mark trial as used
-      if (!user && isHydrated) {
-        setTrialUsed(true);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('trialUsed', 'true');
-        }
-      } else if (user && userPlan !== 'premium' && isHydrated) {
-        // Increment trial count for free users (3 free trials total)
-        if (typeof window !== 'undefined') {
-          const storedTrialCount = localStorage.getItem('freeUserTrialCount');
-          const count = storedTrialCount ? parseInt(storedTrialCount, 10) : 0;
-          const newCount = count + 1;
-          localStorage.setItem('freeUserTrialCount', newCount.toString());
-          setFreeTrialsRemaining(3 - newCount);
-        }
-      }
+      markTrialUsed();
 
-      // If we got a fileId (logged-in user with folder), redirect directly
-      if (fileId) {
-        // Store minimal data in context for streaming
-        setGenerationData({
-          transcriptData: {
-            videoId,
-            locale,
-            contentLanguage,
-            transcriptText: transcript,
-            title: title || 'Untitled',
-            videoDescription: description || '',
-            tokenCount,
-            fetcher,
-          },
-          folderForSummary: activeFolder ? { id: activeFolder.id, name: activeFolder.name } : null,
-        });
-        router.push(`/${locale}/summaries/${fileId}`);
-      } else {
-        // Guest mode: store data in context and use "preview" as fileId
-        setGenerationData({
-          transcriptData: {
-            videoId,
-            locale,
-            contentLanguage,
-            transcriptText: transcript,
-            title: title || 'Untitled',
-            videoDescription: description || '',
-            tokenCount,
-            fetcher,
-          },
-          folderForSummary: null,
-        });
-        router.push(`/${locale}/summaries/preview`);
-      }
+      navigateToSummary(fileId, {
+        videoId,
+        locale,
+        contentLanguage,
+        transcriptText: transcript,
+        title: title || 'Untitled',
+        videoDescription: description || '',
+        tokenCount,
+        fetcher,
+        sourceType: 'youtube' as const,
+      });
 
     } catch (err: any) {
       if (!showTokenLimitUpgrade && !trialLimitExceeded) {
@@ -243,11 +258,120 @@ export function VideoInputForm() {
     } finally {
       setIsLoading(false);
     }
-  }, [url, user, trialUsed, planLoaded, userPlan, isHydrated, locale, activeFolder, t, openSubscriptionModal, setGenerationData, router, showTokenLimitUpgrade, trialLimitExceeded]);
+  }, [url, user, checkTrialAndPlan, planLoaded, userPlan, isHydrated, locale, activeFolder, t, openSubscriptionModal, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
+
+  const submitPdf = useCallback(async () => {
+    setError("");
+    setShowTokenLimitUpgrade(false);
+    setTrialLimitExceeded(false);
+
+    if (!pdfFile) {
+      setError(t('fileSummarizer.noFileSelected'));
+      return;
+    }
+
+    if (!checkTrialAndPlan()) return;
+
+    setIsLoading(true);
+
+    try {
+      // Extract text on the client side
+      const extractedText = await extractPdfText(pdfFile);
+
+      if (!extractedText || extractedText.trim().length === 0) {
+        throw new Error(t('fileSummarizer.errorNoTextExtracted'));
+      }
+
+      const contentLanguage = typeof window !== 'undefined'
+        ? localStorage.getItem('contentLanguage') || locale
+        : locale;
+
+      const formData = new FormData();
+      formData.append('file', pdfFile);
+      formData.append('extractedText', extractedText);
+      formData.append('locale', locale);
+      formData.append('contentLanguage', contentLanguage);
+      if (activeFolder?.id) {
+        formData.append('folderId', activeFolder.id);
+      }
+
+      const response = await fetch('/api/files/pdf', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to process PDF');
+      }
+
+      const data = await response.json();
+      const { transcript, title, tokenCount, fileId, pdfUrl } = data;
+
+      // Token limit checks
+      if (!user && tokenCount > 32768) {
+        setError(t('guestInputTooLong'));
+        setIsLoading(false);
+        return;
+      }
+
+      if (user && userPlan === 'free' && tokenCount > 65536) {
+        setShowTokenLimitUpgrade(true);
+        setError(t('unpaidInputTooLong'));
+        setIsLoading(false);
+        return;
+      }
+
+      markTrialUsed();
+
+      // Create an object URL for the PDF viewer (works even without Supabase Storage)
+      const localPdfUrl = pdfUrl || URL.createObjectURL(pdfFile);
+
+      navigateToSummary(fileId, {
+        videoId: '',
+        locale,
+        contentLanguage,
+        transcriptText: transcript,
+        title: title || 'Untitled PDF',
+        videoDescription: '',
+        tokenCount,
+        fetcher: 'pdf',
+        sourceType: 'pdf' as const,
+        pdfUrl: localPdfUrl,
+      });
+
+    } catch (err: any) {
+      if (!showTokenLimitUpgrade && !trialLimitExceeded) {
+        setError(err.message);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [pdfFile, user, checkTrialAndPlan, userPlan, isHydrated, locale, activeFolder, t, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    submitVideo();
+    if (inputMode === 'pdf') {
+      submitPdf();
+    } else {
+      submitVideo();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        setError('Only PDF files are supported');
+        return;
+      }
+      if (file.size > 50 * 1024 * 1024) { // 50MB limit
+        setError('File size must be under 50MB');
+        return;
+      }
+      setPdfFile(file);
+      setError('');
+    }
   };
 
   return (
@@ -275,43 +399,123 @@ export function VideoInputForm() {
           </div>
         )}
 
+      {/* Input Mode Tabs */}
+      <div className="flex gap-2 justify-center mb-2">
+        <button
+          type="button"
+          onClick={() => { setInputMode('youtube'); setError(''); }}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            inputMode === 'youtube'
+              ? 'bg-red-600 text-white'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          }`}
+        >
+          <YoutubeIcon className="h-4 w-4" />
+          YouTube
+        </button>
+        <button
+          type="button"
+          onClick={() => { setInputMode('pdf'); setError(''); }}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            inputMode === 'pdf'
+              ? 'bg-blue-600 text-white'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          }`}
+        >
+          <FileText className="h-4 w-4" />
+          PDF
+        </button>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex gap-2 items-center">
-          <div className="relative flex-1">
-            <Input
-              type="url"
-              placeholder={t('videoUrl')}
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="border-input bg-background text-foreground placeholder:text-muted-foreground border pr-10 w-full"
-              required
-              pattern="^https?://(www\.|m\.)?(youtube\.com/(watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/).+" // eslint-disable-line no-useless-escape
-            />
-            {url && (
-              <button
-                type="button"
-                onClick={() => setUrl("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1 text-gray-400 hover:text-red-500 bg-background rounded-full"
-                style={{ boxShadow: '0 0 2px rgba(0,0,0,0.05)' }}
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+        {inputMode === 'youtube' ? (
+          <div className="flex gap-2 items-center">
+            <div className="relative flex-1">
+              <Input
+                type="url"
+                placeholder={t('videoUrl')}
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                className="border-input bg-background text-foreground placeholder:text-muted-foreground border pr-10 w-full"
+                required
+                pattern="^https?://(www\.|m\.)?(youtube\.com/(watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/).+" // eslint-disable-line no-useless-escape
+              />
+              {url && (
+                <button
+                  type="button"
+                  onClick={() => setUrl("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1 text-gray-400 hover:text-red-500 bg-background rounded-full"
+                  style={{ boxShadow: '0 0 2px rgba(0,0,0,0.05)' }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <Button
+              type="submit"
+              disabled={isLoading || (!!user && !planLoaded)}
+              className="bg-red-600 hover:bg-red-700 text-white whitespace-nowrap"
+            >
+              {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <YoutubeIcon className="mr-2 h-4 w-4" />
+              )}
+              <span className="block sm:hidden">{isLoading ? t('loadingShort') : t('submitUrlShort')}</span>
+              <span className="hidden sm:block">{isLoading ? t('loading') : t('submitUrl')}</span>
+            </Button>
           </div>
-          <Button
-            type="submit"
-            disabled={isLoading || (!!user && !planLoaded)}
-            className="bg-red-600 hover:bg-red-700 text-white whitespace-nowrap"
-          >
-            {isLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <YoutubeIcon className="mr-2 h-4 w-4" />
-            )}
-            <span className="block sm:hidden">{isLoading ? t('loadingShort') : t('submitUrlShort')}</span>
-            <span className="hidden sm:block">{isLoading ? t('loading') : t('submitUrl')}</span>
-          </Button>
-        </div>
+        ) : (
+          <div className="flex gap-2 items-center">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-1 flex items-center gap-3 border border-input bg-background rounded-md px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+            >
+              {pdfFile ? (
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <FileText className="h-4 w-4 text-blue-600 shrink-0" />
+                  <span className="text-sm truncate">{pdfFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPdfFile(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                    className="ml-auto p-1 text-gray-400 hover:text-red-500 shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Upload className="h-4 w-4" />
+                  <span className="text-sm">{t('fileSummarizer.uploadLabel')}</span>
+                </div>
+              )}
+            </div>
+            <Button
+              type="submit"
+              disabled={isLoading || !pdfFile || (!!user && !planLoaded)}
+              className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
+            >
+              {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <FileText className="mr-2 h-4 w-4" />
+              )}
+              <span className="block sm:hidden">{isLoading ? t('loadingShort') : t('submitUrlShort')}</span>
+              <span className="hidden sm:block">{isLoading ? t('loading') : t('submitUrl')}</span>
+            </Button>
+          </div>
+        )}
       </form>
 
       <div>

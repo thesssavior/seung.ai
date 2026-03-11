@@ -17,6 +17,7 @@ interface ChatProps {
   contentLanguage?: string;
   fileId: string | null;
   title?: string | null;
+  sourceType?: 'youtube' | 'pdf';
 }
 
 const Chat: React.FC<ChatProps> = ({
@@ -25,7 +26,8 @@ const Chat: React.FC<ChatProps> = ({
   locale,
   contentLanguage,
   fileId,
-  title
+  title,
+  sourceType,
 }) => {
   const t = useTranslations();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -105,7 +107,8 @@ const Chat: React.FC<ChatProps> = ({
           summary,
           transcript,
           contentLanguage: contentLanguage || 'en',
-          conversationHistory: messages.slice(-10)
+          conversationHistory: messages.slice(-10),
+          sourceType: sourceType || 'youtube',
         }),
       });
 
