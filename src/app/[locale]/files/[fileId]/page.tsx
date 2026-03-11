@@ -108,7 +108,7 @@ export default function SummaryDetailPage() {
         }
 
         // Clean URL: remove ?youtube= param
-        window.history.replaceState({}, '', `/${locale}/summaries/${data.fileId || 'preview'}`);
+        window.history.replaceState({}, '', `/${locale}/files/${data.fileId || 'preview'}`);
 
         setSourceType('youtube');
         setSummary({

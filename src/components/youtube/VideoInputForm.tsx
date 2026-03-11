@@ -178,9 +178,9 @@ export function VideoInputForm() {
     });
 
     if (fileId) {
-      router.push(`/${locale}/summaries/${fileId}`);
+      router.push(`/${locale}/files/${fileId}`);
     } else {
-      router.push(`/${locale}/summaries/preview`);
+      router.push(`/${locale}/files/preview`);
     }
   }, [activeFolder, locale, router, setGenerationData]);
 
@@ -260,15 +260,10 @@ export function VideoInputForm() {
     }
   }, [url, user, checkTrialAndPlan, planLoaded, userPlan, isHydrated, locale, activeFolder, t, openSubscriptionModal, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
 
-  const submitPdf = useCallback(async () => {
+  const submitPdfWithFile = useCallback(async (file: File) => {
     setError("");
     setShowTokenLimitUpgrade(false);
     setTrialLimitExceeded(false);
-
-    if (!pdfFile) {
-      setError(t('fileSummarizer.noFileSelected'));
-      return;
-    }
 
     if (!checkTrialAndPlan()) return;
 
@@ -276,7 +271,7 @@ export function VideoInputForm() {
 
     try {
       // Extract text on the client side
-      const extractedText = await extractPdfText(pdfFile);
+      const extractedText = await extractPdfText(file);
 
       if (!extractedText || extractedText.trim().length === 0) {
         throw new Error(t('fileSummarizer.errorNoTextExtracted'));
@@ -287,7 +282,7 @@ export function VideoInputForm() {
         : locale;
 
       const formData = new FormData();
-      formData.append('file', pdfFile);
+      formData.append('file', file);
       formData.append('extractedText', extractedText);
       formData.append('locale', locale);
       formData.append('contentLanguage', contentLanguage);
@@ -324,8 +319,7 @@ export function VideoInputForm() {
 
       markTrialUsed();
 
-      // Create an object URL for the PDF viewer (works even without Supabase Storage)
-      const localPdfUrl = pdfUrl || URL.createObjectURL(pdfFile);
+      const localPdfUrl = pdfUrl || URL.createObjectURL(file);
 
       navigateToSummary(fileId, {
         videoId: '',
@@ -347,32 +341,53 @@ export function VideoInputForm() {
     } finally {
       setIsLoading(false);
     }
-  }, [pdfFile, user, checkTrialAndPlan, userPlan, isHydrated, locale, activeFolder, t, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
+  }, [user, checkTrialAndPlan, userPlan, isHydrated, locale, activeFolder, t, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputMode === 'pdf') {
-      submitPdf();
-    } else {
-      submitVideo();
-    }
+    submitVideo();
   };
+
+  const [isDragging, setIsDragging] = useState(false);
+
+  const processFile = useCallback((file: File) => {
+    if (file.type !== 'application/pdf') {
+      setError('Only PDF files are supported');
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      setError('File size must be under 50MB');
+      return;
+    }
+    setPdfFile(file);
+    setError('');
+    // Auto-submit after a tick so state is updated
+    setTimeout(() => {
+      submitPdfWithFile(file);
+    }, 0);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.type !== 'application/pdf') {
-        setError('Only PDF files are supported');
-        return;
-      }
-      if (file.size > 50 * 1024 * 1024) { // 50MB limit
-        setError('File size must be under 50MB');
-        return;
-      }
-      setPdfFile(file);
-      setError('');
-    }
+    if (file) processFile(file);
   };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  }, [processFile]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
 
   return (
     <div className="w-full max-w-4xl mx-auto py-2 space-y-2">
@@ -400,7 +415,7 @@ export function VideoInputForm() {
         )}
 
       {/* Input Mode Tabs */}
-      <div className="flex gap-2 justify-center mb-2">
+      <div className="flex gap-2 justify-center mb-4">
         <button
           type="button"
           onClick={() => { setInputMode('youtube'); setError(''); }}
@@ -427,8 +442,16 @@ export function VideoInputForm() {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {inputMode === 'youtube' ? (
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,application/pdf"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+
+      {inputMode === 'youtube' ? (
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex gap-2 items-center">
             <div className="relative flex-1">
               <Input
@@ -465,58 +488,39 @@ export function VideoInputForm() {
               <span className="hidden sm:block">{isLoading ? t('loading') : t('submitUrl')}</span>
             </Button>
           </div>
-        ) : (
-          <div className="flex gap-2 items-center">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,application/pdf"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="flex-1 flex items-center gap-3 border border-input bg-background rounded-md px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
-            >
-              {pdfFile ? (
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <FileText className="h-4 w-4 text-blue-600 shrink-0" />
-                  <span className="text-sm truncate">{pdfFile.name}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPdfFile(null);
-                      if (fileInputRef.current) fileInputRef.current.value = '';
-                    }}
-                    className="ml-auto p-1 text-gray-400 hover:text-red-500 shrink-0"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Upload className="h-4 w-4" />
-                  <span className="text-sm">{t('fileSummarizer.uploadLabel')}</span>
-                </div>
-              )}
+        </form>
+      ) : (
+        <div
+          onClick={() => !isLoading && fileInputRef.current?.click()}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          className={`relative border-2 border-dashed rounded-xl p-10 cursor-pointer transition-all ${
+            isDragging
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
+              : 'border-muted-foreground/25 hover:border-blue-400 hover:bg-muted/30'
+          } ${isLoading ? 'pointer-events-none opacity-60' : ''}`}
+        >
+          {isLoading ? (
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <p className="text-sm text-muted-foreground">{t('loading')}</p>
             </div>
-            <Button
-              type="submit"
-              disabled={isLoading || !pdfFile || (!!user && !planLoaded)}
-              className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
-            >
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <FileText className="mr-2 h-4 w-4" />
-              )}
-              <span className="block sm:hidden">{isLoading ? t('loadingShort') : t('submitUrlShort')}</span>
-              <span className="hidden sm:block">{isLoading ? t('loading') : t('submitUrl')}</span>
-            </Button>
-          </div>
-        )}
-      </form>
+          ) : (
+            <div className="flex flex-col items-center gap-3">
+              <div className="rounded-full bg-blue-100 dark:bg-blue-900/30 p-3">
+                <Upload className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-medium">
+                  Drop your PDF here or <span className="text-blue-600">browse</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">PDF up to 50MB</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div>
         {!user && (

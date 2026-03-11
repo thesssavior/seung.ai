@@ -367,7 +367,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                 {recents.length === 0 && <li className="text-xs text-muted-foreground">No recent items</li>}
                 {recents.map(r => (
                   <li key={r.id}>
-                    <Link href={`/${locale}/summaries/${r.id}`} className="truncate text-sm text-foreground hover:underline cursor-pointer block">
+                    <Link href={`/${locale}/files/${r.id}`} className="truncate text-sm text-foreground hover:underline cursor-pointer block">
                       {r.name || r.video_id}
                     </Link>
                   </li>
@@ -461,7 +461,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                                                   onMouseEnter={() => setHoveredSummaryId(s.id)}
                                                   onMouseLeave={() => setHoveredSummaryId(null)}
                                                 >
-                                                  <Link href={`/${locale}/summaries/${s.id}`} className="truncate flex-grow px-1 hover:underline cursor-pointer block">
+                                                  <Link href={`/${locale}/files/${s.id}`} className="truncate flex-grow px-1 hover:underline cursor-pointer block">
                                                     {s.name}
                                                   </Link>
                                                   {hoveredFileId === s.id && (

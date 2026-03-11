@@ -237,7 +237,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                     {results.summaries.map((summary) => (
                       <Link
                         key={summary.id}
-                        href={`/${locale}/summaries/${summary.id}`}
+                        href={`/${locale}/files/${summary.id}`}
                         onClick={handleResultClick}
                         className="block p-3 hover:bg-accent rounded-lg border border-transparent hover:border-border transition-colors"
                       >
