@@ -11,8 +11,9 @@ interface TranscriptData {
   videoDescription?: string;
   tokenCount: number;
   fetcher?: string;
-  sourceType?: 'youtube' | 'pdf';
+  sourceType?: 'youtube' | 'pdf' | 'audio';
   pdfUrl?: string | null;
+  audioUrl?: string | null;
 }
 
 interface FolderData {

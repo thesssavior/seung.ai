@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { YoutubeIcon, AlertCircle, X, Loader2, FileText, Upload } from "lucide-react";
+import { YoutubeIcon, AlertCircle, X, Loader2, FileText, Upload, Mic, Square, Headphones } from "lucide-react";
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,7 +21,7 @@ interface FolderType {
   name: string;
 }
 
-type InputMode = 'youtube' | 'pdf';
+type InputMode = 'youtube' | 'pdf' | 'audio';
 
 export function VideoInputForm() {
   const t = useTranslations();
@@ -42,6 +42,12 @@ export function VideoInputForm() {
   const [userPlan, setUserPlan] = useState<string>('free');
   const [planLoaded, setPlanLoaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch user plan
   useEffect(() => {
@@ -343,6 +349,138 @@ export function VideoInputForm() {
     }
   }, [user, checkTrialAndPlan, userPlan, isHydrated, locale, activeFolder, t, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
 
+  const submitAudioFile = useCallback(async (file: File) => {
+    setError("");
+    setShowTokenLimitUpgrade(false);
+    setTrialLimitExceeded(false);
+
+    if (!checkTrialAndPlan()) return;
+
+    setIsLoading(true);
+
+    try {
+      const contentLanguage = typeof window !== 'undefined'
+        ? localStorage.getItem('contentLanguage') || locale
+        : locale;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('locale', locale);
+      formData.append('contentLanguage', contentLanguage);
+      if (activeFolder?.id) {
+        formData.append('folderId', activeFolder.id);
+      }
+
+      const response = await fetch('/api/files/audio', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to process audio');
+      }
+
+      const data = await response.json();
+      const { transcript, title, tokenCount, fileId, audioUrl } = data;
+
+      if (!user && tokenCount > 32768) {
+        setError(t('guestInputTooLong'));
+        setIsLoading(false);
+        return;
+      }
+
+      if (user && userPlan === 'free' && tokenCount > 65536) {
+        setShowTokenLimitUpgrade(true);
+        setError(t('unpaidInputTooLong'));
+        setIsLoading(false);
+        return;
+      }
+
+      markTrialUsed();
+
+      const localAudioUrl = audioUrl || URL.createObjectURL(file);
+
+      navigateToSummary(fileId, {
+        videoId: '',
+        locale,
+        contentLanguage,
+        transcriptText: transcript,
+        title: title || 'Audio Recording',
+        videoDescription: '',
+        tokenCount,
+        fetcher: 'audio',
+        sourceType: 'audio' as const,
+        audioUrl: localAudioUrl,
+      });
+
+    } catch (err: any) {
+      if (!showTokenLimitUpgrade && !trialLimitExceeded) {
+        setError(err.message);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, checkTrialAndPlan, userPlan, isHydrated, locale, activeFolder, t, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
+
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach(track => track.stop());
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const file = new File([audioBlob], 'recording.webm', { type: 'audio/webm' });
+        submitAudioFile(file);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } catch (err: any) {
+      setError('Microphone access denied');
+    }
+  }, [submitAudioFile]);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+        recordingIntervalRef.current = null;
+      }
+    }
+  }, [isRecording]);
+
+  const handleAudioFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 100 * 1024 * 1024) {
+        setError('File size must be under 100MB');
+        return;
+      }
+      setError('');
+      submitAudioFile(file);
+    }
+  };
+
+  const formatRecordingTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     submitVideo();
@@ -440,6 +578,18 @@ export function VideoInputForm() {
           <FileText className="h-4 w-4" />
           PDF
         </button>
+        <button
+          type="button"
+          onClick={() => { setInputMode('audio'); setError(''); }}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            inputMode === 'audio'
+              ? 'bg-purple-600 text-white'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          }`}
+        >
+          <Headphones className="h-4 w-4" />
+          Audio
+        </button>
       </div>
 
       <input
@@ -447,6 +597,13 @@ export function VideoInputForm() {
         type="file"
         accept=".pdf,application/pdf"
         onChange={handleFileChange}
+        className="hidden"
+      />
+      <input
+        ref={audioInputRef}
+        type="file"
+        accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac,.webm"
+        onChange={handleAudioFileChange}
         className="hidden"
       />
 
@@ -489,7 +646,7 @@ export function VideoInputForm() {
             </Button>
           </div>
         </form>
-      ) : (
+      ) : inputMode === 'pdf' ? (
         <div
           onClick={() => !isLoading && fileInputRef.current?.click()}
           onDrop={handleDrop}
@@ -520,7 +677,74 @@ export function VideoInputForm() {
             </div>
           )}
         </div>
-      )}
+      ) : inputMode === 'audio' ? (
+        <div className="space-y-3">
+          {/* Upload audio file */}
+          <div
+            onClick={() => !isLoading && !isRecording && audioInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-xl p-6 cursor-pointer transition-all border-muted-foreground/25 hover:border-purple-400 hover:bg-muted/30 ${
+              isLoading || isRecording ? 'pointer-events-none opacity-60' : ''
+            }`}
+          >
+            {isLoading && !isRecording ? (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+                <p className="text-sm text-muted-foreground">Transcribing audio...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <div className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-3">
+                  <Upload className="h-5 w-5 text-purple-600" />
+                </div>
+                <p className="text-sm font-medium">
+                  Upload audio file
+                </p>
+                <p className="text-xs text-muted-foreground">MP3, WAV, M4A, OGG, FLAC up to 100MB</p>
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+
+          {/* Record audio */}
+          <div className="flex flex-col items-center gap-3 p-6">
+            {isRecording ? (
+              <>
+                <button
+                  type="button"
+                  onClick={stopRecording}
+                  className="rounded-full bg-red-600 p-4 text-white hover:bg-red-700 transition-colors animate-pulse"
+                >
+                  <Square className="h-6 w-6" />
+                </button>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-sm font-medium">{formatRecordingTime(recordingTime)}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Click to stop and transcribe</p>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  disabled={isLoading}
+                  className="rounded-full bg-purple-600 p-4 text-white hover:bg-purple-700 transition-colors disabled:opacity-50"
+                >
+                  <Mic className="h-6 w-6" />
+                </button>
+                <p className="text-sm font-medium">Record audio</p>
+                <p className="text-xs text-muted-foreground">Click to start recording</p>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       <div>
         {!user && (

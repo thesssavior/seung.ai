@@ -42,59 +42,41 @@ export async function POST(req: NextRequest) {
 
     // Build context from available data
     const isPdf = sourceType === 'pdf';
+    const isAudio = sourceType === 'audio';
+    const contentType = isPdf ? 'document' : isAudio ? 'audio recording' : 'video';
+    const contentTypeCapital = isPdf ? 'Document' : isAudio ? 'Audio' : 'Video';
     let contentContext = '';
 
     if (videoTitle) {
-      contentContext += `${isPdf ? 'Document' : 'Video'} Title: "${videoTitle}"\n\n`;
+      contentContext += `${contentTypeCapital} Title: "${videoTitle}"\n\n`;
     }
 
     if (summary) {
-      contentContext += `${isPdf ? 'Document' : 'Video'} Summary:\n${summary}\n\n`;
+      contentContext += `${contentTypeCapital} Summary:\n${summary}\n\n`;
     }
 
     if (transcript) {
       contentContext += `Full ${isPdf ? 'Text' : 'Transcript'}:\n${transcript}\n\n`;
     }
 
-    const systemInstruction = isPdf
-      ? `
-You are an AI assistant specialized in helping users understand and discuss document content. You have access to the document's title, summary, and full text.
+    const systemInstruction = `
+You are an AI assistant specialized in helping users understand and discuss ${contentType} content. You have access to the ${contentType}'s title, summary, and full ${isPdf ? 'text' : 'transcript'}.
 
 Your role is to:
-1. Answer questions about the document content accurately and helpfully
-2. Provide insights and explanations based on the text
+1. Answer questions about the ${contentType} content accurately and helpfully
+2. Provide insights and explanations based on the ${isPdf ? 'text' : 'transcript'}
 3. Help users understand key concepts, themes, and takeaways
-4. Reference specific parts of the document when relevant
+4. Reference specific parts of the ${contentType} when relevant
 5. Encourage deeper thinking and learning about the content
 
 Guidelines:
 - Be conversational and engaging
-- Use the document context to provide specific, relevant answers
+- Use the ${contentType} context to provide specific, relevant answers
 - If you don't have enough information, be honest about limitations
 - Respond in ${contentLanguage || 'en'} language
 - Keep responses focused (2-4 paragraphs typically)
 
-Document Context:
-${contentContext}
-`
-      : `
-You are an AI assistant specialized in helping users understand and discuss video content. You have access to the video's title, summary, and full transcript.
-
-Your role is to:
-1. Answer questions about the video content accurately and helpfully
-2. Provide insights and explanations based on the transcript
-3. Help users understand key concepts, themes, and takeaways
-4. Reference specific parts of the video when relevant
-5. Encourage deeper thinking and learning about the content
-
-Guidelines:
-- Be conversational and engaging
-- Use the video context to provide specific, relevant answers
-- If you don't have enough information, be honest about limitations
-- Respond in ${contentLanguage || 'en'} language
-- Keep responses focused (2-4 paragraphs typically)
-
-Video Context:
+${contentTypeCapital} Context:
 ${contentContext}
 `;
 

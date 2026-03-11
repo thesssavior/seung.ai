@@ -20,6 +20,8 @@ export async function POST(req: Request) {
 
     const videoTitle = title || '';
     const isPdf = sourceType === 'pdf';
+    const isAudio = sourceType === 'audio';
+    const isNonVideo = isPdf || isAudio;
 
     if (!transcriptText) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
@@ -44,13 +46,15 @@ export async function POST(req: Request) {
     const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const encoder = new TextEncoder();
 
-    const pdfSystemPrompt = `You are a document summarizer. Summarize the document content in logical order with clear, accurate, and detailed explanations. For each section, use markdown formatting: **bold** for key terms, _italics_ for emphasis, \`code\` for technical terms, and bullet or numbered lists for structured information. Be thorough but concise. No greetings or filler.`;
-    const pdfUserPrompt = `Please summarize this document:`;
+    const nonVideoSystemPrompt = isPdf
+      ? `You are a document summarizer. Summarize the document content in logical order with clear, accurate, and detailed explanations. For each section, use markdown formatting: **bold** for key terms, _italics_ for emphasis, \`code\` for technical terms, and bullet or numbered lists for structured information. Be thorough but concise. No greetings or filler.`
+      : `You are an audio content summarizer. Summarize the audio transcript in logical order with clear, accurate, and detailed explanations. For each section, use markdown formatting: **bold** for key terms, _italics_ for emphasis, \`code\` for technical terms, and bullet or numbered lists for structured information. Be thorough but concise. No greetings or filler.`;
+    const nonVideoUserPrompt = isPdf ? `Please summarize this document:` : `Please summarize this audio recording:`;
 
-    const systemPrompt = isPdf ? pdfSystemPrompt : messages.systemPrompts;
-    const userPrompt = isPdf ? pdfUserPrompt : messages.userPrompts;
-    const contentLabel = isPdf ? 'Document Title' : 'Video Title';
-    const descriptionSection = isPdf ? '' : `\n\nVideo Description: ${videoDescription}`;
+    const systemPrompt = isNonVideo ? nonVideoSystemPrompt : messages.systemPrompts;
+    const userPrompt = isNonVideo ? nonVideoUserPrompt : messages.userPrompts;
+    const contentLabel = isPdf ? 'Document Title' : isAudio ? 'Audio Title' : 'Video Title';
+    const descriptionSection = isNonVideo ? '' : `\n\nVideo Description: ${videoDescription}`;
     const textLabel = isPdf ? 'Document Text' : 'Transcript';
 
     const stream = new ReadableStream({
@@ -60,7 +64,7 @@ export async function POST(req: Request) {
           contents: `Important: Respond in ${contentLanguage} language. ${systemPrompt}\n\n${userPrompt}\n\n${contentLabel}: ${videoTitle}${descriptionSection}\n\n${textLabel}:\n${transcriptText}`,
           config: {
             responseMimeType: 'application/json',
-            responseSchema: isPdf
+            responseSchema: isNonVideo
               ? {
                   type: Type.OBJECT,
                   properties: {

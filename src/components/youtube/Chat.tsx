@@ -17,7 +17,7 @@ interface ChatProps {
   contentLanguage?: string;
   fileId: string | null;
   title?: string | null;
-  sourceType?: 'youtube' | 'pdf';
+  sourceType?: 'youtube' | 'pdf' | 'audio';
 }
 
 const Chat: React.FC<ChatProps> = ({

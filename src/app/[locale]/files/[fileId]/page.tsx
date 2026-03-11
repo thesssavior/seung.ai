@@ -10,6 +10,7 @@ import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
 import { SidebarRefreshContext, useFolder } from '@/components/home/SidebarLayout';
 import { VideoPlayer } from '@/components/youtube/VideoPlayer';
 import { PdfViewer } from '@/components/pdf/PdfViewer';
+import { AudioPlayer } from '@/components/audio/AudioPlayer';
 import { TranscriptPanel } from '@/components/youtube/TranscriptPanel';
 import Mindmap from '@/components/youtube/Mindmap';
 import Quiz from '@/components/youtube/Quiz';
@@ -40,8 +41,9 @@ export default function SummaryDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Source type tracking
-  const [sourceType, setSourceType] = useState<'youtube' | 'pdf'>('youtube');
+  const [sourceType, setSourceType] = useState<'youtube' | 'pdf' | 'audio'>('youtube');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   // Streaming state
   const [summaryText, setSummaryText] = useState('');
@@ -148,6 +150,7 @@ export default function SummaryDetailPage() {
       if (transcriptData) {
         setSourceType(transcriptData.sourceType || 'youtube');
         setPdfUrl(transcriptData.pdfUrl || null);
+        setAudioUrl(transcriptData.audioUrl || null);
         setSummary({
           id: null,
           name: transcriptData.title,
@@ -179,6 +182,7 @@ export default function SummaryDetailPage() {
         if (transcriptData) {
           setSourceType(transcriptData.sourceType || 'youtube');
           setPdfUrl(transcriptData.pdfUrl || null);
+          setAudioUrl(transcriptData.audioUrl || null);
           setSummary({
             id: fileId,
             name: transcriptData.title,
@@ -227,10 +231,15 @@ export default function SummaryDetailPage() {
 
       // Determine source type from loaded data
       if (!data.summary.video_id) {
-        setSourceType('pdf');
-        // Use description as PDF URL if it looks like a URL
-        if (data.summary.description && data.summary.description.startsWith('http')) {
-          setPdfUrl(data.summary.description);
+        const descUrl = data.summary.description || '';
+        if (descUrl.startsWith('http') && descUrl.includes('/audios/')) {
+          setSourceType('audio');
+          setAudioUrl(descUrl);
+        } else {
+          setSourceType('pdf');
+          if (descUrl.startsWith('http')) {
+            setPdfUrl(descUrl);
+          }
         }
       } else {
         setSourceType('youtube');
@@ -354,20 +363,22 @@ export default function SummaryDetailPage() {
 
   const contentLanguage = summary.content_language || locale;
   const isPdf = sourceType === 'pdf';
+  const isAudio = sourceType === 'audio';
+  const hideTranscriptTab = isPdf; // Audio keeps transcript tab, PDF doesn't
 
   // Service tabs content
   const serviceTabs = (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
       <div className="relative flex items-center justify-center px-4 py-2">
         <TabsList className={`grid ${
-          isPdf
+          hideTranscriptTab
             ? 'grid-cols-4'
             : (isFullscreen || !isDesktop ? 'grid-cols-5' : 'grid-cols-4')
         }`}>
           <TabsTrigger value="summary">{t('summaryTab')}</TabsTrigger>
           <TabsTrigger value="mindmap">{!isDesktop ? t('mindmapTabShort') : t('mindmapTab')}</TabsTrigger>
           <TabsTrigger value="quiz">{t('quizTab')}</TabsTrigger>
-          {!isPdf && (isFullscreen || !isDesktop) && (
+          {!hideTranscriptTab && (isFullscreen || !isDesktop) && (
             <TabsTrigger value="transcript">{t('transcriptTab')}</TabsTrigger>
           )}
           <TabsTrigger value="chat">{t('chatTab')}</TabsTrigger>
@@ -432,7 +443,7 @@ export default function SummaryDetailPage() {
           />
         </div>
 
-        {!isPdf && (isFullscreen || !isDesktop) && (
+        {!hideTranscriptTab && (isFullscreen || !isDesktop) && (
           <div className={`absolute inset-0 bg-background ${activeTab === 'transcript' ? 'z-10' : 'opacity-0 pointer-events-none select-none'}`}>
             <ScrollArea className="h-full p-6">
               <div className="max-w-4xl mx-auto">
@@ -498,6 +509,25 @@ export default function SummaryDetailPage() {
                     </div>
                   )}
                 </div>
+              ) : isAudio ? (
+                <>
+                  {/* Audio player */}
+                  <div className="flex-shrink-0 p-2" style={{ maxHeight: '280px' }}>
+                    {audioUrl ? (
+                      <AudioPlayer audioUrl={audioUrl} title={summary.name} />
+                    ) : (
+                      <div className="flex items-center justify-center h-40 text-muted-foreground">
+                        Audio preview not available
+                      </div>
+                    )}
+                  </div>
+                  {/* Transcript - fills remaining space */}
+                  <div className="flex-1 overflow-hidden">
+                    <ScrollArea className="h-full">
+                      <TranscriptPanel transcript={summary.transcript} />
+                    </ScrollArea>
+                  </div>
+                </>
               ) : (
                 <>
                   {/* Video player - fixed aspect ratio */}
