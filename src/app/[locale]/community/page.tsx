@@ -19,8 +19,8 @@ const CommunityPage = () => {
 
           <Tabs defaultValue="contact" className="w-full ">
             <TabsList className="grid lg:w-1/3 grid-cols-2">
-              <TabsTrigger value="contact" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t('communityPage.contactTab')}</TabsTrigger>
-              <TabsTrigger value="feature-board" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t('communityPage.featureBoardTab')}</TabsTrigger>
+              <TabsTrigger value="contact">{t('communityPage.contactTab')}</TabsTrigger>
+              <TabsTrigger value="feature-board">{t('communityPage.featureBoardTab')}</TabsTrigger>
             </TabsList>
             <TabsContent value="contact">
               <ContactSection />
