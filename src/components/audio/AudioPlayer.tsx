@@ -80,7 +80,7 @@ export function AudioPlayer({ audioUrl, title }: AudioPlayerProps) {
   };
 
   return (
-    <div className="h-full flex flex-col items-center justify-center bg-muted/30 rounded-lg p-6">
+    <div className="h-full flex flex-col items-center justify-center bg-muted/30 rounded-lg pt-12 pb-6">
       <audio ref={audioRef} src={audioUrl} preload="metadata" />
 
       <div className="rounded-full bg-primary/10 p-6 mb-6">

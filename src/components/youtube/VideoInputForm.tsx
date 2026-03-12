@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { YoutubeIcon, AlertCircle, X, Loader2, FileText, Upload, Mic, Square, Headphones, ArrowUp } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +24,98 @@ interface FolderType {
 
 type InputMode = 'youtube' | 'pdf' | 'audio';
 
+/**
+ * Trickle progress — smoothly advances toward a cap, slowing as it approaches.
+ * Call `start(label, cap)` to begin trickling toward `cap` (e.g. 90%).
+ * Call `jump(value, label)` to instantly set a new floor + optionally change label.
+ * Call `finish()` to snap to 100% then reset after a beat.
+ * Call `reset()` to clear immediately.
+ */
+function useTrickleProgress() {
+  const [progress, setProgress] = useState(0);
+  const [label, setLabel] = useState('');
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const capRef = useRef(90);
+
+  const clearTrickle = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  const startTrickle = useCallback((cap: number) => {
+    clearTrickle();
+    capRef.current = cap;
+    intervalRef.current = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= capRef.current) return prev;
+        // Slow down as we approach cap: increment shrinks proportionally
+        const remaining = capRef.current - prev;
+        const increment = Math.max(0.3, remaining * 0.04);
+        return Math.min(prev + increment, capRef.current);
+      });
+    }, 200);
+  }, [clearTrickle]);
+
+  const start = useCallback((newLabel: string, cap = 90) => {
+    setProgress(2);
+    setLabel(newLabel);
+    startTrickle(cap);
+  }, [startTrickle]);
+
+  const jump = useCallback((value: number, newLabel?: string, newCap = 90) => {
+    clearTrickle();
+    setProgress(value);
+    if (newLabel !== undefined) setLabel(newLabel);
+    capRef.current = newCap;
+    startTrickle(newCap);
+  }, [clearTrickle, startTrickle]);
+
+  const finish = useCallback(() => {
+    clearTrickle();
+    setProgress(100);
+  }, [clearTrickle]);
+
+  const reset = useCallback(() => {
+    clearTrickle();
+    setProgress(0);
+    setLabel('');
+  }, [clearTrickle]);
+
+  // Cleanup on unmount
+  useEffect(() => clearTrickle, [clearTrickle]);
+
+  return { progress: Math.round(progress), label, start, jump, finish, reset };
+}
+
+function LoadingProgressBar({ progress, label }: { progress: number; label: string }) {
+  return (
+    <div className="w-full max-w-xs mx-auto space-y-2">
+      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+        <motion.div
+          className="h-full bg-foreground rounded-full"
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+        />
+      </div>
+      <div className="flex items-center justify-center gap-2">
+        <motion.span
+          className="text-sm text-muted-foreground"
+          key={label}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          {label}
+        </motion.span>
+        <span className="text-sm text-muted-foreground tabular-nums">{progress}%</span>
+      </div>
+    </div>
+  );
+}
+
 export function VideoInputForm() {
   const t = useTranslations();
   const params = useParams();
@@ -37,6 +130,7 @@ export function VideoInputForm() {
   const [url, setUrl] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const trickle = useTrickleProgress();
   const [error, setError] = useState("");
   const { user, signInWithGoogle } = useAuth();
   const [userPlan, setUserPlan] = useState<string>('free');
@@ -198,6 +292,7 @@ export function VideoInputForm() {
     if (!checkTrialAndPlan()) return;
 
     setIsLoading(true);
+    trickle.start(t('fetchingTranscript'), 90);
 
     try {
       const videoId = extractVideoId(url);
@@ -226,6 +321,8 @@ export function VideoInputForm() {
         throw new Error(errorMessage);
       }
 
+      trickle.jump(92, t('processing'), 99);
+
       const transcriptDataJSON = await transcriptResponse.json();
       const { transcript, title, description, tokenCount, fetcher, fileId } = transcriptDataJSON;
 
@@ -244,6 +341,7 @@ export function VideoInputForm() {
       }
 
       markTrialUsed();
+      trickle.finish();
 
       navigateToSummary(fileId, {
         videoId,
@@ -263,6 +361,7 @@ export function VideoInputForm() {
       }
     } finally {
       setIsLoading(false);
+      trickle.reset();
     }
   }, [url, user, checkTrialAndPlan, planLoaded, userPlan, isHydrated, locale, activeFolder, t, openSubscriptionModal, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
 
@@ -274,6 +373,7 @@ export function VideoInputForm() {
     if (!checkTrialAndPlan()) return;
 
     setIsLoading(true);
+    trickle.start(t('extractingText'), 35);
 
     try {
       // Extract text on the client side
@@ -282,6 +382,8 @@ export function VideoInputForm() {
       if (!extractedText || extractedText.trim().length === 0) {
         throw new Error(t('fileSummarizer.errorNoTextExtracted'));
       }
+
+      trickle.jump(40, t('uploadingFile'), 65);
 
       const contentLanguage = typeof window !== 'undefined'
         ? localStorage.getItem('contentLanguage') || locale
@@ -301,6 +403,8 @@ export function VideoInputForm() {
           pdfUrl = uploadData.pdfUrl;
         }
       }
+
+      trickle.jump(68, t('processing'), 95);
 
       // Send only text + metadata to API (no file binary)
       const response = await fetch('/api/files/pdf', {
@@ -339,6 +443,7 @@ export function VideoInputForm() {
       }
 
       markTrialUsed();
+      trickle.finish();
 
       const localPdfUrl = pdfUrl || URL.createObjectURL(file);
 
@@ -361,6 +466,7 @@ export function VideoInputForm() {
       }
     } finally {
       setIsLoading(false);
+      trickle.reset();
     }
   }, [user, checkTrialAndPlan, userPlan, isHydrated, locale, activeFolder, t, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
 
@@ -372,6 +478,7 @@ export function VideoInputForm() {
     if (!checkTrialAndPlan()) return;
 
     setIsLoading(true);
+    trickle.start(t('transcribingAudio'), 90);
 
     try {
       const contentLanguage = typeof window !== 'undefined'
@@ -396,6 +503,8 @@ export function VideoInputForm() {
         throw new Error(errorData.error || 'Failed to process audio');
       }
 
+      trickle.jump(92, t('processing'), 99);
+
       const data = await response.json();
       const { transcript, title, tokenCount, fileId, audioUrl } = data;
 
@@ -413,6 +522,7 @@ export function VideoInputForm() {
       }
 
       markTrialUsed();
+      trickle.finish();
 
       const localAudioUrl = audioUrl || URL.createObjectURL(file);
 
@@ -435,6 +545,7 @@ export function VideoInputForm() {
       }
     } finally {
       setIsLoading(false);
+      trickle.reset();
     }
   }, [user, checkTrialAndPlan, userPlan, isHydrated, locale, activeFolder, t, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
 
@@ -574,42 +685,32 @@ export function VideoInputForm() {
 
       {/* Input Mode Tabs */}
       <div className="flex gap-2 justify-center mb-4">
-        <button
-          type="button"
-          onClick={() => { setInputMode('youtube'); setError(''); }}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-            inputMode === 'youtube'
-              ? 'bg-foreground text-background'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          <YoutubeIcon className="h-4 w-4" />
-          YouTube
-        </button>
-        <button
-          type="button"
-          onClick={() => { setInputMode('pdf'); setError(''); }}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-            inputMode === 'pdf'
-              ? 'bg-foreground text-background'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          <FileText className="h-4 w-4" />
-          PDF
-        </button>
-        <button
-          type="button"
-          onClick={() => { setInputMode('audio'); setError(''); }}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-            inputMode === 'audio'
-              ? 'bg-foreground text-background'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          <Headphones className="h-4 w-4" />
-          Audio
-        </button>
+        {([
+          { mode: 'youtube' as InputMode, icon: YoutubeIcon, label: 'YouTube' },
+          { mode: 'pdf' as InputMode, icon: FileText, label: 'PDF' },
+          { mode: 'audio' as InputMode, icon: Headphones, label: 'Audio' },
+        ]).map(({ mode, icon: Icon, label }) => (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => { setInputMode(mode); setError(''); }}
+            className="relative flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors"
+          >
+            {inputMode === mode && (
+              <motion.span
+                layoutId="activeTab"
+                className="absolute inset-0 bg-foreground rounded-full"
+                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              />
+            )}
+            <span className={`relative z-10 flex items-center gap-1.5 transition-colors duration-200 ${
+              inputMode === mode ? 'text-background' : 'text-muted-foreground'
+            }`}>
+              <Icon className="h-4 w-4" />
+              {label}
+            </span>
+          </button>
+        ))}
       </div>
 
       <input
@@ -627,8 +728,15 @@ export function VideoInputForm() {
         className="hidden"
       />
 
-      <div>
+      <AnimatePresence mode="wait">
       {inputMode === 'youtube' ? (
+        <motion.div
+          key="youtube"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2 }}
+        >
         <form onSubmit={handleSubmit}>
           <div className="relative flex items-center">
             <Input
@@ -662,7 +770,15 @@ export function VideoInputForm() {
             </button>
           </div>
         </form>
+        </motion.div>
       ) : inputMode === 'pdf' ? (
+        <motion.div
+          key="pdf"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2 }}
+        >
         <div
           onClick={() => !isLoading && fileInputRef.current?.click()}
           onDrop={handleDrop}
@@ -672,12 +788,11 @@ export function VideoInputForm() {
             isDragging
               ? 'border-foreground bg-muted'
               : 'border-muted-foreground/25 hover:border-foreground/50 hover:bg-muted/30'
-          } ${isLoading ? 'pointer-events-none opacity-60' : ''}`}
+          } ${isLoading ? 'pointer-events-none' : ''}`}
         >
           {isLoading ? (
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-foreground" />
-              <p className="text-sm text-muted-foreground">{t('loading')}</p>
+            <div className="flex flex-col items-center gap-3 w-full">
+              <LoadingProgressBar progress={trickle.progress} label={trickle.label} />
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
@@ -693,7 +808,15 @@ export function VideoInputForm() {
             </div>
           )}
         </div>
+        </motion.div>
       ) : inputMode === 'audio' ? (
+        <motion.div
+          key="audio"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2 }}
+        >
         <div className="space-y-3">
           {/* Upload audio file */}
           <div
@@ -705,12 +828,11 @@ export function VideoInputForm() {
               isDragging
                 ? 'border-foreground bg-muted'
                 : 'border-muted-foreground/25 hover:border-foreground/50 hover:bg-muted/30'
-            } ${isLoading || isRecording ? 'pointer-events-none opacity-60' : ''}`}
+            } ${isLoading || isRecording ? 'pointer-events-none' : ''} ${isRecording ? 'opacity-60' : ''}`}
           >
             {isLoading && !isRecording ? (
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-foreground" />
-                <p className="text-sm text-muted-foreground">Transcribing audio...</p>
+              <div className="flex flex-col items-center gap-3 w-full">
+                <LoadingProgressBar progress={trickle.progress} label={trickle.label} />
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
@@ -765,8 +887,16 @@ export function VideoInputForm() {
             )}
           </div>
         </div>
+        </motion.div>
       ) : null}
-      </div>
+      </AnimatePresence>
+
+      {/* YouTube progress bar (shown below the input) */}
+      {isLoading && inputMode === 'youtube' && (
+        <div className="mt-6">
+          <LoadingProgressBar progress={trickle.progress} label={trickle.label} />
+        </div>
+      )}
 
       <div>
         {!user && (

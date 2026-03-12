@@ -21,6 +21,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SummaryContent from '@/components/youtube/SummaryContent';
 import SummaryActionButtons from '@/components/youtube/SummaryActionButtons';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { extractVideoId } from '@/lib/utils';
 
@@ -339,8 +340,55 @@ export default function SummaryDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-full mt-[20%]">
-        <Loader2 className="h-10 w-10 animate-spin" />
+      <div className="h-[calc(100vh-4rem)] overflow-hidden">
+        {isDesktop ? (
+          <div className="flex h-full">
+            {/* Left panel skeleton */}
+            <div className="w-[46%] p-2 flex flex-col gap-2">
+              <Skeleton className="aspect-video w-full rounded-lg" />
+              <div className="flex-1 space-y-3 p-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Skeleton key={i} className="h-4 w-full" style={{ width: `${70 + Math.random() * 30}%` }} />
+                ))}
+              </div>
+            </div>
+            {/* Right panel skeleton */}
+            <div className="flex-1 flex flex-col p-4 gap-4">
+              <div className="flex justify-center">
+                <Skeleton className="h-10 w-72 rounded-full" />
+              </div>
+              <div className="space-y-4 p-2">
+                <Skeleton className="h-5 w-48" />
+                <div className="space-y-2.5">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-4" style={{ width: `${60 + Math.random() * 40}%` }} />
+                  ))}
+                </div>
+                <Skeleton className="h-5 w-40 mt-4" />
+                <div className="space-y-2.5">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-4" style={{ width: `${50 + Math.random() * 50}%` }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Mobile skeleton */
+          <div className="flex flex-col p-4 gap-4">
+            <div className="flex justify-center">
+              <Skeleton className="h-10 w-72 rounded-full" />
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-5 w-48" />
+              <div className="space-y-2.5">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Skeleton key={i} className="h-4" style={{ width: `${55 + Math.random() * 45}%` }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

@@ -26,12 +26,41 @@ interface SummaryContentProps {
   isStreaming: boolean;
 }
 
+/** Convert any HTML tags that Gemini may produce into markdown equivalents */
+function sanitizeHtmlToMarkdown(text: string): string {
+  return text
+    .replace(/<ul>\s*/gi, '\n')
+    .replace(/<\/ul>\s*/gi, '\n')
+    .replace(/<ol>\s*/gi, '\n')
+    .replace(/<\/ol>\s*/gi, '\n')
+    .replace(/<li>\s*/gi, '- ')
+    .replace(/<\/li>\s*/gi, '\n')
+    .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+    .replace(/<em>(.*?)<\/em>/gi, '_$1_')
+    .replace(/<code>(.*?)<\/code>/gi, '`$1`')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<p>\s*/gi, '\n')
+    .replace(/<\/p>\s*/gi, '\n')
+    .replace(/<\/?[a-z][^>]*>/gi, ''); // strip any remaining tags
+}
+
+function sanitizeStructured(data: StructuredSummary): StructuredSummary {
+  return {
+    intro: data.intro ? sanitizeHtmlToMarkdown(data.intro) : data.intro,
+    body: data.body?.map((s) => ({
+      ...s,
+      content: s.content ? sanitizeHtmlToMarkdown(s.content) : s.content,
+    })),
+    outro: data.outro ? sanitizeHtmlToMarkdown(data.outro) : data.outro,
+  };
+}
+
 function tryParseStructured(text: string): StructuredSummary | null {
   if (!text) return null;
   try {
     const data = parsePartialJson(text);
     if (data && typeof data === 'object' && !Array.isArray(data) && ('intro' in data || 'body' in data)) {
-      return data as StructuredSummary;
+      return sanitizeStructured(data as StructuredSummary);
     }
   } catch {}
   return null;
@@ -146,7 +175,7 @@ const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreamin
 
       {/* Streaming cursor */}
       {isStreaming && (
-        <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1" />
+        <span className="inline-block w-0.5 h-[1.1em] bg-primary ml-0.5 align-text-bottom animate-cursor-blink" />
       )}
     </article>
   );

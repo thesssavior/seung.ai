@@ -422,7 +422,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                                         {folderOpen[f.id] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                       </button>
                                       <Folder className="w-4 h-4" />
-                                      <span className="mx-1 flex-1 text-left truncate">{f.name}</span>
+                                      <span className="mx-1 flex-1 text-left truncate font-normal">{f.name}</span>
                                       {hoveredFolderId === f.id && (
                                         <div className="flex items-center ml-auto">
                                           <button
