@@ -367,7 +367,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                 {recents.length === 0 && <li className="text-xs text-muted-foreground">No recent items</li>}
                 {recents.map(r => (
                   <li key={r.id}>
-                    <Link href={`/${locale}/files/${r.id}`} className="truncate text-sm text-foreground hover:underline cursor-pointer block">
+                    <Link href={`/${locale}/files/${r.id}`} className="truncate text-sm text-foreground hover:underline cursor-pointer block px-1 py-0.5 rounded hover:bg-accent transition-all duration-150 hover:translate-x-0.5">
                       {r.name || r.video_id}
                     </Link>
                   </li>
@@ -409,7 +409,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                                     <div
                                       ref={folderDropProvided.innerRef}
                                       {...folderDropProvided.droppableProps}
-                                      className={`flex items-center gap-1 font-semibold text-foreground group ${activeFolder?.id === f.id || folderDropSnapshot.isDraggingOver ? 'bg-accent rounded px-1' : 'px-1'}`}
+                                      className={`flex items-center gap-1 font-semibold text-foreground group transition-all duration-150 hover:translate-x-0.5 ${activeFolder?.id === f.id || folderDropSnapshot.isDraggingOver ? 'bg-accent rounded px-1' : 'px-1 hover:bg-accent/50 rounded'}`}
                                       onClick={() => setActiveFolder(f)}
                                       onMouseEnter={() => setHoveredFolderId(f.id)}
                                       onMouseLeave={() => setHoveredFolderId(null)}
@@ -457,7 +457,7 @@ export default function Sidebar({ refreshKey }: { refreshKey?: number }) {
                                                   ref={summaryDragProvided.innerRef}
                                                   {...summaryDragProvided.draggableProps}
                                                   {...summaryDragProvided.dragHandleProps}
-                                                  className="flex items-center justify-between text-sm text-foreground hover:bg-accent rounded group"
+                                                  className="flex items-center justify-between text-sm text-foreground hover:bg-accent rounded group transition-all duration-150 hover:translate-x-0.5"
                                                   onMouseEnter={() => setHoveredSummaryId(s.id)}
                                                   onMouseLeave={() => setHoveredSummaryId(null)}
                                                 >

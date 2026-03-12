@@ -8,18 +8,20 @@ import { HelpCircle, LogIn, User } from 'lucide-react';
 import { Logo } from '@/components/ui/logo';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useParams } from "next/navigation";
+import { useSidebarOpen } from './SidebarLayout';
 
 export function Navbar() {
   const t = useTranslations();
   const { user, signInWithGoogle } = useAuth();
   const params = useParams();
   const locale = params.locale as string;
+  const sidebarOpen = useSidebarOpen();
 
   return (
     <>
       <nav className="bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-14 items-center justify-between px-4 sm:px-12">
-          <Link href={`/${locale}`} className="flex items-center space-x-2 ml-12 sm:ml-6">
+          <Link href={`/${locale}`} className={`flex items-center space-x-2 ml-12 sm:ml-6 ${sidebarOpen ? 'invisible' : ''}`}>
             <Logo width={92} height={92} small={true} />
           </Link>
 
