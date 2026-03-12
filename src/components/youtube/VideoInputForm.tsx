@@ -514,8 +514,13 @@ export function VideoInputForm() {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
-  }, [processFile]);
+    if (!file) return;
+    if (inputMode === 'audio') {
+      submitAudioFile(file);
+    } else {
+      processFile(file);
+    }
+  }, [processFile, submitAudioFile, inputMode]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -682,9 +687,14 @@ export function VideoInputForm() {
           {/* Upload audio file */}
           <div
             onClick={() => !isLoading && !isRecording && audioInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-6 cursor-pointer transition-all border-muted-foreground/25 hover:border-purple-400 hover:bg-muted/30 ${
-              isLoading || isRecording ? 'pointer-events-none opacity-60' : ''
-            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            className={`border-2 border-dashed rounded-xl p-6 cursor-pointer transition-all ${
+              isDragging
+                ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/20'
+                : 'border-muted-foreground/25 hover:border-purple-400 hover:bg-muted/30'
+            } ${isLoading || isRecording ? 'pointer-events-none opacity-60' : ''}`}
           >
             {isLoading && !isRecording ? (
               <div className="flex flex-col items-center gap-3">

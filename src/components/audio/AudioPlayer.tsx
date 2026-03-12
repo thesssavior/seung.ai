@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { Play, Pause, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useVideoPlayerOptional } from '@/contexts/VideoPlayerContext';
 
 interface AudioPlayerProps {
   audioUrl: string;
@@ -14,25 +15,43 @@ export function AudioPlayer({ audioUrl, title }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const playerContext = useVideoPlayerOptional();
+
+  // Register audio element with the player context so timestamp links can seek
+  useEffect(() => {
+    if (playerContext) {
+      playerContext.registerAudioElement(audioRef.current);
+      return () => playerContext.registerAudioElement(null);
+    }
+  }, [playerContext]);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const onTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+      playerContext?.updateTime(audio.currentTime);
+    };
     const onLoadedMetadata = () => setDuration(audio.duration);
     const onEnded = () => setIsPlaying(false);
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
 
     audio.addEventListener('timeupdate', onTimeUpdate);
     audio.addEventListener('loadedmetadata', onLoadedMetadata);
     audio.addEventListener('ended', onEnded);
+    audio.addEventListener('play', onPlay);
+    audio.addEventListener('pause', onPause);
 
     return () => {
       audio.removeEventListener('timeupdate', onTimeUpdate);
       audio.removeEventListener('loadedmetadata', onLoadedMetadata);
       audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('play', onPlay);
+      audio.removeEventListener('pause', onPause);
     };
-  }, []);
+  }, [playerContext]);
 
   const togglePlay = () => {
     const audio = audioRef.current;

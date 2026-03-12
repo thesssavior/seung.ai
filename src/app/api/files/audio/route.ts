@@ -27,14 +27,40 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Unsupported audio format: ${file.type}` }, { status: 400 });
     }
 
-    // Transcribe with OpenAI Whisper
+    // Transcribe with OpenAI Whisper (verbose_json for segment timestamps)
+    const langMap: Record<string, string> = { ko: 'ko', es: 'es', ja: 'ja', zh: 'zh', fr: 'fr', de: 'de' };
     const transcription = await openai.audio.transcriptions.create({
       file: file,
       model: 'whisper-1',
-      language: contentLanguage === 'ko' ? 'ko' : contentLanguage === 'es' ? 'es' : contentLanguage === 'ja' ? 'ja' : undefined,
+      response_format: 'verbose_json',
+      timestamp_granularities: ['segment'],
+      language: langMap[contentLanguage] || undefined,
     });
 
-    const transcriptText = transcription.text;
+    // Format transcript with [MM:SS] timestamps, merging every 4 segments into one chunk
+    const segments = (transcription as any).segments;
+    let transcriptText: string;
+    if (segments && Array.isArray(segments) && segments.length > 0) {
+      const merged: { start: number; text: string }[] = [];
+      for (let i = 0; i < segments.length; i++) {
+        if (i % 4 === 0) {
+          merged.push({ start: Math.floor(segments[i].start), text: (segments[i].text || '').trim() });
+        } else {
+          merged[merged.length - 1].text += ' ' + (segments[i].text || '').trim();
+        }
+      }
+      transcriptText = merged.map((chunk) => {
+        const hours = Math.floor(chunk.start / 3600);
+        const minutes = Math.floor((chunk.start % 3600) / 60);
+        const seconds = chunk.start % 60;
+        const timestamp = hours > 0
+          ? `[${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}]`
+          : `[${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}]`;
+        return `${timestamp} ${chunk.text}`;
+      }).join('\n');
+    } else {
+      transcriptText = (transcription as any).text || '';
+    }
 
     if (!transcriptText || transcriptText.trim().length === 0) {
       return NextResponse.json({ error: 'No speech detected in the audio' }, { status: 400 });

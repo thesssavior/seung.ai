@@ -6,6 +6,7 @@ interface VideoPlayerContextType {
   currentTime: number;
   seekTo: (time: number) => void;
   updateTime: (time: number) => void;
+  registerAudioElement: (el: HTMLAudioElement | null) => void;
 }
 
 const VideoPlayerContext = createContext<VideoPlayerContextType | undefined>(undefined);
@@ -16,6 +17,11 @@ interface VideoPlayerProviderProps {
 
 export function VideoPlayerProvider({ children }: VideoPlayerProviderProps) {
   const [currentTime, setCurrentTime] = useState(0);
+  const audioElementRef = React.useRef<HTMLAudioElement | null>(null);
+
+  const registerAudioElement = useCallback((el: HTMLAudioElement | null) => {
+    audioElementRef.current = el;
+  }, []);
 
   const updateTime = useCallback((time: number) => {
     setCurrentTime(time);
@@ -23,6 +29,14 @@ export function VideoPlayerProvider({ children }: VideoPlayerProviderProps) {
 
   const seekTo = useCallback((time: number) => {
     setCurrentTime(time);
+
+    // If an audio element is registered, seek it directly
+    const audio = audioElementRef.current;
+    if (audio) {
+      audio.currentTime = Math.floor(time);
+      audio.play().catch(() => {});
+      return;
+    }
 
     // Try to use YouTube iframe API first (if available)
     const iframe = document.getElementById('youtube-player') as HTMLIFrameElement;
@@ -65,7 +79,7 @@ export function VideoPlayerProvider({ children }: VideoPlayerProviderProps) {
   }, []);
 
   return (
-    <VideoPlayerContext.Provider value={{ currentTime, seekTo, updateTime }}>
+    <VideoPlayerContext.Provider value={{ currentTime, seekTo, updateTime, registerAudioElement }}>
       {children}
     </VideoPlayerContext.Provider>
   );

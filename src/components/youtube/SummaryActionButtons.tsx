@@ -121,7 +121,7 @@ export default function SummaryActionButtons({
 
   return (
     <>
-      <div className="not-prose flex items-center gap-1 mt-4 pt-4 border-t">
+      <div className="not-prose flex items-center gap-1 mt-4 pt-4">
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCopy} title={t("copySummary")}>
           <Copy className="h-4 w-4" />
         </Button>
