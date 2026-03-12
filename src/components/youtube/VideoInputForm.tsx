@@ -287,18 +287,33 @@ export function VideoInputForm() {
         ? localStorage.getItem('contentLanguage') || locale
         : locale;
 
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('extractedText', extractedText);
-      formData.append('locale', locale);
-      formData.append('contentLanguage', contentLanguage);
-      if (activeFolder?.id) {
-        formData.append('folderId', activeFolder.id);
+      // Upload PDF to storage via server endpoint
+      let pdfUrl: string | null = null;
+      if (user) {
+        const uploadForm = new FormData();
+        uploadForm.append('file', file);
+        const uploadRes = await fetch('/api/files/pdf/upload', {
+          method: 'POST',
+          body: uploadForm,
+        });
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json();
+          pdfUrl = uploadData.pdfUrl;
+        }
       }
 
+      // Send only text + metadata to API (no file binary)
       const response = await fetch('/api/files/pdf', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          extractedText,
+          fileName: file.name,
+          locale,
+          contentLanguage,
+          folderId: activeFolder?.id || null,
+          pdfUrl,
+        }),
       });
 
       if (!response.ok) {
@@ -307,7 +322,7 @@ export function VideoInputForm() {
       }
 
       const data = await response.json();
-      const { transcript, title, tokenCount, fileId, pdfUrl } = data;
+      const { transcript, title, tokenCount, fileId } = data;
 
       // Token limit checks
       if (!user && tokenCount > 32768) {

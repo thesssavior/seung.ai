@@ -5,54 +5,16 @@ import { supabase } from '@/lib/supabaseClient';
 
 export async function POST(req: Request) {
   try {
-    const formData = await req.formData();
-    const file = formData.get('file') as File | null;
-    const locale = (formData.get('locale') as string) || 'en';
-    const contentLanguage = (formData.get('contentLanguage') as string) || locale;
-    const folderId = formData.get('folderId') as string | null;
-    const extractedText = formData.get('extractedText') as string | null;
-
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-    }
-
-    if (file.type !== 'application/pdf') {
-      return NextResponse.json({ error: 'Only PDF files are supported' }, { status: 400 });
-    }
+    const { extractedText, fileName, locale = 'en', contentLanguage, folderId, pdfUrl } = await req.json();
 
     if (!extractedText || extractedText.trim().length === 0) {
       return NextResponse.json({ error: 'No text could be extracted from the PDF' }, { status: 400 });
     }
 
-    const title = file.name.replace(/\.pdf$/i, '') || 'Untitled PDF';
+    const title = (fileName || 'Untitled.pdf').replace(/\.pdf$/i, '') || 'Untitled PDF';
     const tokenCount = calculateTokenCount(extractedText);
 
     const user = await getUser();
-
-    // Upload PDF to Supabase Storage
-    let pdfUrl: string | null = null;
-    if (user?.id) {
-      const fileBuffer = await file.arrayBuffer();
-      const fileName = `${user.id}/${Date.now()}_${file.name}`;
-
-      const { error: uploadError } = await supabase
-        .storage
-        .from('pdfs')
-        .upload(fileName, fileBuffer, {
-          contentType: 'application/pdf',
-          upsert: false,
-        });
-
-      if (uploadError) {
-        console.error('PDF upload error:', uploadError.message);
-      } else {
-        const { data: urlData } = supabase
-          .storage
-          .from('pdfs')
-          .getPublicUrl(fileName);
-        pdfUrl = urlData.publicUrl;
-      }
-    }
 
     // Create DB record if user is logged in with a folder
     let fileId = null;
@@ -92,7 +54,7 @@ export async function POST(req: Request) {
       tokenCount,
       fetcher: 'pdf',
       fileId,
-      pdfUrl,
+      pdfUrl: pdfUrl || null,
     }, { status: 200 });
 
   } catch (error: any) {
