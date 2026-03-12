@@ -303,9 +303,13 @@
     "deleteSelected": "Hapus yang dipilih"
   },
   "Chat": {
-    "title": "Tanya tentang video",
-    "description": "Ajukan pertanyaan tentang konten, minta penjelasan, atau jelajahi konsep utama.",
-    "noContent": "Konten video diperlukan untuk memulai percakapan.",
+    "title_youtube": "Tanya tentang video",
+    "title_pdf": "Tanya tentang dokumen",
+    "title_audio": "Tanya tentang audio",
+    "description_youtube": "Ajukan pertanyaan tentang video, minta penjelasan, atau jelajahi konsep utama.",
+    "description_pdf": "Ajukan pertanyaan tentang dokumen, minta penjelasan, atau jelajahi konsep utama.",
+    "description_audio": "Ajukan pertanyaan tentang audio, minta penjelasan, atau jelajahi konsep utama.",
+    "noContent": "Konten diperlukan untuk memulai percakapan.",
     "placeholder": "Ajukan pertanyaan..."
   },
   "Quiz": {

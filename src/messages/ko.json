@@ -307,9 +307,13 @@
     "deleteSelected": "선택 삭제"
   },
   "Chat": {
-    "title": "영상에 대해 질문하기",
-    "description": "내용에 대해 질문하고 핵심 개념을 탐구해 보세요.",
-    "noContent": "대화를 시작하려면 영상 콘텐츠가 필요합니다.",
+    "title_youtube": "영상에 대해 질문하기",
+    "title_pdf": "문서에 대해 질문하기",
+    "title_audio": "오디오에 대해 질문하기",
+    "description_youtube": "영상 내용에 대해 질문하고 핵심 개념을 탐구해 보세요.",
+    "description_pdf": "문서 내용에 대해 질문하고 핵심 개념을 탐구해 보세요.",
+    "description_audio": "오디오 내용에 대해 질문하고 핵심 개념을 탐구해 보세요.",
+    "noContent": "대화를 시작하려면 콘텐츠가 필요합니다.",
     "placeholder": "질문을 입력하세요..."
   },
   "Quiz": {

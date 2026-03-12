@@ -303,9 +303,13 @@
     "deleteSelected": "Elimina selezionati"
   },
   "Chat": {
-    "title": "Chiedi informazioni sul video",
-    "description": "Fai domande sul contenuto, chiedi spiegazioni o esplora i concetti chiave.",
-    "noContent": "Il contenuto del video è necessario per avviare una conversazione.",
+    "title_youtube": "Chiedi informazioni sul video",
+    "title_pdf": "Chiedi informazioni sul documento",
+    "title_audio": "Chiedi informazioni sull'audio",
+    "description_youtube": "Fai domande sul video, chiedi spiegazioni o esplora i concetti chiave.",
+    "description_pdf": "Fai domande sul documento, chiedi spiegazioni o esplora i concetti chiave.",
+    "description_audio": "Fai domande sull'audio, chiedi spiegazioni o esplora i concetti chiave.",
+    "noContent": "Il contenuto è necessario per avviare una conversazione.",
     "placeholder": "Fai una domanda..."
   },
   "Quiz": {

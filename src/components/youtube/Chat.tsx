@@ -195,9 +195,11 @@ const Chat: React.FC<ChatProps> = ({
         {messages.length === 0 ? (
           <div className="flex flex-col items-center pt-36 h-full text-center px-4">
             <MessageCircle className="h-10 w-10 text-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">{t('Chat.title')}</h3>
+            <h3 className="text-lg font-medium mb-2">
+              {t(`Chat.title_${sourceType || 'youtube'}`)}
+            </h3>
             <p className="text-sm text-muted-foreground max-w-sm">
-              {t('Chat.description')}
+              {t(`Chat.description_${sourceType || 'youtube'}`)}
             </p>
           </div>
         ) : (

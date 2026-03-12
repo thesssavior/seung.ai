@@ -303,9 +303,13 @@
     "deleteSelected": "Delete selected"
   },
   "Chat": {
-    "title": "Ask about the video",
-    "description": "Ask questions about the content, request explanations, or explore key concepts.",
-    "noContent": "Video content is required to start a conversation.",
+    "title_youtube": "Ask about the video",
+    "title_pdf": "Ask about the document",
+    "title_audio": "Ask about the audio",
+    "description_youtube": "Ask questions about the video, request explanations, or explore key concepts.",
+    "description_pdf": "Ask questions about the document, request explanations, or explore key concepts.",
+    "description_audio": "Ask questions about the audio, request explanations, or explore key concepts.",
+    "noContent": "Content is required to start a conversation.",
     "placeholder": "Ask a question..."
   },
   "Quiz": {

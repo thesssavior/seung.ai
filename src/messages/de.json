@@ -303,9 +303,13 @@
     "deleteSelected": "Auswahl löschen"
   },
   "Chat": {
-    "title": "Fragen zum Video",
-    "description": "Stelle Fragen zum Inhalt, lass dir Themen erklären oder vertiefe zentrale Konzepte.",
-    "noContent": "Videoinhalt nötig, um den Chat zu starten.",
+    "title_youtube": "Fragen zum Video",
+    "title_pdf": "Fragen zum Dokument",
+    "title_audio": "Fragen zum Audio",
+    "description_youtube": "Stelle Fragen zum Video, lass dir Themen erklären oder vertiefe zentrale Konzepte.",
+    "description_pdf": "Stelle Fragen zum Dokument, lass dir Themen erklären oder vertiefe zentrale Konzepte.",
+    "description_audio": "Stelle Fragen zum Audio, lass dir Themen erklären oder vertiefe zentrale Konzepte.",
+    "noContent": "Inhalt nötig, um den Chat zu starten.",
     "placeholder": "Frage stellen..."
   },
   "Quiz": {
