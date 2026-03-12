@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { YoutubeIcon, AlertCircle, X, Loader2, FileText, Upload, Mic, Square, Headphones } from "lucide-react";
+import { YoutubeIcon, AlertCircle, X, Loader2, FileText, Upload, Mic, Square, Headphones, ArrowUp } from "lucide-react";
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from "@/contexts/AuthContext";
@@ -564,7 +564,7 @@ export function VideoInputForm() {
           onClick={() => { setInputMode('youtube'); setError(''); }}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
             inputMode === 'youtube'
-              ? 'bg-red-600 text-white'
+              ? 'bg-foreground text-background'
               : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
@@ -576,7 +576,7 @@ export function VideoInputForm() {
           onClick={() => { setInputMode('pdf'); setError(''); }}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
             inputMode === 'pdf'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-foreground text-background'
               : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
@@ -588,7 +588,7 @@ export function VideoInputForm() {
           onClick={() => { setInputMode('audio'); setError(''); }}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
             inputMode === 'audio'
-              ? 'bg-purple-600 text-white'
+              ? 'bg-foreground text-background'
               : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
@@ -612,43 +612,39 @@ export function VideoInputForm() {
         className="hidden"
       />
 
+      <div>
       {inputMode === 'youtube' ? (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex gap-2 items-center">
-            <div className="relative flex-1">
-              <Input
-                type="url"
-                placeholder={t('videoUrl')}
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="border-input bg-background text-foreground placeholder:text-muted-foreground border pr-10 w-full"
-                required
-                pattern="^https?://(www\.|m\.)?(youtube\.com/(watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/).+" // eslint-disable-line no-useless-escape
-              />
-              {url && (
-                <button
-                  type="button"
-                  onClick={() => setUrl("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1 text-gray-400 hover:text-red-500 bg-background rounded-full"
-                  style={{ boxShadow: '0 0 2px rgba(0,0,0,0.05)' }}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-            <Button
+        <form onSubmit={handleSubmit}>
+          <div className="relative flex items-center">
+            <Input
+              type="url"
+              placeholder={t('videoUrl')}
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="border-input bg-background text-foreground placeholder:text-muted-foreground border pr-20 w-full rounded-full h-12 pl-4"
+              required
+              pattern="^https?://(www\.|m\.)?(youtube\.com/(watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/).+" // eslint-disable-line no-useless-escape
+            />
+            {url && (
+              <button
+                type="button"
+                onClick={() => setUrl("")}
+                className="absolute right-12 top-1/2 -translate-y-1/2 z-10 p-1 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+            <button
               type="submit"
               disabled={isLoading || (!!user && !planLoaded)}
-              className="bg-red-600 hover:bg-red-700 text-white whitespace-nowrap"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-foreground text-background flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-40"
             >
               {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <YoutubeIcon className="mr-2 h-4 w-4" />
+                <ArrowUp className="h-4 w-4" />
               )}
-              <span className="block sm:hidden">{isLoading ? t('loadingShort') : t('submitUrlShort')}</span>
-              <span className="hidden sm:block">{isLoading ? t('loading') : t('submitUrl')}</span>
-            </Button>
+            </button>
           </div>
         </form>
       ) : inputMode === 'pdf' ? (
@@ -657,25 +653,25 @@ export function VideoInputForm() {
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          className={`relative border-2 border-dashed rounded-xl p-10 cursor-pointer transition-all ${
+          className={`relative border-2 border-dashed rounded-xl p-10 cursor-pointer ${
             isDragging
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
-              : 'border-muted-foreground/25 hover:border-blue-400 hover:bg-muted/30'
+              ? 'border-foreground bg-muted'
+              : 'border-muted-foreground/25 hover:border-foreground/50 hover:bg-muted/30'
           } ${isLoading ? 'pointer-events-none opacity-60' : ''}`}
         >
           {isLoading ? (
             <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-foreground" />
               <p className="text-sm text-muted-foreground">{t('loading')}</p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
-              <div className="rounded-full bg-blue-100 dark:bg-blue-900/30 p-3">
-                <Upload className="h-6 w-6 text-blue-600" />
+              <div className="rounded-full bg-muted p-3">
+                <Upload className="h-6 w-6 text-foreground" />
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium">
-                  Drop your PDF here or <span className="text-blue-600">browse</span>
+                  Drop your PDF here or <span className="text-foreground font-semibold">browse</span>
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">PDF up to 50MB</p>
               </div>
@@ -690,21 +686,21 @@ export function VideoInputForm() {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            className={`border-2 border-dashed rounded-xl p-6 cursor-pointer transition-all ${
+            className={`border-2 border-dashed rounded-xl p-6 cursor-pointer ${
               isDragging
-                ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/20'
-                : 'border-muted-foreground/25 hover:border-purple-400 hover:bg-muted/30'
+                ? 'border-foreground bg-muted'
+                : 'border-muted-foreground/25 hover:border-foreground/50 hover:bg-muted/30'
             } ${isLoading || isRecording ? 'pointer-events-none opacity-60' : ''}`}
           >
             {isLoading && !isRecording ? (
               <div className="flex flex-col items-center gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-foreground" />
                 <p className="text-sm text-muted-foreground">Transcribing audio...</p>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
-                <div className="rounded-full bg-purple-100 dark:bg-purple-900/30 p-3">
-                  <Upload className="h-5 w-5 text-purple-600" />
+                <div className="rounded-full bg-muted p-3">
+                  <Upload className="h-5 w-5 text-foreground" />
                 </div>
                 <p className="text-sm font-medium">
                   Upload audio file
@@ -728,12 +724,12 @@ export function VideoInputForm() {
                 <button
                   type="button"
                   onClick={stopRecording}
-                  className="rounded-full bg-red-600 p-4 text-white hover:bg-red-700 transition-colors animate-pulse"
+                  className="rounded-full bg-foreground p-4 text-background hover:opacity-90 transition-colors animate-pulse"
                 >
                   <Square className="h-6 w-6" />
                 </button>
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                  <div className="h-2 w-2 rounded-full bg-foreground animate-pulse" />
                   <span className="text-sm font-medium">{formatRecordingTime(recordingTime)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">Click to stop and transcribe</p>
@@ -744,7 +740,7 @@ export function VideoInputForm() {
                   type="button"
                   onClick={startRecording}
                   disabled={isLoading}
-                  className="rounded-full bg-purple-600 p-4 text-white hover:bg-purple-700 transition-colors disabled:opacity-50"
+                  className="rounded-full bg-foreground p-4 text-background hover:opacity-90 transition-colors disabled:opacity-50"
                 >
                   <Mic className="h-6 w-6" />
                 </button>
@@ -755,6 +751,7 @@ export function VideoInputForm() {
           </div>
         </div>
       ) : null}
+      </div>
 
       <div>
         {!user && (
