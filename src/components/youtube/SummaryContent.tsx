@@ -7,6 +7,7 @@ import { parse as parsePartialJson } from 'partial-json';
 import { useVideoPlayerOptional } from '@/contexts/VideoPlayerContext';
 import { timeStringToSeconds, formatTimeString } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
+import posthog from 'posthog-js';
 
 interface SummarySection {
   emoji?: string;
@@ -77,6 +78,7 @@ const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreamin
   const handleTimestampClick = useCallback((timestamp: string) => {
     if (videoPlayer) {
       videoPlayer.seekTo(timeStringToSeconds(timestamp));
+      posthog.capture('summary_timestamp_clicked', { timestamp });
     }
   }, [videoPlayer]);
 

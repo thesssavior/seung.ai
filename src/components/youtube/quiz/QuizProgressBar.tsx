@@ -27,7 +27,7 @@ const QuizProgressBar: React.FC<QuizProgressBarProps> = ({ current, total, tag }
           </Badge>
         )}
       </div>
-      <Progress value={progress} className="h-1.5 [&>div]:bg-green-500" />
+      <Progress value={progress} className="h-1.5 [&>div]:bg-green-500 [&>div]:rounded-full" />
     </div>
   );
 };

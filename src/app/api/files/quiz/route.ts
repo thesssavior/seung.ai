@@ -42,6 +42,7 @@ Rules:
 - For true_false: options must be ["True", "False"]. correctAnswer must be "True" or "False".
 - For free_response: do not include options. correctAnswer is a concise model answer.
 - tag: a short topic/category label for the question (2-4 words).
+- explanation: 1-2 sentence explanation of why the correct answer is correct.
 - Questions should be thought-provoking and varied.`;
 
     const prompt = `Important: Respond in ${contentLanguage || 'ko'} language.
@@ -70,8 +71,9 @@ ${transcript}`;
                   options: { type: Type.ARRAY, items: { type: Type.STRING } },
                   correctAnswer: { type: Type.STRING },
                   tag: { type: Type.STRING },
+                  explanation: { type: Type.STRING },
                 },
-                required: ['question', 'type', 'correctAnswer', 'tag'],
+                required: ['question', 'type', 'correctAnswer', 'tag', 'explanation'],
               },
             },
           },
@@ -103,22 +105,30 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { fileId, quiz } = await req.json();
-    console.log('[Quiz API PATCH] Received:', { fileId, userId: user.id, quizLength: quiz?.length });
+    const { fileId, quiz, quizResults } = await req.json();
+    console.log('[Quiz API PATCH] Received:', { fileId, userId: user.id, quizLength: quiz?.length, hasResults: !!quizResults });
 
     if (!fileId) {
       console.log('[Quiz API PATCH] Missing fileId');
       return NextResponse.json({ error: 'Summary ID is required' }, { status: 400 });
     }
 
-    if (!quiz || !Array.isArray(quiz)) {
-      console.log('[Quiz API PATCH] Missing/invalid quiz data');
-      return NextResponse.json({ error: 'Quiz data is required' }, { status: 400 });
+    if (!quiz && !quizResults) {
+      console.log('[Quiz API PATCH] Missing quiz data and quiz results');
+      return NextResponse.json({ error: 'Quiz data or quiz results required' }, { status: 400 });
+    }
+
+    const updatePayload: Record<string, any> = {};
+    if (quiz && Array.isArray(quiz)) {
+      updatePayload.quiz = quiz;
+    }
+    if (quizResults) {
+      updatePayload.quiz_results = quizResults;
     }
 
     const { data, error } = await supabase
       .from('files')
-      .update({ quiz: quiz })
+      .update(updatePayload)
       .eq('id', fileId)
       .eq('user_id', user.id)
       .select('id, video_id')

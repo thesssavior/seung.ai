@@ -3,6 +3,7 @@
 import React from 'react';
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 interface TrueFalseQuestionProps {
   question: string;
@@ -10,6 +11,7 @@ interface TrueFalseQuestionProps {
   selectedAnswer: string | null;
   checked: boolean;
   onSelect: (answer: string) => void;
+  explanation?: string;
 }
 
 const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
@@ -18,7 +20,9 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
   selectedAnswer,
   checked,
   onSelect,
+  explanation,
 }) => {
+  const t = useTranslations('Quiz');
   const options = ['True', 'False'];
 
   return (
@@ -60,6 +64,12 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
           );
         })}
       </div>
+      {checked && explanation && (
+        <div className="pt-3">
+          <p className="text-xs font-medium text-foreground mb-0.5">{t('explanation')}</p>
+          <p className="text-sm text-muted-foreground">{explanation}</p>
+        </div>
+      )}
     </div>
   );
 };

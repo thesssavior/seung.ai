@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Loader2, Send, MessageCircle, ArrowUp } from 'lucide-react';
+import posthog from 'posthog-js';
 
 interface ChatMessage {
   id: string;
@@ -92,6 +93,12 @@ const Chat: React.FC<ChatProps> = ({
     setInputMessage('');
     setIsLoading(true);
     setError(null);
+
+    posthog.capture('chat_message_sent', {
+      source_type: sourceType || 'youtube',
+      message_length: userMessage.content.length,
+      is_first_message: messages.length === 0,
+    });
 
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';

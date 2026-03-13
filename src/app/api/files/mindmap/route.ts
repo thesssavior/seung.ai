@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
 Rules:
 - Output ONLY a markdown heading hierarchy (# ## ### ####). No other text, no code fences, no explanation.
-- Root heading (#) may include one emoji. All deeper levels (## ### ####) must have NO emojis.
+- Every heading must start with one relevant emoji.
 - Concise labels (max 4 words per heading)
 - The top-level heading (#) is the root topic
 - Maximum depth: 4 levels (# to ####)

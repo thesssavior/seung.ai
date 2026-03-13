@@ -14,6 +14,7 @@ import { useSummaryGeneration } from '@/contexts/SummaryGenerationContext';
 import { useHydration } from '@/hooks/useHydration';
 import { extractVideoId } from '@/lib/utils';
 import * as pdfjsLib from 'pdfjs-dist';
+import posthog from 'posthog-js';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
@@ -343,6 +344,11 @@ export function VideoInputForm() {
       markTrialUsed();
       trickle.finish();
 
+      posthog.capture('file_uploaded', {
+        upload_type: 'youtube',
+        token_count: tokenCount,
+      });
+
       navigateToSummary(fileId, {
         videoId,
         locale,
@@ -445,6 +451,11 @@ export function VideoInputForm() {
       markTrialUsed();
       trickle.finish();
 
+      posthog.capture('file_uploaded', {
+        upload_type: 'pdf',
+        token_count: tokenCount,
+      });
+
       const localPdfUrl = pdfUrl || URL.createObjectURL(file);
 
       navigateToSummary(fileId, {
@@ -524,6 +535,11 @@ export function VideoInputForm() {
       markTrialUsed();
       trickle.finish();
 
+      posthog.capture('file_uploaded', {
+        upload_type: 'audio_file',
+        token_count: tokenCount,
+      });
+
       const localAudioUrl = audioUrl || URL.createObjectURL(file);
 
       navigateToSummary(fileId, {
@@ -564,6 +580,10 @@ export function VideoInputForm() {
         stream.getTracks().forEach(track => track.stop());
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const file = new File([audioBlob], 'recording.webm', { type: 'audio/webm' });
+        posthog.capture('file_uploaded', {
+          upload_type: 'audio_recording',
+          recording_duration: recordingTime,
+        });
         submitAudioFile(file);
       };
 

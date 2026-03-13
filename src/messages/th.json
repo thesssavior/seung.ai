@@ -64,6 +64,18 @@
       "incorrect": "ไม่ถูกต้อง",
       "gotItRight": "ฉันตอบถูก",
       "gotItWrong": "ฉันตอบผิด",
-      "questionCounter": "{current} / {total}"
+      "questionCounter": "{current} / {total}",
+      "resultComplete": "เยี่ยม! ทำแบบทดสอบเสร็จแล้ว",
+      "statsScore": "คะแนน",
+      "statsAccuracy": "ความแม่นยำ",
+      "statsBreakdown": "รายละเอียด",
+      "statsRight": "ถูก {count}",
+      "statsWrong": "ผิด {count}",
+      "statsSkipped": "ข้าม {count}",
+      "highlightsTitle": "จุดเด่น",
+      "focusAreasTitle": "จุดที่ต้องปรับปรุง",
+      "reviewButton": "ตรวจคำตอบ",
+      "backToResults": "กลับไปดูผลลัพธ์",
+      "explanation": "คำอธิบาย"
     }
 }

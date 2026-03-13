@@ -3,6 +3,7 @@
 import React from 'react';
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 interface MCQQuestionProps {
   question: string;
@@ -11,6 +12,7 @@ interface MCQQuestionProps {
   selectedAnswer: string | null;
   checked: boolean;
   onSelect: (answer: string) => void;
+  explanation?: string;
 }
 
 const MCQQuestion: React.FC<MCQQuestionProps> = ({
@@ -20,7 +22,9 @@ const MCQQuestion: React.FC<MCQQuestionProps> = ({
   selectedAnswer,
   checked,
   onSelect,
+  explanation,
 }) => {
+  const t = useTranslations('Quiz');
   return (
     <div className="space-y-4">
       <p className="text-base font-medium">{question}</p>
@@ -60,6 +64,12 @@ const MCQQuestion: React.FC<MCQQuestionProps> = ({
           );
         })}
       </div>
+      {checked && explanation && (
+        <div className="pt-3">
+          <p className="text-xs font-medium text-foreground mb-1">{t('explanation')}</p>
+          <p className="text-sm text-muted-foreground">{explanation}</p>
+        </div>
+      )}
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useVideoPlayerOptional } from '@/contexts/VideoPlayerContext';
+import posthog from 'posthog-js';
 
 interface TranscriptGroup {
   timestamp: string;
@@ -54,6 +55,7 @@ export function FullTranscriptViewer({ transcript }: { transcript: string }) {
     if (videoPlayer) {
       const seconds = parseTimestampToSeconds(timestamp);
       videoPlayer.seekTo(seconds);
+      posthog.capture('transcript_clicked', { timestamp: seconds });
     }
   };
 

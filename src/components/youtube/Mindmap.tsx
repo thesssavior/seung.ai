@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Transformer } from 'markmap-lib';
 import { Markmap } from 'markmap-view';
-import { Loader2, AlertTriangle, Brain } from 'lucide-react';
+import { Loader2, AlertTriangle, Brain, Plus, Minus, Maximize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
+import posthog from 'posthog-js';
 
 interface MindmapProps {
   transcript?: string;
@@ -48,34 +49,51 @@ const MindmapComponent: React.FC<MindmapProps> = ({
     }
   }, [mindmap]);
 
-  // Render markmap when markdown changes or becomes active
+  // Destroy and recreate markmap when tab becomes active to avoid SVGLength errors
   useEffect(() => {
     if (!markdown || !svgRef.current || !isActive) return;
 
+    // Destroy previous instance to avoid stale SVG measurements
+    if (markmapRef.current) {
+      markmapRef.current.destroy();
+      markmapRef.current = null;
+    }
+
+    // Clear SVG children from previous render
+    while (svgRef.current.firstChild) {
+      svgRef.current.removeChild(svgRef.current.firstChild);
+    }
+
     const { root } = transformer.transform(markdown);
 
-    if (markmapRef.current) {
-      markmapRef.current.setData(root);
-      markmapRef.current.fit();
-    } else {
-      markmapRef.current = Markmap.create(svgRef.current, {
-        autoFit: true,
-        duration: 500,
+    // Small delay to ensure container is laid out before measuring
+    requestAnimationFrame(() => {
+      if (!svgRef.current) return;
+      // Create with no animation so it snaps to center immediately
+      const mm = Markmap.create(svgRef.current, {
+        autoFit: false,
+        duration: 0,
         maxWidth: 200,
         color: () => 'currentColor',
         paddingX: 16,
+        spacingVertical: 28,
+        spacingHorizontal: 100,
+        scrollForPan: false,
       }, root);
-    }
-  }, [markdown, isActive]);
-
-  // Fit when tab becomes active
-  useEffect(() => {
-    if (isActive && markmapRef.current) {
-      requestAnimationFrame(() => {
-        markmapRef.current?.fit();
+      markmapRef.current = mm;
+      mm.fit().then(() => {
+        // Restore animation duration after initial positioning
+        mm.setOptions({ duration: 500 });
       });
-    }
-  }, [isActive]);
+    });
+
+    return () => {
+      if (markmapRef.current) {
+        markmapRef.current.destroy();
+        markmapRef.current = null;
+      }
+    };
+  }, [markdown, isActive]);
 
   // Auto-generate if no mindmap exists
   useEffect(() => {
@@ -84,6 +102,21 @@ const MindmapComponent: React.FC<MindmapProps> = ({
       generateMindmap();
     }
   }, [transcript, isGenerated, isLoading, mindmap]);
+
+  const handleZoomIn = () => {
+    markmapRef.current?.rescale(1.25);
+    posthog.capture('mindmap_interaction', { action: 'zoom_in' });
+  };
+
+  const handleZoomOut = () => {
+    markmapRef.current?.rescale(0.8);
+    posthog.capture('mindmap_interaction', { action: 'zoom_out' });
+  };
+
+  const handleFit = () => {
+    markmapRef.current?.fit();
+    posthog.capture('mindmap_interaction', { action: 'fit_to_view' });
+  };
 
   const generateMindmap = async () => {
     if (!transcript) {
@@ -202,7 +235,53 @@ const MindmapComponent: React.FC<MindmapProps> = ({
 
   return (
     <div className="relative h-full min-h-[500px]">
-      <svg ref={svgRef} className="w-full h-full text-foreground [&_.markmap-node_text]:fill-current [&_.markmap-link]:!stroke-current [&_.markmap-node_circle]:!fill-current" />
+      <style>{`
+        .markmap {
+          --markmap-font: 500 16px/20px sans-serif !important;
+          font: 500 16px/20px sans-serif !important;
+        }
+        .markmap-foreign > div {
+          font-weight: 500 !important;
+        }
+        .markmap-node text {
+          fill: currentColor;
+        }
+        .markmap-node { cursor: pointer; }
+        .markmap-link { stroke: #d1d5db !important; }
+        .markmap-node line { stroke: #d1d5db !important; }
+        .markmap-node circle { fill: #d1d5db !important; stroke: #d1d5db !important; }
+        .markmap-node:hover line { stroke: #6b7280 !important; }
+        .markmap-node:hover circle { fill: #6b7280 !important; stroke: #6b7280 !important; }
+        .dark .markmap-link { stroke: #374151 !important; }
+        .dark .markmap-node line { stroke: #374151 !important; }
+        .dark .markmap-node circle { fill: #374151 !important; stroke: #374151 !important; }
+        .dark .markmap-node:hover line { stroke: #9ca3af !important; }
+        .dark .markmap-node:hover circle { fill: #9ca3af !important; stroke: #9ca3af !important; }
+      `}</style>
+      <svg ref={svgRef} width="100%" height="100%" className="w-full h-full text-foreground" />
+      <div className="absolute bottom-4 right-4 flex flex-col gap-1">
+        <button
+          onClick={handleZoomIn}
+          className="p-1.5 rounded-md bg-background border border-border hover:bg-muted transition-colors"
+          aria-label="Zoom in"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+        <button
+          onClick={handleZoomOut}
+          className="p-1.5 rounded-md bg-background border border-border hover:bg-muted transition-colors"
+          aria-label="Zoom out"
+        >
+          <Minus className="h-4 w-4" />
+        </button>
+        <button
+          onClick={handleFit}
+          className="p-1.5 rounded-md bg-background border border-border hover:bg-muted transition-colors"
+          aria-label="Fit to view"
+        >
+          <Maximize className="h-3.5 w-3.5" />
+        </button>
+      </div>
     </div>
   );
 };

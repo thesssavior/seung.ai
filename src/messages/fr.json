@@ -357,7 +357,19 @@
     "incorrect": "Incorrect",
     "gotItRight": "J'ai eu juste",
     "gotItWrong": "J'ai eu faux",
-    "questionCounter": "{current} / {total}"
+    "questionCounter": "{current} / {total}",
+    "resultComplete": "Bravo ! Quiz terminé.",
+    "statsScore": "Score",
+    "statsAccuracy": "Précision",
+    "statsBreakdown": "Détails",
+    "statsRight": "Correct {count}",
+    "statsWrong": "Incorrect {count}",
+    "statsSkipped": "Omis {count}",
+    "highlightsTitle": "Points forts",
+    "focusAreasTitle": "À améliorer",
+    "reviewButton": "Revoir les réponses",
+    "backToResults": "Retour aux résultats",
+    "explanation": "Explication"
   },
   "faq": {
     "title": "Questions Fréquentes",

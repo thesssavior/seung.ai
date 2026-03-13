@@ -6,6 +6,15 @@ export interface QuizItem {
   options?: string[];
   correctAnswer: string;
   tag?: string;
+  explanation?: string;
+}
+
+export interface QuizProgress {
+  answers: Record<number, string>;
+  checked: Record<number, boolean>;
+  currentIndex: number;
+  score: number;
+  version: number;
 }
 
 export interface LegacyQuizItem {

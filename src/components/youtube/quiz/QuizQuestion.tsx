@@ -10,20 +10,18 @@ interface QuizQuestionProps {
   item: QuizItem;
   selectedAnswer: string | null;
   checked: boolean;
-  selfAssessment: boolean | null;
   onSelect: (answer: string) => void;
   onAnswerChange: (answer: string) => void;
-  onSelfAssess: (correct: boolean) => void;
+  onCheck: () => void;
 }
 
 const QuizQuestion: React.FC<QuizQuestionProps> = ({
   item,
   selectedAnswer,
   checked,
-  selfAssessment,
   onSelect,
   onAnswerChange,
-  onSelfAssess,
+  onCheck,
 }) => {
   switch (item.type) {
     case 'mcq':
@@ -35,6 +33,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           selectedAnswer={selectedAnswer}
           checked={checked}
           onSelect={onSelect}
+          explanation={item.explanation}
         />
       );
     case 'true_false':
@@ -45,6 +44,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           selectedAnswer={selectedAnswer}
           checked={checked}
           onSelect={onSelect}
+          explanation={item.explanation}
         />
       );
     case 'free_response':
@@ -54,9 +54,9 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           correctAnswer={item.correctAnswer}
           userAnswer={selectedAnswer || ''}
           checked={checked}
-          selfAssessment={selfAssessment}
           onAnswerChange={onAnswerChange}
-          onSelfAssess={onSelfAssess}
+          onCheck={onCheck}
+          explanation={item.explanation}
         />
       );
     default:

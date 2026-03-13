@@ -353,7 +353,19 @@
     "incorrect": "Salah",
     "gotItRight": "Saya benar",
     "gotItWrong": "Saya salah",
-    "questionCounter": "{current} / {total}"
+    "questionCounter": "{current} / {total}",
+    "resultComplete": "Hebat! Kuis selesai.",
+    "statsScore": "Skor",
+    "statsAccuracy": "Akurasi",
+    "statsBreakdown": "Rincian",
+    "statsRight": "Benar {count}",
+    "statsWrong": "Salah {count}",
+    "statsSkipped": "Dilewati {count}",
+    "highlightsTitle": "Poin Kuat",
+    "focusAreasTitle": "Area Perbaikan",
+    "reviewButton": "Tinjau Jawaban",
+    "backToResults": "Kembali ke Hasil",
+    "explanation": "Penjelasan"
   },
   "faq": {
     "title": "Pertanyaan yang Sering Diajukan",

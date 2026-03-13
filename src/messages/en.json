@@ -353,7 +353,19 @@
     "incorrect": "Incorrect",
     "gotItRight": "I got it right",
     "gotItWrong": "I got it wrong",
-    "questionCounter": "{current} / {total}"
+    "questionCounter": "{current} / {total}",
+    "resultComplete": "You did it! Quiz complete.",
+    "statsScore": "Score",
+    "statsAccuracy": "Accuracy",
+    "statsBreakdown": "Breakdown",
+    "statsRight": "Right {count}",
+    "statsWrong": "Wrong {count}",
+    "statsSkipped": "Skipped {count}",
+    "highlightsTitle": "Highlights",
+    "focusAreasTitle": "Focus Areas",
+    "reviewButton": "Review Answers",
+    "backToResults": "Back to Results",
+    "explanation": "Explanation"
   },
   "faq": {
     "title": "Frequently Asked Questions",

@@ -6,6 +6,7 @@ import { Copy, ThumbsUp, ThumbsDown, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import FeedbackModal from "./FeedbackModal";
+import posthog from "posthog-js";
 
 function toMarkdown(text: string): string {
   try {
@@ -63,6 +64,7 @@ export default function SummaryActionButtons({
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(toMarkdown(summaryText));
+      posthog.capture('summary_copied_to_clipboard');
       toast.success(t("copiedToClipboard"), {
         description: t("summaryContentCopied"),
       });
@@ -145,7 +147,7 @@ export default function SummaryActionButtons({
         >
           <ThumbsDown className="h-4 w-4" fill={feedbackGiven === "bad" ? "currentColor" : "none"} />
         </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onTryAgain} title={tf("tryAgain")}>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { posthog.capture('summary_regenerate_clicked'); onTryAgain(); }} title={tf("tryAgain")}>
           <RotateCcw className="h-4 w-4" />
         </Button>
       </div>

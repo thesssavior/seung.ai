@@ -355,8 +355,8 @@ export default function SummaryDetailPage() {
             <div className="w-[46%] p-2 flex flex-col gap-2">
               <Skeleton className="aspect-video w-full rounded-lg" />
               <div className="flex-1 space-y-3 p-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton key={i} className="h-4 w-full" style={{ width: `${70 + Math.random() * 30}%` }} />
+                {[85, 72, 90, 78, 95, 82, 88, 76].map((w, i) => (
+                  <Skeleton key={i} className="h-4 w-full" style={{ width: `${w}%` }} />
                 ))}
               </div>
             </div>
@@ -368,14 +368,14 @@ export default function SummaryDetailPage() {
               <div className="space-y-4 p-2">
                 <Skeleton className="h-5 w-48" />
                 <div className="space-y-2.5">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} className="h-4" style={{ width: `${60 + Math.random() * 40}%` }} />
+                  {[88, 74, 92, 68, 85, 79].map((w, i) => (
+                    <Skeleton key={i} className="h-4" style={{ width: `${w}%` }} />
                   ))}
                 </div>
                 <Skeleton className="h-5 w-40 mt-4" />
                 <div className="space-y-2.5">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <Skeleton key={i} className="h-4" style={{ width: `${50 + Math.random() * 50}%` }} />
+                  {[82, 70, 90, 75].map((w, i) => (
+                    <Skeleton key={i} className="h-4" style={{ width: `${w}%` }} />
                   ))}
                 </div>
               </div>
@@ -390,8 +390,8 @@ export default function SummaryDetailPage() {
             <div className="space-y-4">
               <Skeleton className="h-5 w-48" />
               <div className="space-y-2.5">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <Skeleton key={i} className="h-4" style={{ width: `${55 + Math.random() * 45}%` }} />
+                {[80, 68, 92, 75, 87, 72, 95, 83].map((w, i) => (
+                  <Skeleton key={i} className="h-4" style={{ width: `${w}%` }} />
                 ))}
               </div>
             </div>

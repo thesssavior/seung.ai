@@ -357,7 +357,19 @@
     "incorrect": "오답",
     "gotItRight": "맞았어요",
     "gotItWrong": "틀렸어요",
-    "questionCounter": "{current} / {total}"
+    "questionCounter": "{current} / {total}",
+    "resultComplete": "잘했어요! 퀴즈 완료.",
+    "statsScore": "점수",
+    "statsAccuracy": "정확도",
+    "statsBreakdown": "분석",
+    "statsRight": "정답 {count}",
+    "statsWrong": "오답 {count}",
+    "statsSkipped": "건너뜀 {count}",
+    "highlightsTitle": "잘한 부분",
+    "focusAreasTitle": "보완할 부분",
+    "reviewButton": "답변 검토",
+    "backToResults": "결과로 돌아가기",
+    "explanation": "해설"
   },
   "faq": {
     "title": "자주 묻는 질문",
