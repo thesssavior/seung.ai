@@ -30,6 +30,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ file
       return NextResponse.json({ error: 'Summary not found or access denied' }, { status: 404 });
     }
 
+    console.log('[Files GET]', fileId, {
+      hasQuiz: !!summaryData.quiz,
+      quizLength: Array.isArray(summaryData.quiz) ? summaryData.quiz.length : 0,
+      content_language: summaryData.content_language,
+    });
+
     // Fetch folder data
     let folderData = null;
     if (summaryData.folder_id) {

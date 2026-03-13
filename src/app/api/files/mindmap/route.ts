@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 import { getUser } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabaseClient';
 import { getPostHogClient } from '@/lib/posthog-server';
@@ -27,13 +27,16 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const systemInstruction = `You generate React-Flow mind-map JSON for learners to comprehend main points at a glance.
+    const systemInstruction = `You generate a markdown-formatted mind map outline for learners to comprehend main points at a glance.
+
 Rules:
-- Use emojis and concise labels (max 4 words per node)
-- Maximum 16 total nodes (including root)
-- Left-to-right layout: root node at the left, children to the right
-- Leaf depth limit of 3 per branch
-- Root node type must be "input"`;
+- Output ONLY a markdown heading hierarchy (# ## ### ####). No other text, no code fences, no explanation.
+- Root heading (#) may include one emoji. All deeper levels (## ### ####) must have NO emojis.
+- Concise labels (max 4 words per heading)
+- The top-level heading (#) is the root topic
+- Maximum depth: 4 levels (# to ####)
+- Maximum 16 total headings (including root)
+- Cover the key concepts from the content`;
 
     const prompt = `IMPORTANT: Provide the mindmap in ${contentLanguage || 'en'} language
 
@@ -50,53 +53,6 @@ ${transcript}`;
         const response = await client.models.generateContentStream({
           model,
           contents: systemInstruction + '\n\n' + prompt,
-          config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                nodes: {
-                  type: Type.ARRAY,
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      id: { type: Type.STRING },
-                      data: {
-                        type: Type.OBJECT,
-                        properties: {
-                          label: { type: Type.STRING },
-                        },
-                        required: ['label'],
-                      },
-                      position: {
-                        type: Type.OBJECT,
-                        properties: {
-                          x: { type: Type.NUMBER },
-                          y: { type: Type.NUMBER },
-                        },
-                        required: ['x', 'y'],
-                      },
-                      type: { type: Type.STRING },
-                    },
-                    required: ['id', 'data', 'position'],
-                  },
-                },
-                edges: {
-                  type: Type.ARRAY,
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      id: { type: Type.STRING },
-                      source: { type: Type.STRING },
-                      target: { type: Type.STRING },
-                    },
-                    required: ['id', 'source', 'target'],
-                  },
-                },
-              },
-              required: ['nodes', 'edges'],
-            },
-          },
         });
 
         for await (const chunk of response) {
@@ -111,7 +67,7 @@ ${transcript}`;
 
     return new Response(stream, {
       headers: {
-        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
       },
     });
@@ -132,16 +88,16 @@ export async function PATCH(req: NextRequest) {
     const { fileId, mindmap } = await req.json();
 
     if (!fileId) {
-      return NextResponse.json({ error: 'Summary ID is required' }, { status: 400 });
+      return NextResponse.json({ error: 'File ID is required' }, { status: 400 });
     }
 
-    if (!mindmap || !mindmap.nodes || !mindmap.edges) {
-      return NextResponse.json({ error: 'Mindmap data (nodes and edges) is required' }, { status: 400 });
+    if (!mindmap || !mindmap.markdown) {
+      return NextResponse.json({ error: 'Mindmap markdown is required' }, { status: 400 });
     }
 
     const { data, error } = await supabase
       .from('files')
-      .update({ mindmap: mindmap })
+      .update({ mindmap })
       .eq('id', fileId)
       .eq('user_id', user.id)
       .select('id, video_id')
@@ -153,7 +109,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (!data) {
-      return NextResponse.json({ error: 'Summary not found or unauthorized' }, { status: 404 });
+      return NextResponse.json({ error: 'File not found or unauthorized' }, { status: 404 });
     }
 
     return NextResponse.json({ message: 'Mindmap saved', fileId: data.id }, { status: 200 });

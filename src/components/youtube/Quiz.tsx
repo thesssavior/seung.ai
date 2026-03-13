@@ -1,19 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { Loader2, Lightbulb, ChevronDown } from 'lucide-react';
+import { Loader2, Lightbulb } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-interface QuizItem {
-  question: string;
-  answer: string;
-}
+import { AnimatePresence, motion } from 'framer-motion';
+import { QuizItem, isLegacyQuiz, migrateLegacyQuiz } from '@/types/quiz';
+import QuizProgressBar from './quiz/QuizProgressBar';
+import QuizQuestion from './quiz/QuizQuestion';
+import QuizResults from './quiz/QuizResults';
 
 interface QuizProps {
   transcript?: string | null;
-  quizData: QuizItem[] | null;
+  quizData: any[] | null;
   locale: string;
   contentLanguage?: string;
   fileId: string | null;
@@ -30,30 +30,85 @@ const QuizComponent: React.FC<QuizProps> = ({
 }) => {
   const t = useTranslations();
 
-  const [quizItems, setQuizItems] = useState<QuizItem[]>(initialQuizData || []);
+  const [quizItems, setQuizItems] = useState<QuizItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isGenerated, setIsGenerated] = useState(!!initialQuizData && initialQuizData.length > 0);
-  const [revealedAnswers, setRevealedAnswers] = useState<{ [index: number]: boolean }>({});
+  const [isGenerated, setIsGenerated] = useState(false);
   const hasStartedGeneration = useRef(false);
 
+  // Interactive quiz state
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [checked, setChecked] = useState<Record<number, boolean>>({});
+  const [selfAssessments, setSelfAssessments] = useState<Record<number, boolean | null>>({});
+  const [score, setScore] = useState(0);
+  const [quizComplete, setQuizComplete] = useState(false);
+  const [direction, setDirection] = useState(1);
+
+  const normalizeQuizData = useCallback((data: any[] | null): QuizItem[] => {
+    if (!data || data.length === 0) return [];
+    if (isLegacyQuiz(data)) {
+      return migrateLegacyQuiz(data);
+    }
+    return data as QuizItem[];
+  }, []);
+
   useEffect(() => {
+    console.log('[Quiz] Props received:', {
+      fileId,
+      locale,
+      contentLanguage,
+      hasTranscript: !!transcript,
+      initialQuizDataLength: initialQuizData?.length ?? null,
+    });
+  }, [fileId, locale, contentLanguage, transcript, initialQuizData]);
+
+  useEffect(() => {
+    console.log('[Quiz] initialQuizData changed:', JSON.stringify({
+      hasData: !!initialQuizData,
+      length: initialQuizData?.length ?? 0,
+      firstItem: initialQuizData?.[0] ?? null,
+    }));
     if (initialQuizData) {
-      setQuizItems(initialQuizData);
-      setIsGenerated(initialQuizData.length > 0);
-      setRevealedAnswers({});
+      const normalized = normalizeQuizData(initialQuizData);
+      setQuizItems(normalized);
+      setIsGenerated(normalized.length > 0);
+      resetQuizState();
     } else {
       setQuizItems([]);
       setIsGenerated(false);
     }
-  }, [initialQuizData]);
+  }, [initialQuizData, normalizeQuizData]);
+
+  // Save quiz when fileId becomes available after generation
+  const hasSavedForFileId = useRef<string | null>(null);
+  useEffect(() => {
+    console.log('[Quiz] fileId effect:', { fileId, quizItemsLength: quizItems.length, isGenerated, hasSavedForFileId: hasSavedForFileId.current });
+    if (fileId && fileId !== 'new' && quizItems.length > 0 && isGenerated && hasSavedForFileId.current !== fileId) {
+      console.log('[Quiz] Saving quiz via fileId effect for:', fileId);
+      hasSavedForFileId.current = fileId;
+      saveQuiz(quizItems, fileId);
+    }
+  }, [fileId, quizItems, isGenerated]);
 
   useEffect(() => {
-    if (transcript && !isGenerated && !isLoading && !hasStartedGeneration.current) {
+    const hasExistingQuiz = initialQuizData && initialQuizData.length > 0;
+    console.log('[Quiz] Auto-generate check:', { hasTranscript: !!transcript, isGenerated, isLoading, hasStarted: hasStartedGeneration.current, hasExistingQuiz });
+    if (transcript && !isGenerated && !hasExistingQuiz && !isLoading && !hasStartedGeneration.current) {
       hasStartedGeneration.current = true;
       generateQuiz();
     }
-  }, [transcript, isGenerated, isLoading]);
+  }, [transcript, isGenerated, isLoading, initialQuizData]);
+
+  const resetQuizState = () => {
+    setCurrentIndex(0);
+    setAnswers({});
+    setChecked({});
+    setSelfAssessments({});
+    setScore(0);
+    setQuizComplete(false);
+    setDirection(1);
+  };
 
   const generateQuiz = async () => {
     if (!transcript) {
@@ -63,16 +118,19 @@ const QuizComponent: React.FC<QuizProps> = ({
 
     setIsLoading(true);
     setError(null);
-    setRevealedAnswers({});
+    resetQuizState();
 
     try {
+      const langToSend = contentLanguage || locale;
+      console.log('[Quiz] generateQuiz sending:', { title, contentLanguage, locale, langToSend, fileId });
+
       const response = await fetch('/api/files/quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           transcript,
           title,
-          contentLanguage: contentLanguage || locale
+          contentLanguage: langToSend
         }),
       });
 
@@ -82,12 +140,17 @@ const QuizComponent: React.FC<QuizProps> = ({
       }
 
       const data = await response.json();
+      console.log('[Quiz] API response:', { hasQuiz: !!data.quiz, quizLength: data.quiz?.length });
       if (data.quiz && Array.isArray(data.quiz)) {
-        setQuizItems(data.quiz);
+        const normalized = normalizeQuizData(data.quiz);
+        setQuizItems(normalized);
         setIsGenerated(true);
 
         if (fileId && fileId !== 'new') {
+          console.log('[Quiz] Saving immediately after generation, fileId:', fileId);
           await saveQuiz(data.quiz, fileId);
+        } else {
+          console.log('[Quiz] Skipping immediate save, fileId:', fileId);
         }
       } else {
         throw new Error(t('Quiz.errorInvalidData'));
@@ -100,12 +163,19 @@ const QuizComponent: React.FC<QuizProps> = ({
     }
   };
 
-  const saveQuiz = async (currentQuizItems: QuizItem[], currentSummaryId: string) => {
-    if (!currentSummaryId || currentSummaryId === 'new') return;
-    if (!currentQuizItems || currentQuizItems.length === 0) return;
+  const saveQuiz = async (currentQuizItems: QuizItem[] | any[], currentSummaryId: string) => {
+    console.log('[Quiz] saveQuiz called:', { fileId: currentSummaryId, itemCount: currentQuizItems?.length });
+    if (!currentSummaryId || currentSummaryId === 'new') {
+      console.log('[Quiz] saveQuiz early return: invalid fileId', currentSummaryId);
+      return;
+    }
+    if (!currentQuizItems || currentQuizItems.length === 0) {
+      console.log('[Quiz] saveQuiz early return: no items');
+      return;
+    }
 
     try {
-      await fetch('/api/files/quiz', {
+      const res = await fetch('/api/files/quiz', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -113,14 +183,74 @@ const QuizComponent: React.FC<QuizProps> = ({
           quiz: currentQuizItems
         }),
       });
+      const result = await res.json();
+      console.log('[Quiz] saveQuiz response:', { status: res.status, result });
     } catch (err: any) {
-      console.error("Error saving quiz:", err);
+      console.error("[Quiz] Error saving quiz:", err);
     }
   };
 
-  const toggleAnswer = (index: number) => {
-    setRevealedAnswers(prev => ({ ...prev, [index]: !prev[index] }));
+  const handleSelect = (answer: string) => {
+    if (checked[currentIndex]) return;
+    setAnswers(prev => ({ ...prev, [currentIndex]: answer }));
   };
+
+  const handleAnswerChange = (answer: string) => {
+    if (checked[currentIndex]) return;
+    setAnswers(prev => ({ ...prev, [currentIndex]: answer }));
+  };
+
+  const handleCheck = () => {
+    const currentItem = quizItems[currentIndex];
+    setChecked(prev => ({ ...prev, [currentIndex]: true }));
+
+    if (currentItem.type === 'mcq' || currentItem.type === 'true_false') {
+      if (answers[currentIndex] === currentItem.correctAnswer) {
+        setScore(prev => prev + 1);
+      }
+    }
+    // For free_response, score is handled by self-assessment
+  };
+
+  const handleSelfAssess = (correct: boolean) => {
+    setSelfAssessments(prev => ({ ...prev, [currentIndex]: correct }));
+    if (correct) {
+      setScore(prev => prev + 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentIndex < quizItems.length - 1) {
+      setDirection(1);
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      setQuizComplete(true);
+    }
+  };
+
+  const handleRetry = () => {
+    resetQuizState();
+  };
+
+  const handleRegenerate = () => {
+    hasStartedGeneration.current = false;
+    setIsGenerated(false);
+    setQuizItems([]);
+    resetQuizState();
+    generateQuiz();
+  };
+
+  const currentItem = quizItems[currentIndex];
+  const isCurrentChecked = checked[currentIndex] || false;
+  const hasAnswer = !!answers[currentIndex]?.trim();
+  const currentSelfAssessment = selfAssessments[currentIndex] ?? null;
+
+  // For free response: need self-assessment before "Next"
+  const canProceed = isCurrentChecked && (
+    currentItem?.type !== 'free_response' || currentSelfAssessment !== null
+  );
+
+  const isLastQuestion = currentIndex === quizItems.length - 1;
 
   if (isLoading) {
     return (
@@ -148,43 +278,75 @@ const QuizComponent: React.FC<QuizProps> = ({
     );
   }
 
+  if (quizComplete) {
+    return (
+      <ScrollArea className="h-full p-4">
+        <div className="max-w-2xl mx-auto">
+          <QuizResults
+            score={score}
+            total={quizItems.length}
+            onRetry={handleRetry}
+            onRegenerate={handleRegenerate}
+          />
+        </div>
+      </ScrollArea>
+    );
+  }
+
   return (
     <ScrollArea className="h-full p-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-2xl mx-auto space-y-6">
         {error && (
-          <div className="mb-4 p-3 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg">
+          <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg">
             {error}
           </div>
         )}
 
-        <div className="space-y-4">
-          {quizItems.map((item, index) => (
-            <div key={index} className="border rounded-lg overflow-hidden">
-              <button
-                onClick={() => toggleAnswer(index)}
-                className="w-full p-4 text-left flex items-start justify-between gap-4 hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex gap-3">
-                  <span className="flex-shrink-0 text-sm font-medium text-muted-foreground">
-                    {index + 1}.
-                  </span>
-                  <span className="text-sm">{item.question}</span>
-                </div>
-                <ChevronDown
-                  className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${
-                    revealedAnswers[index] ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-              {revealedAnswers[index] && (
-                <div className="px-4 pb-4 pt-0">
-                  <div className="pl-7 pt-2 border-t">
-                    <p className="text-sm text-muted-foreground pt-3">{item.answer}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+        <QuizProgressBar
+          current={currentIndex}
+          total={quizItems.length}
+          tag={currentItem?.tag}
+        />
+
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={currentIndex}
+            custom={direction}
+            initial={{ opacity: 0, x: direction * 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -direction * 50 }}
+            transition={{ duration: 0.2 }}
+          >
+            {currentItem && (
+              <QuizQuestion
+                item={currentItem}
+                selectedAnswer={answers[currentIndex] || null}
+                checked={isCurrentChecked}
+                selfAssessment={currentSelfAssessment}
+                onSelect={handleSelect}
+                onAnswerChange={handleAnswerChange}
+                onSelfAssess={handleSelfAssess}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="flex justify-end pt-2">
+          {!isCurrentChecked ? (
+            <Button
+              onClick={handleCheck}
+              disabled={!hasAnswer}
+            >
+              {t('Quiz.checkButton')}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleNext}
+              disabled={!canProceed}
+            >
+              {isLastQuestion ? t('Quiz.seeResults') : t('Quiz.nextButton')}
+            </Button>
+          )}
         </div>
       </div>
     </ScrollArea>

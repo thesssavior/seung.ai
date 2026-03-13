@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { getUser } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabaseClient';
 import { getPostHogClient } from '@/lib/posthog-server';
 
 const model = 'gemini-2.5-flash';
 
-interface QuizItem {
-  question: string;
-  answer: string;
-}
-
 export async function POST(req: NextRequest) {
   try {
     const { transcript, title, contentLanguage } = await req.json();
+    console.log('[Quiz API POST] Received:', { title, contentLanguage, transcriptLength: transcript?.length });
 
     if (!transcript) {
       return NextResponse.json({ error: 'Transcript is required' }, { status: 400 });
@@ -21,6 +17,7 @@ export async function POST(req: NextRequest) {
 
     // Track quiz generation event in PostHog
     const user = await getUser();
+    console.log('[Quiz API POST] User:', user?.id);
     if (user?.id) {
       const posthog = getPostHogClient();
       posthog.capture({
@@ -32,43 +29,55 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const systemInstruction = `
-You are an AI assistant that generates quizzes from video transcripts.
-Create 5 distinct question and answer pairs that test understanding of the core ideas.
+    const systemInstruction = `You are an AI assistant that generates quizzes from video transcripts.
+Create exactly 5 questions that test understanding of the core ideas.
 
-CRITICAL: Return ONLY valid JSON with a "quiz" property containing an array of 5 objects.
-Each object must have exactly: "question" (string) and "answer" (string).
+Question type mix:
+- About 3 multiple-choice questions (type: "mcq") with exactly 4 options
+- About 1 true/false question (type: "true_false") with options ["True", "False"]
+- About 1 free-response question (type: "free_response") with no options
 
-Expected format:
-{
-  "quiz": [
-    {"question": "Question 1?", "answer": "Answer 1"},
-    {"question": "Question 2?", "answer": "Answer 2"},
-    {"question": "Question 3?", "answer": "Answer 3"},
-    {"question": "Question 4?", "answer": "Answer 4"},
-    {"question": "Question 5?", "answer": "Answer 5"}
-  ]
-}
+Rules:
+- For mcq: provide exactly 4 plausible options. correctAnswer must match one option exactly.
+- For true_false: options must be ["True", "False"]. correctAnswer must be "True" or "False".
+- For free_response: do not include options. correctAnswer is a concise model answer.
+- tag: a short topic/category label for the question (2-4 words).
+- Questions should be thought-provoking and varied.`;
 
-Questions should be thought-provoking and answers concise.
-Generate in ${contentLanguage || 'en'} language.
-`;
+    const prompt = `Important: Respond in ${contentLanguage || 'ko'} language.
 
-    const prompt = `
 Video Title: ${title || 'Unknown'}
 
 Transcript:
----
-${transcript}
----
-
-JSON Output:
-`;
+${transcript}`;
 
     const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await client.models.generateContent({
       model,
       contents: systemInstruction + '\n\n' + prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            quiz: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  question: { type: Type.STRING },
+                  type: { type: Type.STRING, enum: ['mcq', 'true_false', 'free_response'] },
+                  options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                  correctAnswer: { type: Type.STRING },
+                  tag: { type: Type.STRING },
+                },
+                required: ['question', 'type', 'correctAnswer', 'tag'],
+              },
+            },
+          },
+          required: ['quiz'],
+        },
+      },
     });
 
     const resultJsonString = response.text || '';
@@ -77,38 +86,9 @@ JSON Output:
       return NextResponse.json({ error: 'Failed to generate quiz' }, { status: 500 });
     }
 
-    try {
-      let cleanedResponse = resultJsonString.trim();
-      cleanedResponse = cleanedResponse.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
-
-      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        cleanedResponse = jsonMatch[0];
-      }
-
-      const parsedResult = JSON.parse(cleanedResponse);
-
-      let quizData: QuizItem[];
-
-      if (Array.isArray(parsedResult)) {
-        quizData = parsedResult;
-      } else if (parsedResult.quiz && Array.isArray(parsedResult.quiz)) {
-        quizData = parsedResult.quiz;
-      } else if (parsedResult.questions && Array.isArray(parsedResult.questions)) {
-        quizData = parsedResult.questions;
-      } else {
-        return NextResponse.json({ error: 'Invalid quiz structure' }, { status: 500 });
-      }
-
-      if (!quizData.every(item => typeof item.question === 'string' && typeof item.answer === 'string')) {
-        return NextResponse.json({ error: 'Invalid quiz item structure' }, { status: 500 });
-      }
-
-      return NextResponse.json({ quiz: quizData }, { status: 200 });
-    } catch (parseError) {
-      console.error("Failed to parse quiz response:", parseError);
-      return NextResponse.json({ error: 'Failed to parse quiz data' }, { status: 500 });
-    }
+    const parsedResult = JSON.parse(resultJsonString);
+    console.log('[Quiz API POST] Generated quiz:', { count: parsedResult.quiz?.length, firstQuestion: parsedResult.quiz?.[0]?.question?.slice(0, 50) });
+    return NextResponse.json({ quiz: parsedResult.quiz }, { status: 200 });
 
   } catch (error: any) {
     console.error('Error generating quiz:', error);
@@ -124,12 +104,15 @@ export async function PATCH(req: NextRequest) {
     }
 
     const { fileId, quiz } = await req.json();
+    console.log('[Quiz API PATCH] Received:', { fileId, userId: user.id, quizLength: quiz?.length });
 
     if (!fileId) {
+      console.log('[Quiz API PATCH] Missing fileId');
       return NextResponse.json({ error: 'Summary ID is required' }, { status: 400 });
     }
 
     if (!quiz || !Array.isArray(quiz)) {
+      console.log('[Quiz API PATCH] Missing/invalid quiz data');
       return NextResponse.json({ error: 'Quiz data is required' }, { status: 400 });
     }
 
@@ -141,15 +124,19 @@ export async function PATCH(req: NextRequest) {
       .select('id, video_id')
       .single();
 
+    console.log('[Quiz API PATCH] Supabase result:', { data, error: error?.message });
+
     if (error) {
-      console.error('Supabase error saving quiz:', error);
+      console.error('[Quiz API PATCH] Supabase error saving quiz:', error);
       return NextResponse.json({ error: error.message || 'Failed to save quiz' }, { status: 500 });
     }
 
     if (!data) {
+      console.log('[Quiz API PATCH] No data returned - not found or unauthorized');
       return NextResponse.json({ error: 'Summary not found or unauthorized' }, { status: 404 });
     }
 
+    console.log('[Quiz API PATCH] Quiz saved successfully for file:', data.id);
     return NextResponse.json({ message: 'Quiz saved', fileId: data.id }, { status: 200 });
 
   } catch (error: any) {

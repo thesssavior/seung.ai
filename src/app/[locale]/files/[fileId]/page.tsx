@@ -227,6 +227,14 @@ export default function SummaryDetailPage() {
       }
 
       const data = await response.json();
+      console.log('[Page] fetchExistingSummary loaded:', {
+        id: data.summary?.id,
+        hasQuiz: !!data.summary?.quiz,
+        quizLength: data.summary?.quiz?.length ?? 0,
+        quizSample: data.summary?.quiz?.[0] ? JSON.stringify(data.summary.quiz[0]).slice(0, 100) : null,
+        hasMindmap: !!data.summary?.mindmap,
+        content_language: data.summary?.content_language,
+      });
       setSummary(data.summary);
       setFolder(data.folder);
 

@@ -1,18 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import ReactFlow, {
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  Node,
-  Position,
-  ReactFlowProvider,
-  useReactFlow,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+import { Transformer } from 'markmap-lib';
+import { Markmap } from 'markmap-view';
 import { Loader2, AlertTriangle, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
@@ -28,6 +18,8 @@ interface MindmapProps {
   isActive: boolean | null;
 }
 
+const transformer = new Transformer();
+
 const MindmapComponent: React.FC<MindmapProps> = ({
   transcript,
   title,
@@ -38,46 +30,56 @@ const MindmapComponent: React.FC<MindmapProps> = ({
   isActive
 }) => {
   const t = useTranslations();
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const markmapRef = useRef<Markmap | null>(null);
+  const [markdown, setMarkdown] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isGenerated, setIsGenerated] = useState(
-    !!(mindmap?.nodes && Array.isArray(mindmap.nodes) && mindmap.nodes.length > 0)
-  );
+  const [isGenerated, setIsGenerated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [reactFlowReady, setReactFlowReady] = useState(false);
-  const { fitView } = useReactFlow();
-  const hasFit = useRef(false);
   const { user } = useAuth();
   const hasStartedGeneration = useRef(false);
 
-  const onConnect = useCallback(
-    (params: any) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
-  );
-
+  // Load existing mindmap data
   useEffect(() => {
-    if (mindmap) {
-      if (mindmap.nodes && Array.isArray(mindmap.nodes) && mindmap.nodes.length > 0) {
-        setNodes(mindmap.nodes);
-        setEdges(mindmap.edges || []);
-        setIsGenerated(true);
-      }
+    if (mindmap?.markdown) {
+      setMarkdown(mindmap.markdown);
+      setIsGenerated(true);
     }
   }, [mindmap]);
 
+  // Render markmap when markdown changes or becomes active
   useEffect(() => {
-    if (reactFlowReady && nodes.length && !hasFit.current && isActive) {
-      requestAnimationFrame(() => {
-        fitView();
-      });
-      hasFit.current = true;
-    }
-  }, [reactFlowReady, nodes, isActive, fitView]);
+    if (!markdown || !svgRef.current || !isActive) return;
 
+    const { root } = transformer.transform(markdown);
+
+    if (markmapRef.current) {
+      markmapRef.current.setData(root);
+      markmapRef.current.fit();
+    } else {
+      markmapRef.current = Markmap.create(svgRef.current, {
+        autoFit: true,
+        duration: 500,
+        maxWidth: 200,
+        color: () => 'currentColor',
+        paddingX: 16,
+      }, root);
+    }
+  }, [markdown, isActive]);
+
+  // Fit when tab becomes active
   useEffect(() => {
-    if (transcript && !isGenerated && !isLoading && !hasStartedGeneration.current && !(mindmap?.nodes?.length)) {
+    if (isActive && markmapRef.current) {
+      requestAnimationFrame(() => {
+        markmapRef.current?.fit();
+      });
+    }
+  }, [isActive]);
+
+  // Auto-generate if no mindmap exists
+  useEffect(() => {
+    if (transcript && !isGenerated && !isLoading && !hasStartedGeneration.current && !mindmap?.markdown) {
       hasStartedGeneration.current = true;
       generateMindmap();
     }
@@ -105,57 +107,50 @@ const MindmapComponent: React.FC<MindmapProps> = ({
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || 'Failed to fetch mindmap data');
+        throw new Error(errData.error || 'Failed to generate mindmap');
       }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      let fullResponse = '';
+      let fullMarkdown = '';
       if (reader) {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          fullResponse += decoder.decode(value, { stream: true });
+          fullMarkdown += decoder.decode(value, { stream: true });
         }
       }
-      const data = JSON.parse(fullResponse);
-      if (data.nodes && data.edges) {
-        const validatedNodes = data.nodes.map((node: Node) => ({
-          ...node,
-          position: node.position || { x: Math.random() * 400, y: Math.random() * 400 },
-          sourcePosition: node.sourcePosition || Position.Right,
-          targetPosition: node.targetPosition || Position.Left,
-        }));
-        setNodes(validatedNodes);
-        setEdges(data.edges);
-        setIsGenerated(true);
-        setIsLoading(false);
 
-        if (!user || !fileId) {
-          setIsSaving(false);
-          return;
+      // Clean up: remove code fences if the LLM wraps it
+      fullMarkdown = fullMarkdown.replace(/^```(?:markdown)?\n?/gm, '').replace(/\n?```$/gm, '').trim();
+
+      setMarkdown(fullMarkdown);
+      setIsGenerated(true);
+      setIsLoading(false);
+
+      // Save to database
+      if (!user || !fileId) {
+        setIsSaving(false);
+        return;
+      }
+
+      setIsSaving(true);
+      try {
+        const saveResponse = await fetch('/api/files/mindmap', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileId, mindmap: { markdown: fullMarkdown } }),
+        });
+
+        if (!saveResponse.ok) {
+          const saveErrData = await saveResponse.json();
+          console.error("Failed to save mindmap:", saveErrData.error);
         }
-
-        setIsSaving(true);
-        try {
-          const saveResponse = await fetch('/api/files/mindmap', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fileId, mindmap: { nodes: validatedNodes, edges: data.edges } }),
-          });
-
-          if (!saveResponse.ok) {
-            const saveErrData = await saveResponse.json();
-            console.error("Failed to save mindmap:", saveErrData.error);
-          }
-        } finally {
-          setIsSaving(false);
-        }
-      } else {
-        throw new Error('Invalid data structure received from mindmap API');
+      } finally {
+        setIsSaving(false);
       }
     } catch (err: any) {
-      console.error("Error fetching mindmap data:", err);
+      console.error("Error generating mindmap:", err);
       setError(err.message || 'An unknown error occurred');
       setIsLoading(false);
     }
@@ -192,7 +187,7 @@ const MindmapComponent: React.FC<MindmapProps> = ({
     );
   }
 
-  if (error || (nodes.length === 0 && !isLoading && !isSaving)) {
+  if (error || (!markdown && !isLoading && !isSaving)) {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center rounded-md p-4">
         <AlertTriangle className="h-10 w-10 text-red-500 mb-4" />
@@ -207,29 +202,9 @@ const MindmapComponent: React.FC<MindmapProps> = ({
 
   return (
     <div className="relative h-full min-h-[500px]">
-      <div className="absolute inset-0">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onInit={() => setReactFlowReady(true)}
-          fitView
-          attributionPosition="bottom-left"
-        >
-          <Controls />
-          <Background gap={16} />
-        </ReactFlow>
-      </div>
+      <svg ref={svgRef} className="w-full h-full text-foreground [&_.markmap-node_text]:fill-current [&_.markmap-link]:!stroke-current [&_.markmap-node_circle]:!fill-current" />
     </div>
   );
 };
 
-const Mindmap: React.FC<MindmapProps> = (props) => (
-  <ReactFlowProvider>
-    <MindmapComponent {...props} />
-  </ReactFlowProvider>
-);
-
-export default Mindmap;
+export default MindmapComponent;
