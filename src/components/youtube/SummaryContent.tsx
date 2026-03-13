@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { parse as parsePartialJson } from 'partial-json';
 import { useVideoPlayerOptional } from '@/contexts/VideoPlayerContext';
+import { usePdfViewerOptional } from '@/contexts/PdfViewerContext';
 import { timeStringToSeconds, formatTimeString } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import posthog from 'posthog-js';
@@ -13,6 +14,7 @@ interface SummarySection {
   emoji?: string;
   heading?: string;
   timestamp?: string;
+  page?: number;
   content?: string;
 }
 
@@ -71,6 +73,7 @@ const proseClasses = "prose prose-sm dark:prose-invert max-w-none prose-hr:my-4 
 
 const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreaming }) => {
   const videoPlayer = useVideoPlayerOptional();
+  const pdfViewer = usePdfViewerOptional();
   const parsed = useMemo(() => tryParseStructured(summaryText), [summaryText]);
   const [tocOpen, setTocOpen] = useState(true);
   const t = useTranslations('SummaryContent');
@@ -81,6 +84,13 @@ const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreamin
       posthog.capture('summary_timestamp_clicked', { timestamp });
     }
   }, [videoPlayer]);
+
+  const handlePageClick = useCallback((page: number) => {
+    if (pdfViewer) {
+      pdfViewer.goToPage(page);
+      posthog.capture('summary_page_clicked', { page });
+    }
+  }, [pdfViewer]);
 
   // Legacy markdown fallback (old saved summaries)
   if (!parsed) {
@@ -116,12 +126,16 @@ const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreamin
           </button>
           {tocOpen && (
             <ul className="space-y-1 text-sm text-muted-foreground mt-2">
-              {parsed.body.map((section, i) => (
-                section.heading && (
+              {parsed.body.map((section, i) => {
+                const isClickable = (videoPlayer && section.timestamp) || (pdfViewer && section.page);
+                return section.heading && (
                   <li
                     key={i}
-                    className={videoPlayer && section.timestamp ? 'cursor-pointer hover:text-foreground transition-colors' : ''}
-                    onClick={() => section.timestamp && handleTimestampClick(section.timestamp)}
+                    className={isClickable ? 'cursor-pointer hover:text-foreground transition-colors' : ''}
+                    onClick={() => {
+                      if (section.timestamp) handleTimestampClick(section.timestamp);
+                      else if (section.page) handlePageClick(section.page);
+                    }}
                   >
                     {<span className="mr-1.5">{i + 1}.</span>}
                     {section.heading}
@@ -130,9 +144,14 @@ const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreamin
                         {formatTimeString(section.timestamp)}
                       </span>
                     )}
+                    {section.page && (
+                      <span className="ml-1.5 text-xs opacity-70">
+                        p.{section.page}
+                      </span>
+                    )}
                   </li>
-                )
-              ))}
+                );
+              })}
             </ul>
           )}
         </nav>
@@ -152,6 +171,15 @@ const SummaryContent: React.FC<SummaryContentProps> = ({ summaryText, isStreamin
                   className="ml-2 text-sm font-normal text-muted-foreground hover:text-primary cursor-pointer transition-colors"
                 >
                   {formatTimeString(section.timestamp)}
+                </button>
+              )}
+              {section.page && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handlePageClick(section.page!); }}
+                  className="ml-2 text-sm font-normal text-muted-foreground hover:text-primary cursor-pointer transition-colors"
+                >
+                  p.{section.page}
                 </button>
               )}
             </h2>

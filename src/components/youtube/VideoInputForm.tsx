@@ -226,7 +226,7 @@ export function VideoInputForm() {
         .map((item: any) => item.str)
         .join(' ');
       if (pageText.trim()) {
-        textParts.push(pageText);
+        textParts.push(`[Page ${i}]\n${pageText}`);
       }
     }
 

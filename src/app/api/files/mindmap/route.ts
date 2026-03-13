@@ -8,7 +8,7 @@ const model = 'gemini-2.5-flash';
 
 export async function POST(req: NextRequest) {
   try {
-    const { transcript, title, contentLanguage } = await req.json();
+    const { transcript, title, contentLanguage, sourceType } = await req.json();
 
     if (!transcript) {
       return NextResponse.json({ error: 'Transcript is required' }, { status: 400 });
@@ -27,6 +27,12 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const referenceRule = sourceType === 'pdf'
+      ? `\n- For every heading EXCEPT the root (#), append the most relevant page reference at the end in the format [p.N] (e.g. "## 📌 Key Concept [p.3]"). Extract page numbers from [Page N] markers in the transcript.`
+      : (sourceType === 'youtube' || sourceType === 'audio')
+      ? `\n- For every heading EXCEPT the root (#), append the most relevant timestamp at the end in the format [MM:SS] or [H:MM:SS] (e.g. "## 📌 Key Concept [2:35]"). Extract timestamps from the transcript.`
+      : '';
+
     const systemInstruction = `You generate a markdown-formatted mind map outline for learners to comprehend main points at a glance.
 
 Rules:
@@ -36,7 +42,7 @@ Rules:
 - The top-level heading (#) is the root topic
 - Maximum depth: 4 levels (# to ####)
 - Maximum 16 total headings (including root)
-- Cover the key concepts from the content`;
+- Cover the key concepts from the content${referenceRule}`;
 
     const prompt = `IMPORTANT: Provide the mindmap in ${contentLanguage || 'en'} language
 

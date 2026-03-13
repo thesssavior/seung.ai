@@ -7,6 +7,8 @@ export interface QuizItem {
   correctAnswer: string;
   tag?: string;
   explanation?: string;
+  timestamp?: string;
+  page?: number;
 }
 
 export interface QuizProgress {

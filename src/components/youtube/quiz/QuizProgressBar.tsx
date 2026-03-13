@@ -16,9 +16,9 @@ const QuizProgressBar: React.FC<QuizProgressBarProps> = ({ current, total, tag }
   const progress = ((current + 1) / total) * 100;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 lg:space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-muted-foreground">
+        <span className="text-sm lg:text-base font-medium text-muted-foreground">
           {t('questionCounter', { current: current + 1, total })}
         </span>
         {tag && (
@@ -27,7 +27,7 @@ const QuizProgressBar: React.FC<QuizProgressBarProps> = ({ current, total, tag }
           </Badge>
         )}
       </div>
-      <Progress value={progress} className="h-1.5 [&>div]:bg-green-500 [&>div]:rounded-full" />
+      <Progress value={progress} className="h-1.5 lg:h-2 [&>div]:bg-green-500 [&>div]:rounded-full" />
     </div>
   );
 };

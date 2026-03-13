@@ -7,6 +7,9 @@ import { Loader2, AlertTriangle, Brain, Plus, Minus, Maximize } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
+import { useVideoPlayerOptional } from '@/contexts/VideoPlayerContext';
+import { usePdfViewerOptional } from '@/contexts/PdfViewerContext';
+import { timeStringToSeconds } from '@/lib/utils';
 import posthog from 'posthog-js';
 
 interface MindmapProps {
@@ -17,6 +20,7 @@ interface MindmapProps {
   contentLanguage?: string;
   fileId: string | null | undefined;
   isActive: boolean | null;
+  sourceType?: 'youtube' | 'pdf' | 'audio';
 }
 
 const transformer = new Transformer();
@@ -28,7 +32,8 @@ const MindmapComponent: React.FC<MindmapProps> = ({
   locale,
   contentLanguage,
   fileId,
-  isActive
+  isActive,
+  sourceType
 }) => {
   const t = useTranslations();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -39,6 +44,12 @@ const MindmapComponent: React.FC<MindmapProps> = ({
   const [isGenerated, setIsGenerated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
+  const videoPlayer = useVideoPlayerOptional();
+  const pdfViewer = usePdfViewerOptional();
+  const videoPlayerRef = useRef(videoPlayer);
+  const pdfViewerRef = useRef(pdfViewer);
+  videoPlayerRef.current = videoPlayer;
+  pdfViewerRef.current = pdfViewer;
   const hasStartedGeneration = useRef(false);
 
   // Load existing mindmap data
@@ -64,7 +75,18 @@ const MindmapComponent: React.FC<MindmapProps> = ({
       svgRef.current.removeChild(svgRef.current.firstChild);
     }
 
-    const { root } = transformer.transform(markdown);
+    // Strip reference tags from markdown for display, but store them as data attributes
+    const refMap = new Map<string, string>();
+    const displayMarkdown = markdown.replace(
+      /^(#{1,4}\s+.+?)\s*\[(\d{1,2}:\d{2}(?::\d{2})?|p\.\d+)\]\s*$/gm,
+      (_, heading, ref) => {
+        const key = heading.trim();
+        refMap.set(key, ref);
+        return heading;
+      }
+    );
+
+    const { root } = transformer.transform(displayMarkdown);
 
     // Small delay to ensure container is laid out before measuring
     requestAnimationFrame(() => {
@@ -85,6 +107,37 @@ const MindmapComponent: React.FC<MindmapProps> = ({
         // Restore animation duration after initial positioning
         mm.setOptions({ duration: 500 });
       });
+
+      // Attach click handler for reference navigation
+      const handleNodeClick = (e: Event) => {
+        const target = e.target as Element;
+        const node = target.closest('.markmap-foreign') || target.closest('.markmap-node');
+        if (!node) return;
+        const text = (node.textContent || '').trim();
+        // Look up the reference from the stored map
+        let ref: string | undefined;
+        refMap.forEach((val, key) => {
+          if (ref) return;
+          // Strip heading markers for comparison
+          const cleanKey = key.replace(/^#{1,4}\s+/, '');
+          if (text.includes(cleanKey)) {
+            ref = val;
+          }
+        });
+        if (!ref) return;
+        // Timestamp reference
+        const tsMatch = ref.match(/^(\d{1,2}:\d{2}(?::\d{2})?)$/);
+        if (tsMatch && videoPlayerRef.current) {
+          videoPlayerRef.current.seekTo(timeStringToSeconds(tsMatch[1]));
+          return;
+        }
+        // Page reference
+        const pageMatch = ref.match(/^p\.(\d+)$/);
+        if (pageMatch && pdfViewerRef.current) {
+          pdfViewerRef.current.goToPage(parseInt(pageMatch[1]));
+        }
+      };
+      svgRef.current.addEventListener('click', handleNodeClick);
     });
 
     return () => {
@@ -134,7 +187,8 @@ const MindmapComponent: React.FC<MindmapProps> = ({
         body: JSON.stringify({
           transcript,
           title,
-          contentLanguage: contentLanguage || locale
+          contentLanguage: contentLanguage || locale,
+          sourceType
         }),
       });
 
@@ -246,15 +300,21 @@ const MindmapComponent: React.FC<MindmapProps> = ({
         .markmap-node text {
           fill: currentColor;
         }
+        .markmap-foreign > div {
+          color: #1f2937 !important;
+        }
+        .dark .markmap-foreign > div {
+          color: #f3f4f6 !important;
+        }
         .markmap-node { cursor: pointer; }
         .markmap-link { stroke: #d1d5db !important; }
         .markmap-node line { stroke: #d1d5db !important; }
         .markmap-node circle { fill: #d1d5db !important; stroke: #d1d5db !important; }
         .markmap-node:hover line { stroke: #6b7280 !important; }
         .markmap-node:hover circle { fill: #6b7280 !important; stroke: #6b7280 !important; }
-        .dark .markmap-link { stroke: #374151 !important; }
-        .dark .markmap-node line { stroke: #374151 !important; }
-        .dark .markmap-node circle { fill: #374151 !important; stroke: #374151 !important; }
+        .dark .markmap-link { stroke: #4b5563 !important; }
+        .dark .markmap-node line { stroke: #4b5563 !important; }
+        .dark .markmap-node circle { fill: #4b5563 !important; stroke: #4b5563 !important; }
         .dark .markmap-node:hover line { stroke: #9ca3af !important; }
         .dark .markmap-node:hover circle { fill: #9ca3af !important; stroke: #9ca3af !important; }
       `}</style>

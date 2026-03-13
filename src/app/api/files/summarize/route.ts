@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     const encoder = new TextEncoder();
 
     const audioSystemPrompt = `You are an audio content summarizer. Summarize the audio transcript in logical order with clear, accurate, and detailed explanations. For each section, use markdown formatting: **bold** for key terms, _italics_ for emphasis, \`code\` for technical terms, and bullet or numbered lists for structured information. Be thorough but concise. No greetings or filler.`;
-    const pdfSystemPrompt = `You are a document summarizer. Summarize the document content in logical order with clear, accurate, and detailed explanations. For each section, use markdown formatting: **bold** for key terms, _italics_ for emphasis, \`code\` for technical terms, and bullet or numbered lists for structured information. Be thorough but concise. No greetings or filler.`;
+    const pdfSystemPrompt = `You are a document summarizer. Summarize the document content in logical order with clear, accurate, and detailed explanations. The document text includes [Page N] markers — use these to set the exact page number where each section begins. Use markdown formatting: **bold** for key terms, _italics_ for emphasis, \`code\` for technical terms, and bullet or numbered lists for structured information. Be thorough but concise. No greetings or filler.`;
 
     const systemPrompt = isPdf ? pdfSystemPrompt : isAudio ? audioSystemPrompt : messages.systemPrompts;
     const userPrompt = isPdf ? `Please summarize this document:` : isAudio ? `Please summarize this audio recording:` : messages.userPrompts;
@@ -82,12 +82,16 @@ export async function POST(req: Request) {
                             type: Type.STRING,
                             description: 'Concise subheading for this section',
                           },
+                          page: {
+                            type: Type.INTEGER,
+                            description: 'The page number from the [Page N] markers where this section\'s content begins',
+                          },
                           content: {
                             type: Type.STRING,
                             description: 'Detailed summary using markdown: bullet points, numbered lists, **bold**, _italics_, `code` where appropriate',
                           },
                         },
-                        required: ['emoji', 'heading', 'content'],
+                        required: ['emoji', 'heading', 'page', 'content'],
                       },
                     },
                     outro: {

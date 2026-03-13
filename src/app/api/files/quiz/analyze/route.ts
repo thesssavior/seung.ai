@@ -11,15 +11,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'quizItems and answers are required' }, { status: 400 });
     }
 
-    // Build the prompt with quiz data
-    const freeResponseQuestions = quizItems
-      .map((item: any, index: number) => ({ item, index }))
-      .filter(({ item }: any) => item.type === 'free_response');
-
+    // Track free-response indices so we don't rely on the LLM to return them
+    const freeResponseIndices: number[] = [];
     const allQuestions = quizItems.map((item: any, index: number) => {
       const userAnswer = answers[index] || '(no answer)';
       let isCorrect: string;
       if (item.type === 'free_response') {
+        freeResponseIndices.push(index);
         isCorrect = 'needs grading';
       } else {
         isCorrect = userAnswer === item.correctAnswer ? 'correct' : 'incorrect';
@@ -30,7 +28,7 @@ export async function POST(req: NextRequest) {
     const lang = contentLanguage || 'ko';
 
     const systemInstruction = `You are an AI tutor analyzing quiz results. You will:
-1. Grade each free-response question by comparing the user's answer to the correct answer. Be lenient — if the user demonstrates understanding of the core concept, mark it correct even if wording differs.
+1. Grade each free-response question (marked "needs grading"). Return grades in the same order they appear. Be lenient — if the user demonstrates understanding of the core concept, mark it correct even if wording differs.
 2. Write "highlights" as a JSON array of short bullet strings (2-4 bullets, each under 15 words) about what the user understood well.
 3. Write "focusAreas" as a JSON array of short bullet strings (2-4 bullets, each under 15 words) about what needs review.
 
@@ -54,14 +52,7 @@ Grade the free-response questions and provide analysis.`;
           properties: {
             freeResponseGrades: {
               type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  index: { type: Type.NUMBER },
-                  correct: { type: Type.BOOLEAN },
-                },
-                required: ['index', 'correct'],
-              },
+              items: { type: Type.BOOLEAN },
             },
             highlights: { type: Type.ARRAY, items: { type: Type.STRING } },
             focusAreas: { type: Type.ARRAY, items: { type: Type.STRING } },
@@ -77,7 +68,18 @@ Grade the free-response questions and provide analysis.`;
     }
 
     const parsed = JSON.parse(resultJsonString);
-    return NextResponse.json(parsed, { status: 200 });
+
+    // Map ordered boolean grades back to actual question indices
+    const mappedGrades = (parsed.freeResponseGrades || []).map((correct: boolean, i: number) => ({
+      index: freeResponseIndices[i],
+      correct,
+    }));
+
+    return NextResponse.json({
+      freeResponseGrades: mappedGrades,
+      highlights: parsed.highlights,
+      focusAreas: parsed.focusAreas,
+    }, { status: 200 });
   } catch (error: any) {
     console.error('Error analyzing quiz:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });

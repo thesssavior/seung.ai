@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { usePdfViewerOptional } from '@/contexts/PdfViewerContext';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
@@ -17,6 +18,15 @@ interface PdfViewerProps {
 export function PdfViewer({ pdfUrl, title }: PdfViewerProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [scale, setScale] = useState(1.0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const pdfViewer = usePdfViewerOptional();
+
+  // Register scroll container with context
+  useEffect(() => {
+    if (pdfViewer) {
+      pdfViewer.registerScrollContainer(scrollContainerRef.current);
+    }
+  }, [pdfViewer]);
 
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -48,7 +58,7 @@ export function PdfViewer({ pdfUrl, title }: PdfViewerProps) {
       </div>
 
       {/* PDF Document - continuous scroll */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto" ref={scrollContainerRef}>
         <Document
           file={pdfUrl}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -64,7 +74,7 @@ export function PdfViewer({ pdfUrl, title }: PdfViewerProps) {
           }
         >
           {Array.from({ length: numPages }, (_, i) => (
-            <div key={i + 1} className="flex justify-center py-2">
+            <div key={i + 1} className="flex justify-center py-2" data-page-number={i + 1}>
               <Page
                 pageNumber={i + 1}
                 scale={scale}

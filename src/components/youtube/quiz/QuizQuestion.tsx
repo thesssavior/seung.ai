@@ -34,6 +34,8 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           checked={checked}
           onSelect={onSelect}
           explanation={item.explanation}
+          timestamp={item.timestamp}
+          page={item.page}
         />
       );
     case 'true_false':
@@ -45,6 +47,8 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           checked={checked}
           onSelect={onSelect}
           explanation={item.explanation}
+          timestamp={item.timestamp}
+          page={item.page}
         />
       );
     case 'free_response':
@@ -57,6 +61,8 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           onAnswerChange={onAnswerChange}
           onCheck={onCheck}
           explanation={item.explanation}
+          timestamp={item.timestamp}
+          page={item.page}
         />
       );
     default:

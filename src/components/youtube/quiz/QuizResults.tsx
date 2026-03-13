@@ -87,35 +87,35 @@ const QuizResults: React.FC<QuizResultsProps> = ({
   const showFocusAreas = (analysisFocusAreas && analysisFocusAreas.length > 0) || fallbackFocusAreas.length > 0;
 
   return (
-    <div className="flex flex-col py-8 px-4 space-y-8">
+    <div className="flex flex-col py-8 px-4 lg:py-10 lg:px-6 space-y-8 lg:space-y-10">
       {/* Title */}
       <div className="text-center space-y-2">
         <div className="rounded-full bg-primary/10 p-4 w-fit mx-auto">
-          <Trophy className="h-10 w-10 text-primary" />
+          <Trophy className="h-10 w-10 lg:h-12 lg:w-12 text-primary" />
         </div>
-        <h3 className="text-xl font-semibold">{t('resultComplete')}</h3>
+        <h3 className="text-xl lg:text-2xl font-semibold">{t('resultComplete')}</h3>
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl border p-4 text-center space-y-1">
-          <p className="text-xs text-muted-foreground font-medium">{t('statsScore')}</p>
+      <div className="grid grid-cols-3 gap-3 lg:gap-4">
+        <div className="rounded-xl border p-4 lg:p-5 text-center space-y-1">
+          <p className="text-xs lg:text-sm text-muted-foreground font-medium">{t('statsScore')}</p>
           {analysisLoading ? (
             <Shimmer className="h-8 w-16 mx-auto" />
           ) : (
-            <p className="text-2xl font-bold text-primary">{score}/{total}</p>
+            <p className="text-2xl lg:text-3xl font-bold text-primary">{score}/{total}</p>
           )}
         </div>
-        <div className="rounded-xl border p-4 text-center space-y-1">
-          <p className="text-xs text-muted-foreground font-medium">{t('statsAccuracy')}</p>
+        <div className="rounded-xl border p-4 lg:p-5 text-center space-y-1">
+          <p className="text-xs lg:text-sm text-muted-foreground font-medium">{t('statsAccuracy')}</p>
           {analysisLoading ? (
             <Shimmer className="h-8 w-14 mx-auto" />
           ) : (
-            <p className="text-2xl font-bold text-primary">{percentage}%</p>
+            <p className="text-2xl lg:text-3xl font-bold text-primary">{percentage}%</p>
           )}
         </div>
-        <div className="rounded-xl border p-4 text-center space-y-1">
-          <p className="text-xs text-muted-foreground font-medium">{t('statsBreakdown')}</p>
+        <div className="rounded-xl border p-4 lg:p-5 text-center space-y-1">
+          <p className="text-xs lg:text-sm text-muted-foreground font-medium">{t('statsBreakdown')}</p>
           {analysisLoading ? (
             <div className="space-y-1.5 pt-1">
               <Shimmer className="h-3 w-16 mx-auto" />
@@ -135,7 +135,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
       {/* Highlights */}
       {analysisLoading ? (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold">{t('highlightsTitle')}</h4>
+          <h4 className="text-sm lg:text-base font-semibold">{t('highlightsTitle')}</h4>
           <div className="space-y-2 pl-6">
             <Shimmer className="h-4 w-3/4" />
             <Shimmer className="h-4 w-1/2" />
@@ -143,8 +143,8 @@ const QuizResults: React.FC<QuizResultsProps> = ({
         </div>
       ) : showHighlights && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold">{t('highlightsTitle')}</h4>
-          <ul className="text-sm text-muted-foreground space-y-1 pl-6 list-disc">
+          <h4 className="text-sm lg:text-base font-semibold">{t('highlightsTitle')}</h4>
+          <ul className="text-sm lg:text-base text-muted-foreground space-y-1 pl-6 list-disc">
             {(analysisHighlights || fallbackHighlights).map((item, i) => (
               <li key={i}>{item}</li>
             ))}
@@ -155,7 +155,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
       {/* Focus Areas */}
       {analysisLoading ? (
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold">{t('focusAreasTitle')}</h4>
+          <h4 className="text-sm lg:text-base font-semibold">{t('focusAreasTitle')}</h4>
           <div className="space-y-2 pl-6">
             <Shimmer className="h-4 w-2/3" />
             <Shimmer className="h-4 w-1/2" />
@@ -163,8 +163,8 @@ const QuizResults: React.FC<QuizResultsProps> = ({
         </div>
       ) : showFocusAreas && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold">{t('focusAreasTitle')}</h4>
-          <ul className="text-sm text-muted-foreground space-y-1 pl-6 list-disc">
+          <h4 className="text-sm lg:text-base font-semibold">{t('focusAreasTitle')}</h4>
+          <ul className="text-sm lg:text-base text-muted-foreground space-y-1 pl-6 list-disc">
             {(analysisFocusAreas || fallbackFocusAreas).map((item, i) => (
               <li key={i}>{item}</li>
             ))}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useRef, useContext } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { Loader2, Maximize2, Minimize2 } from 'lucide-react';
 import { useSummaryGeneration } from '@/contexts/SummaryGenerationContext';
 import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
+import { PdfViewerProvider } from '@/contexts/PdfViewerContext';
 import { SidebarRefreshContext, useFolder } from '@/components/home/SidebarLayout';
 import { VideoPlayer } from '@/components/youtube/VideoPlayer';
 import { PdfViewer } from '@/components/pdf/PdfViewer';
@@ -485,6 +486,7 @@ export default function SummaryDetailPage() {
             contentLanguage={contentLanguage}
             fileId={effectiveFileId || null}
             isActive={activeTab === 'mindmap'}
+            sourceType={sourceType}
           />
         </div>
 
@@ -496,6 +498,7 @@ export default function SummaryDetailPage() {
             contentLanguage={contentLanguage}
             fileId={effectiveFileId || null}
             title={summary.name}
+            sourceType={sourceType}
           />
         </div>
 
@@ -524,13 +527,18 @@ export default function SummaryDetailPage() {
     </Tabs>
   );
 
+  // Conditional PDF provider wrapper
+  const MaybePdfProvider = isPdf ? PdfViewerProvider : React.Fragment;
+
   // Mobile layout: tabs only
   if (!isDesktop) {
     return (
       <VideoPlayerProvider>
-        <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
-          {serviceTabs}
-        </div>
+        <MaybePdfProvider>
+          <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+            {serviceTabs}
+          </div>
+        </MaybePdfProvider>
       </VideoPlayerProvider>
     );
   }
@@ -539,9 +547,11 @@ export default function SummaryDetailPage() {
   if (isFullscreen) {
     return (
       <VideoPlayerProvider>
-        <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
-          {serviceTabs}
-        </div>
+        <MaybePdfProvider>
+          <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+            {serviceTabs}
+          </div>
+        </MaybePdfProvider>
       </VideoPlayerProvider>
     );
   }
@@ -549,68 +559,70 @@ export default function SummaryDetailPage() {
   // Desktop split layout: viewer+transcript left, tabs right
   return (
     <VideoPlayerProvider>
-      <div className="h-[calc(100vh-4rem)] overflow-hidden">
-        <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Left panel: Video/PDF + Transcript */}
-          <ResizablePanel defaultSize={46} minSize={25} maxSize={60}>
-            <div className="h-full flex flex-col">
-              {isPdf ? (
-                /* PDF viewer takes full height */
-                <div className="h-full p-2">
-                  {pdfUrl ? (
-                    <PdfViewer pdfUrl={pdfUrl} title={summary.name} />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                      PDF preview not available
-                    </div>
-                  )}
-                </div>
-              ) : isAudio ? (
-                <>
-                  {/* Audio player */}
-                  <div className="flex-shrink-0 p-2" style={{ maxHeight: '280px' }}>
-                    {audioUrl ? (
-                      <AudioPlayer audioUrl={audioUrl} title={summary.name} />
+      <MaybePdfProvider>
+        <div className="h-[calc(100vh-4rem)] overflow-hidden">
+          <ResizablePanelGroup direction="horizontal" className="h-full">
+            {/* Left panel: Video/PDF + Transcript */}
+            <ResizablePanel defaultSize={46} minSize={25} maxSize={60}>
+              <div className="h-full flex flex-col">
+                {isPdf ? (
+                  /* PDF viewer takes full height */
+                  <div className="h-full p-2">
+                    {pdfUrl ? (
+                      <PdfViewer pdfUrl={pdfUrl} title={summary.name} />
                     ) : (
-                      <div className="flex items-center justify-center h-40 text-muted-foreground">
-                        Audio preview not available
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        PDF preview not available
                       </div>
                     )}
                   </div>
-                  {/* Transcript - fills remaining space */}
-                  <div className="flex-1 overflow-hidden">
-                    <ScrollArea className="h-full">
-                      <TranscriptPanel transcript={summary.transcript} />
-                    </ScrollArea>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Video player - fixed aspect ratio */}
-                  <div className="flex-shrink-0 p-2">
-                    <div className="aspect-video">
-                      <VideoPlayer videoId={summary.video_id} title={summary.name} />
+                ) : isAudio ? (
+                  <>
+                    {/* Audio player */}
+                    <div className="flex-shrink-0 p-2" style={{ maxHeight: '280px' }}>
+                      {audioUrl ? (
+                        <AudioPlayer audioUrl={audioUrl} title={summary.name} />
+                      ) : (
+                        <div className="flex items-center justify-center h-40 text-muted-foreground">
+                          Audio preview not available
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  {/* Transcript - fills remaining space */}
-                  <div className="flex-1 overflow-hidden">
-                    <ScrollArea className="h-full">
-                      <TranscriptPanel transcript={summary.transcript} />
-                    </ScrollArea>
-                  </div>
-                </>
-              )}
-            </div>
-          </ResizablePanel>
+                    {/* Transcript - fills remaining space */}
+                    <div className="flex-1 overflow-hidden">
+                      <ScrollArea className="h-full">
+                        <TranscriptPanel transcript={summary.transcript} />
+                      </ScrollArea>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Video player - fixed aspect ratio */}
+                    <div className="flex-shrink-0 p-2">
+                      <div className="aspect-video">
+                        <VideoPlayer videoId={summary.video_id} title={summary.name} />
+                      </div>
+                    </div>
+                    {/* Transcript - fills remaining space */}
+                    <div className="flex-1 overflow-hidden">
+                      <ScrollArea className="h-full">
+                        <TranscriptPanel transcript={summary.transcript} />
+                      </ScrollArea>
+                    </div>
+                  </>
+                )}
+              </div>
+            </ResizablePanel>
 
-          <ResizableHandle />
+            <ResizableHandle />
 
-          {/* Right panel: Service tabs */}
-          <ResizablePanel defaultSize={54} minSize={40}>
-            {serviceTabs}
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      </div>
+            {/* Right panel: Service tabs */}
+            <ResizablePanel defaultSize={54} minSize={40}>
+              {serviceTabs}
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
+      </MaybePdfProvider>
     </VideoPlayerProvider>
   );
 }

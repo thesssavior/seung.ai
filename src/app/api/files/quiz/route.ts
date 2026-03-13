@@ -8,8 +8,8 @@ const model = 'gemini-2.5-flash';
 
 export async function POST(req: NextRequest) {
   try {
-    const { transcript, title, contentLanguage } = await req.json();
-    console.log('[Quiz API POST] Received:', { title, contentLanguage, transcriptLength: transcript?.length });
+    const { transcript, title, contentLanguage, sourceType } = await req.json();
+    console.log('[Quiz API POST] Received:', { title, contentLanguage, sourceType, transcriptLength: transcript?.length });
 
     if (!transcript) {
       return NextResponse.json({ error: 'Transcript is required' }, { status: 400 });
@@ -29,7 +29,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const systemInstruction = `You are an AI assistant that generates quizzes from video transcripts.
+    const referenceInstruction = sourceType === 'pdf'
+      ? `\n- page: For each question, identify which page in the transcript (marked with [Page N]) is most relevant. Set the "page" field to that page number (integer).`
+      : sourceType === 'youtube' || sourceType === 'audio'
+      ? `\n- timestamp: For each question, identify the most relevant timestamp from the transcript. Set the "timestamp" field to that time in MM:SS or H:MM:SS format.`
+      : '';
+
+    const systemInstruction = `You are an AI assistant that generates quizzes from transcripts.
 Create exactly 5 questions that test understanding of the core ideas.
 
 Question type mix:
@@ -38,11 +44,11 @@ Question type mix:
 - About 1 free-response question (type: "free_response") with no options
 
 Rules:
-- For mcq: provide exactly 4 plausible options. correctAnswer must match one option exactly.
-- For true_false: options must be ["True", "False"]. correctAnswer must be "True" or "False".
-- For free_response: do not include options. correctAnswer is a concise model answer.
+- For mcq: provide exactly 4 plausible options. Set correctAnswerIndex to the 0-based index of the correct option (0-3).
+- For true_false: options must be ["True", "False"]. Set correctAnswerIndex to 0 for True, 1 for False.
+- For free_response: do not include options. correctAnswer is a concise model answer (correctAnswerIndex is ignored).
 - tag: a short topic/category label for the question (2-4 words).
-- explanation: 1-2 sentence explanation of why the correct answer is correct.
+- explanation: 1-2 sentence explanation of why the correct answer is correct.${referenceInstruction}
 - Questions should be thought-provoking and varied.`;
 
     const prompt = `Important: Respond in ${contentLanguage || 'ko'} language.
@@ -70,8 +76,11 @@ ${transcript}`;
                   type: { type: Type.STRING, enum: ['mcq', 'true_false', 'free_response'] },
                   options: { type: Type.ARRAY, items: { type: Type.STRING } },
                   correctAnswer: { type: Type.STRING },
+                  correctAnswerIndex: { type: Type.INTEGER },
                   tag: { type: Type.STRING },
                   explanation: { type: Type.STRING },
+                  ...(sourceType === 'pdf' ? { page: { type: Type.INTEGER } } : {}),
+                  ...((sourceType === 'youtube' || sourceType === 'audio') ? { timestamp: { type: Type.STRING } } : {}),
                 },
                 required: ['question', 'type', 'correctAnswer', 'tag', 'explanation'],
               },
@@ -89,6 +98,20 @@ ${transcript}`;
     }
 
     const parsedResult = JSON.parse(resultJsonString);
+
+    // Post-process: resolve correctAnswer from correctAnswerIndex for MCQ/TF
+    if (parsedResult.quiz && Array.isArray(parsedResult.quiz)) {
+      for (const item of parsedResult.quiz) {
+        if (item.options && item.options.length > 0 && item.correctAnswerIndex != null) {
+          const idx = item.correctAnswerIndex;
+          if (idx >= 0 && idx < item.options.length) {
+            item.correctAnswer = item.options[idx];
+          }
+        }
+        delete item.correctAnswerIndex;
+      }
+    }
+
     console.log('[Quiz API POST] Generated quiz:', { count: parsedResult.quiz?.length, firstQuestion: parsedResult.quiz?.[0]?.question?.slice(0, 50) });
     return NextResponse.json({ quiz: parsedResult.quiz }, { status: 200 });
 

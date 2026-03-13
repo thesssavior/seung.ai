@@ -19,6 +19,7 @@ interface QuizProps {
   contentLanguage?: string;
   fileId: string | null;
   title?: string | null;
+  sourceType?: 'youtube' | 'pdf' | 'audio';
 }
 
 const QuizComponent: React.FC<QuizProps> = ({
@@ -27,7 +28,8 @@ const QuizComponent: React.FC<QuizProps> = ({
   locale,
   contentLanguage,
   fileId,
-  title
+  title,
+  sourceType
 }) => {
   const t = useTranslations();
 
@@ -158,7 +160,8 @@ const QuizComponent: React.FC<QuizProps> = ({
         body: JSON.stringify({
           transcript,
           title,
-          contentLanguage: langToSend
+          contentLanguage: langToSend,
+          sourceType
         }),
       });
 
@@ -423,8 +426,8 @@ const QuizComponent: React.FC<QuizProps> = ({
 
   if (quizComplete) {
     return (
-      <ScrollArea className="h-full p-4">
-        <div className="max-w-2xl mx-auto">
+      <ScrollArea className="h-full p-4 lg:p-6">
+        <div className="max-w-2xl lg:max-w-3xl mx-auto">
           <QuizResults
             score={score}
             total={quizItems.length}
@@ -462,8 +465,8 @@ const QuizComponent: React.FC<QuizProps> = ({
   };
 
   return (
-    <ScrollArea className="h-full p-4">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <ScrollArea className="h-full p-4 lg:p-6">
+      <div className="max-w-2xl lg:max-w-3xl mx-auto space-y-6 lg:space-y-8">
         {error && (
           <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg">
             {error}
@@ -513,7 +516,7 @@ const QuizComponent: React.FC<QuizProps> = ({
               <button
                 key={i}
                 onClick={() => goTo(i)}
-                className={`h-2 w-2 rounded-full transition-all ${getDotColor(i)}`}
+                className={`h-2 w-2 lg:h-2.5 lg:w-2.5 rounded-full transition-all ${getDotColor(i)}`}
               />
             ))}
           </div>
