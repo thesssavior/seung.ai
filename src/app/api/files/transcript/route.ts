@@ -13,6 +13,11 @@ import { supabase } from '@/lib/supabaseClient';
 
 export async function POST(req: Request) {
   try {
+    const user = await getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { videoId, locale = 'ko', contentLanguage, folderId, fileId: clientFileId } = await req.json();
     const messages = locale === 'ko' ? koMessages : locale === 'es' ? esMessages : enMessages;
 
@@ -112,7 +117,6 @@ export async function POST(req: Request) {
     // If folderId is provided, create a DB row with empty summary
     let fileId = null;
     if (folderId) {
-      const user = await getUser();
       if (user?.id) {
         const insertData = {
           ...(clientFileId ? { id: clientFileId } : {}),

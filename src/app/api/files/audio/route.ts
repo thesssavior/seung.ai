@@ -8,6 +8,11 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req: Request) {
   try {
+    const user = await getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     const locale = (formData.get('locale') as string) || 'en';
@@ -68,8 +73,6 @@ export async function POST(req: Request) {
 
     const title = file.name.replace(/\.[^.]+$/, '') || 'Audio Recording';
     const tokenCount = calculateTokenCount(transcriptText);
-
-    const user = await getUser();
 
     // Upload audio to Supabase Storage
     let audioUrl: string | null = null;

@@ -19,6 +19,7 @@ interface ChatProps {
   fileId: string | null;
   title?: string | null;
   sourceType?: 'youtube' | 'pdf' | 'audio';
+  tokenCount?: number;
 }
 
 const Chat: React.FC<ChatProps> = ({
@@ -29,6 +30,7 @@ const Chat: React.FC<ChatProps> = ({
   fileId,
   title,
   sourceType,
+  tokenCount,
 }) => {
   const t = useTranslations();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -116,6 +118,7 @@ const Chat: React.FC<ChatProps> = ({
           contentLanguage: contentLanguage || 'en',
           conversationHistory: messages.slice(-10),
           sourceType: sourceType || 'youtube',
+          tokenCount,
         }),
       });
 

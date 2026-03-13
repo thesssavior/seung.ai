@@ -5,6 +5,11 @@ import { supabase } from '@/lib/supabaseClient';
 
 export async function POST(req: Request) {
   try {
+    const user = await getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { extractedText, fileName, locale = 'en', contentLanguage, folderId, pdfUrl } = await req.json();
 
     if (!extractedText || extractedText.trim().length === 0) {
@@ -13,8 +18,6 @@ export async function POST(req: Request) {
 
     const title = (fileName || 'Untitled.pdf').replace(/\.pdf$/i, '') || 'Untitled PDF';
     const tokenCount = calculateTokenCount(extractedText);
-
-    const user = await getUser();
 
     // Create DB record if user is logged in with a folder
     let fileId = null;

@@ -20,6 +20,7 @@ interface QuizProps {
   fileId: string | null;
   title?: string | null;
   sourceType?: 'youtube' | 'pdf' | 'audio';
+  tokenCount?: number;
 }
 
 const QuizComponent: React.FC<QuizProps> = ({
@@ -29,7 +30,8 @@ const QuizComponent: React.FC<QuizProps> = ({
   contentLanguage,
   fileId,
   title,
-  sourceType
+  sourceType,
+  tokenCount,
 }) => {
   const t = useTranslations();
 
@@ -161,7 +163,8 @@ const QuizComponent: React.FC<QuizProps> = ({
           transcript,
           title,
           contentLanguage: langToSend,
-          sourceType
+          sourceType,
+          tokenCount,
         }),
       });
 

@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { GoogleGenAI, Type } from '@google/genai';
 import messages from '@/messages/en.json';
 import { getPostHogClient } from '@/lib/posthog-server';
-import { getUser } from '@/lib/supabase/auth';
+import { getUserWithProfile } from '@/lib/supabase/auth';
+import { FREE_TOKEN_LIMIT } from '@/lib/utils';
 
 const model = 'gemini-2.5-flash';
 
@@ -22,13 +23,21 @@ export async function POST(req: Request) {
     const isPdf = sourceType === 'pdf';
     const isAudio = sourceType === 'audio';
 
+    const user = await getUserWithProfile();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (user.profile?.plan !== 'premium' && tokenCount > FREE_TOKEN_LIMIT) {
+      return NextResponse.json({ error: 'token_limit_exceeded' }, { status: 403 });
+    }
+
     if (!transcriptText) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
     // Track summary generation event in PostHog
-    const user = await getUser();
-    if (user?.id) {
+    if (user.id) {
       const posthog = getPostHogClient();
       posthog.capture({
         distinctId: user.id,

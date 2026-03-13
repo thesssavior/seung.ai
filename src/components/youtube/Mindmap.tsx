@@ -21,6 +21,7 @@ interface MindmapProps {
   fileId: string | null | undefined;
   isActive: boolean | null;
   sourceType?: 'youtube' | 'pdf' | 'audio';
+  tokenCount?: number;
 }
 
 const transformer = new Transformer();
@@ -33,7 +34,8 @@ const MindmapComponent: React.FC<MindmapProps> = ({
   contentLanguage,
   fileId,
   isActive,
-  sourceType
+  sourceType,
+  tokenCount,
 }) => {
   const t = useTranslations();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -55,7 +57,8 @@ const MindmapComponent: React.FC<MindmapProps> = ({
   // Load existing mindmap data
   useEffect(() => {
     if (mindmap?.markdown) {
-      setMarkdown(mindmap.markdown);
+      // Strip leading whitespace from heading lines (Gemini sometimes indents them)
+      setMarkdown(mindmap.markdown.replace(/^[ \t]+(#{1,4}\s)/gm, '$1'));
       setIsGenerated(true);
     }
   }, [mindmap]);
@@ -188,7 +191,8 @@ const MindmapComponent: React.FC<MindmapProps> = ({
           transcript,
           title,
           contentLanguage: contentLanguage || locale,
-          sourceType
+          sourceType,
+          tokenCount,
         }),
       });
 
@@ -210,6 +214,8 @@ const MindmapComponent: React.FC<MindmapProps> = ({
 
       // Clean up: remove code fences if the LLM wraps it
       fullMarkdown = fullMarkdown.replace(/^```(?:markdown)?\n?/gm, '').replace(/\n?```$/gm, '').trim();
+      // Strip leading whitespace from heading lines (Gemini sometimes indents them)
+      fullMarkdown = fullMarkdown.replace(/^[ \t]+(#{1,4}\s)/gm, '$1');
 
       setMarkdown(fullMarkdown);
       setIsGenerated(true);

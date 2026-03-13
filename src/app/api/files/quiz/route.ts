@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, Type } from '@google/genai';
-import { getUser } from '@/lib/supabase/auth';
+import { getUser, getUserWithProfile } from '@/lib/supabase/auth';
+import { FREE_TOKEN_LIMIT } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { getPostHogClient } from '@/lib/posthog-server';
 
@@ -8,15 +9,23 @@ const model = 'gemini-2.5-flash';
 
 export async function POST(req: NextRequest) {
   try {
-    const { transcript, title, contentLanguage, sourceType } = await req.json();
+    const { transcript, title, contentLanguage, sourceType, tokenCount } = await req.json();
     console.log('[Quiz API POST] Received:', { title, contentLanguage, sourceType, transcriptLength: transcript?.length });
+
+    const user = await getUserWithProfile();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (user.profile?.plan !== 'premium' && tokenCount > FREE_TOKEN_LIMIT) {
+      return NextResponse.json({ error: 'token_limit_exceeded' }, { status: 403 });
+    }
 
     if (!transcript) {
       return NextResponse.json({ error: 'Transcript is required' }, { status: 400 });
     }
 
     // Track quiz generation event in PostHog
-    const user = await getUser();
     console.log('[Quiz API POST] User:', user?.id);
     if (user?.id) {
       const posthog = getPostHogClient();

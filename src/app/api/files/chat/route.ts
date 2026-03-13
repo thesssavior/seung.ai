@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { getPostHogClient } from '@/lib/posthog-server';
-import { getUser } from '@/lib/supabase/auth';
+import { getUserWithProfile } from '@/lib/supabase/auth';
+import { FREE_TOKEN_LIMIT } from '@/lib/utils';
 
 const model = 'gemini-2.5-flash';
 
@@ -20,14 +21,23 @@ export async function POST(req: NextRequest) {
       contentLanguage,
       conversationHistory,
       sourceType,
+      tokenCount,
     } = await req.json();
+
+    const user = await getUserWithProfile();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (user.profile?.plan !== 'premium' && tokenCount > FREE_TOKEN_LIMIT) {
+      return NextResponse.json({ error: 'token_limit_exceeded' }, { status: 403 });
+    }
 
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
     // Track chat message event in PostHog
-    const user = await getUser();
     if (user?.id) {
       const posthog = getPostHogClient();
       posthog.capture({
