@@ -166,24 +166,35 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
                   {t('freeTrial')}
                 </p>
               )}
-              <button
+              <motion.button
                 onClick={handleCheckout}
                 disabled={checkingOut || !user}
-                className="w-full bg-foreground text-background font-bold py-2 px-4 rounded hover:opacity-90 transition-colors duration-200 text-center mt-4 disabled:opacity-50 flex items-center justify-center gap-2"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="relative w-full overflow-hidden bg-foreground text-background font-bold py-2.5 px-4 rounded-lg text-center mt-4 disabled:opacity-50 flex items-center justify-center gap-2"
               >
+                <motion.span
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-background/25 to-transparent"
+                  initial={{ x: '-100%' }}
+                  animate={{ x: '100%' }}
+                  transition={{ repeat: Infinity, duration: 2, ease: 'linear', repeatDelay: 3 }}
+                />
                 {checkingOut ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {/* {t('loading')} */}
-                  </>
+                  <Loader2 className="relative z-10 w-4 h-4 animate-spin" />
                 ) : (
-                  <>
-                    <Crown className="w-4 h-4" />
+                  <span className="relative z-10 flex items-center gap-2">
+                    <motion.span
+                      initial={{ y: -4 }}
+                      animate={{ y: 0 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 8 }}
+                    >
+                      <Crown className="w-4 h-4" />
+                    </motion.span>
                     {billingCycle === 'yearly' ? t('freeTrialCta') : t('subscribeButton')}
-                    {/* <span aria-hidden="true">→</span> */}
-                  </>
+                    <span aria-hidden="true">→</span>
+                  </span>
                 )}
-              </button>
+              </motion.button>
             </div>
 
             {/* Right Column (Feature List) */}
