@@ -85,15 +85,22 @@ export default function Home() {
     };
   }, [router, hasNavigated]);
 
-  // Show loading while routing
+  // Show loading while routing — uses inline styles for dark mode since ThemeProvider isn't mounted here
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-        <p className="mt-2 text-gray-600">
-          {isChecking ? 'Checking language preference...' : 'Loading...'}
-        </p>
-      </div>
+    <div
+      className="flex items-center justify-center min-h-screen"
+      style={{ backgroundColor: 'var(--bg-color)' }}
+    >
+      <style>{`
+        :root { --bg-color: #fff; --spinner-border: #e5e5e5; --spinner-top: #171717; }
+        @media (prefers-color-scheme: dark) {
+          :root { --bg-color: #0a0a0a; --spinner-border: #333; --spinner-top: #fafafa; }
+        }
+      `}</style>
+      <div
+        className="h-8 w-8 rounded-full border-2 animate-spin"
+        style={{ borderColor: 'var(--spinner-border)', borderTopColor: 'var(--spinner-top)' }}
+      />
     </div>
   );
 } 

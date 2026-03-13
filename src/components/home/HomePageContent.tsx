@@ -1,9 +1,8 @@
 'use client';
 
 import { useSearchParams, useParams } from 'next/navigation';
-import { Suspense, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { VideoInputForm } from '@/components/youtube/VideoInputForm';
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { motion, useInView, useSpring, useTransform } from 'framer-motion';
 
@@ -75,9 +74,7 @@ export default function HomePageContent() {
           {/* <p className="text-muted-foreground text-center mb-12">
             {t('subtitle')}
           </p> */}
-          <Suspense fallback={<div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
-            <VideoInputForm />
-          </Suspense>
+          <VideoInputForm />
           {/* Pass videoIdFromUrl to FullTranscriptViewer */}
         </div>
     );

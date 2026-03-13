@@ -101,7 +101,6 @@ export async function POST(req: Request) {
     console.warn(`Failed to fetch video info for ${videoId}: ${e.message}. Proceeding without it.`);
     }
 
-
     // Check if transcript is empty (considering different fetcher formats)
     const transcriptEmpty = fetcherUsed === "supadata"
       ? !formattedTranscriptText || formattedTranscriptText.trim().length === 0

@@ -32,7 +32,7 @@ export function ClientLayoutWrapper({
             <ServerDownModalProvider>
               <div>
                 <SidebarLayout>
-                  <Suspense fallback={<div className="flex justify-center items-center h-32">Loading...</div>}>
+                  <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><div className="h-8 w-8 rounded-full border-2 border-muted-foreground/20 border-t-foreground animate-spin" /></div>}>
                     <div className="bg-background text-foreground min-h-screen">
                       <Navbar />
                       {children}

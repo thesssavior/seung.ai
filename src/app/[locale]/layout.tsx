@@ -1,7 +1,5 @@
 import { notFound } from 'next/navigation';
 import '../globals.css';
-import { Suspense } from 'react';
-import { Loader2 } from 'lucide-react';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
@@ -50,10 +48,8 @@ export default async function LocaleLayout({
   }
 
   return (
-    <Suspense fallback={<div className="flex justify-center items-center h-32"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
-      <ClientLayoutWrapper locale={locale} messages={messages}>
-        {children}
-      </ClientLayoutWrapper>
-    </Suspense>
+    <ClientLayoutWrapper locale={locale} messages={messages}>
+      {children}
+    </ClientLayoutWrapper>
   );
 }
