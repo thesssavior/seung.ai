@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { motion } from 'framer-motion';
 import {
   Dialog,
   DialogContent,
@@ -107,38 +108,33 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
         </DialogHeader>
 
         {/* Billing Cycle Toggle */}
-        <div className="flex justify-center">
-          <div className="inline-flex bg-gray-100 dark:bg-gray-800 p-1 rounded-full">
-            <button
-              onClick={() => setBillingCycle('weekly')}
-              className={`px-4 py-1 rounded-full text-sm font-medium transition-colors duration-150 ${
-                billingCycle === 'weekly'
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              {t('weekly')}
-            </button>
-            <button
-              onClick={() => setBillingCycle('monthly')}
-              className={`px-4 py-1 rounded-full text-sm font-medium transition-colors duration-150 ${
-                billingCycle === 'monthly'
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              {t('monthly')}
-            </button>
-            <button
-              onClick={() => setBillingCycle('yearly')}
-              className={`px-4 py-1 rounded-full text-sm font-medium transition-colors duration-150 ${
-                billingCycle === 'yearly'
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              {t('yearly', { defaultValue: 'Yearly' })}
-            </button>
+        <div className="flex gap-2 justify-center">
+          <div className="flex gap-2">
+            {(['weekly', 'monthly', 'yearly'] as const).map((cycle) => (
+              <button
+                key={cycle}
+                onClick={() => setBillingCycle(cycle)}
+                className="relative flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors"
+              >
+                {billingCycle === cycle && (
+                  <motion.span
+                    layoutId="billingToggle"
+                    className="absolute inset-0 bg-foreground rounded-full"
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  />
+                )}
+                <span className={`relative z-10 flex items-center gap-1.5 transition-colors duration-200 ${
+                  billingCycle === cycle ? 'text-background' : 'text-muted-foreground'
+                }`}>
+                  {t(cycle)}
+                  {cycle === 'yearly' && (
+                    <span className="text-[10px] font-semibold bg-green-500 text-white px-1.5 py-0.5 rounded-full leading-none">
+                      {t('save', { percentage: 44 })}
+                    </span>
+                  )}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -162,7 +158,7 @@ export default function SubscriptionPlans({ isOpen, onCloseAction }: Subscriptio
               <p className="text-3xl font-bold mb-1">
                 {currentPricing.priceFormatted}
                 <span className="text-sm font-normal text-muted-foreground ml-1">
-                  {billingCycle === 'weekly' ? '/ week' : billingCycle === 'monthly' ? '/ month' : '/ year'}
+                  {billingCycle === 'weekly' ? t('pricePerWeek') : billingCycle === 'monthly' ? t('pricePerMonth') : t('pricePerYear')}
                 </span>
               </p>
               {billingCycle === 'yearly' && (
