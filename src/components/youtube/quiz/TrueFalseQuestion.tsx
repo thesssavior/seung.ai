@@ -44,9 +44,9 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
   const hasRef = (timestamp && videoPlayer) || (page && pdfViewer);
 
   return (
-    <div className="space-y-4 lg:space-y-5">
-      <p className="text-base lg:text-lg font-medium">{question}</p>
-      <div className="flex flex-col gap-3 lg:gap-4">
+    <div className="space-y-4 2xl:space-y-5">
+      <p className="text-base 2xl:text-lg font-light">{question}</p>
+      <div className="flex flex-col gap-3 2xl:gap-4">
         {options.map((option) => {
           const isSelected = selectedAnswer === option;
           const isCorrect = option === correctAnswer;
@@ -70,28 +70,28 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
               onClick={() => !checked && onSelect(option)}
               disabled={checked}
               className={cn(
-                'rounded-xl border p-4 lg:p-5 text-left transition-all flex items-center justify-between gap-3',
+                'rounded-xl border p-4 2xl:p-5 text-left transition-all flex items-center justify-between gap-3',
                 stateClasses,
                 !checked && 'cursor-pointer'
               )}
             >
-              <span className="text-sm lg:text-base font-medium">{option}</span>
-              {checked && isCorrect && <Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 flex-shrink-0" />}
-              {checked && isSelected && !isCorrect && <X className="h-4 w-4 lg:h-5 lg:w-5 text-red-500 flex-shrink-0" />}
+              <span className="text-sm 2xl:text-base font-light">{option}</span>
+              {checked && isCorrect && <Check className="h-4 w-4 2xl:h-5 2xl:w-5 text-green-500 flex-shrink-0" />}
+              {checked && isSelected && !isCorrect && <X className="h-4 w-4 2xl:h-5 2xl:w-5 text-red-500 flex-shrink-0" />}
             </button>
           );
         })}
       </div>
       {checked && explanation && (
         <div className="pt-3">
-          <p className="text-xs lg:text-sm font-medium text-foreground mb-0.5">{t('explanation')}</p>
-          <p className="text-sm lg:text-base text-muted-foreground">
+          <p className="text-xs 2xl:text-sm font-normal text-foreground mb-1">{t('explanation')}</p>
+          <p className="text-sm 2xl:text-base font-light text-muted-foreground">
             {explanation}
             {hasRef && (
               <button
                 type="button"
                 onClick={handleRefClick}
-                className="ml-2 text-xs font-medium text-muted-foreground hover:text-primary cursor-pointer transition-colors"
+                className="ml-2 text-xs font-normal text-muted-foreground hover:text-primary cursor-pointer transition-colors"
               >
                 {timestamp ? formatTimeString(timestamp) : `p.${page}`}
               </button>

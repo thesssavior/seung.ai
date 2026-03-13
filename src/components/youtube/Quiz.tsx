@@ -426,8 +426,8 @@ const QuizComponent: React.FC<QuizProps> = ({
 
   if (quizComplete) {
     return (
-      <ScrollArea className="h-full p-4 lg:p-6">
-        <div className="max-w-2xl lg:max-w-3xl mx-auto">
+      <ScrollArea className="h-full p-4 2xl:p-6">
+        <div className="max-w-2xl 2xl:max-w-3xl mx-auto">
           <QuizResults
             score={score}
             total={quizItems.length}
@@ -465,8 +465,8 @@ const QuizComponent: React.FC<QuizProps> = ({
   };
 
   return (
-    <ScrollArea className="h-full p-4 lg:p-6">
-      <div className="max-w-2xl lg:max-w-3xl mx-auto space-y-6 lg:space-y-8">
+    <ScrollArea className="h-full p-4 2xl:p-6">
+      <div className="max-w-2xl 2xl:max-w-3xl mx-auto space-y-6 2xl:space-y-8">
         {error && (
           <div className="p-3 text-sm text-red-500 bg-red-50 dark:bg-red-900/20 rounded-lg">
             {error}
@@ -516,7 +516,7 @@ const QuizComponent: React.FC<QuizProps> = ({
               <button
                 key={i}
                 onClick={() => goTo(i)}
-                className={`h-2 w-2 lg:h-2.5 lg:w-2.5 rounded-full transition-all ${getDotColor(i)}`}
+                className={`h-2 w-2 2xl:h-2.5 2xl:w-2.5 rounded-full transition-all ${getDotColor(i)}`}
               />
             ))}
           </div>

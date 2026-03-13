@@ -46,27 +46,27 @@ const FreeResponseQuestion: React.FC<FreeResponseQuestionProps> = ({
   const hasRef = (timestamp && videoPlayer) || (page && pdfViewer);
 
   return (
-    <div className="space-y-4 lg:space-y-5">
-      <p className="text-base lg:text-lg font-medium">{question}</p>
+    <div className="space-y-4 2xl:space-y-5">
+      <p className="text-base 2xl:text-lg font-light">{question}</p>
       <Textarea
         value={userAnswer}
         onChange={(e) => onAnswerChange(e.target.value)}
         placeholder={t('typeAnswer')}
         disabled={checked}
-        className="min-h-[100px] lg:min-h-[120px] lg:text-base resize-none"
+        className="min-h-[100px] 2xl:min-h-[120px] 2xl:text-base resize-none"
       />
       {checked && (
-        <div className="rounded-xl border border-green-500 bg-green-50 dark:bg-green-950/30 p-4 lg:p-5">
-          <p className="text-xs lg:text-sm font-medium text-green-700 dark:text-green-400 mb-1">
+        <div className="rounded-xl border border-green-500 bg-green-50 dark:bg-green-950/30 p-4 2xl:p-5">
+          <p className="text-xs 2xl:text-sm font-normal text-green-700 dark:text-green-400 mb-1">
             {t('correctAnswer')}
           </p>
-          <p className="text-sm lg:text-base">{correctAnswer}</p>
+          <p className="text-sm 2xl:text-base font-light">{correctAnswer}</p>
         </div>
       )}
       {checked && explanation && (
         <div className="pt-3">
-          <p className="text-xs lg:text-sm font-medium text-foreground mb-0.5">{t('explanation')}</p>
-          <p className="text-sm lg:text-base text-muted-foreground">
+          <p className="text-xs 2xl:text-sm font-normal text-foreground mb-0.5">{t('explanation')}</p>
+          <p className="text-sm 2xl:text-base font-light text-muted-foreground">
             {explanation}
             {hasRef && (
               <button
