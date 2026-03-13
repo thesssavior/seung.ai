@@ -45,7 +45,7 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
 
   return (
     <div className="space-y-4 2xl:space-y-5">
-      <p className="text-base 2xl:text-lg font-light">{question}</p>
+      <p className="text-base 2xl:text-lg font-normal">{question}</p>
       <div className="flex flex-col gap-3 2xl:gap-4">
         {options.map((option) => {
           const isSelected = selectedAnswer === option;
@@ -75,7 +75,7 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
                 !checked && 'cursor-pointer'
               )}
             >
-              <span className="text-sm 2xl:text-base font-light">{option}</span>
+              <span className="text-sm 2xl:text-base font-normal">{option}</span>
               {checked && isCorrect && <Check className="h-4 w-4 2xl:h-5 2xl:w-5 text-green-500 flex-shrink-0" />}
               {checked && isSelected && !isCorrect && <X className="h-4 w-4 2xl:h-5 2xl:w-5 text-red-500 flex-shrink-0" />}
             </button>
@@ -85,7 +85,7 @@ const TrueFalseQuestion: React.FC<TrueFalseQuestionProps> = ({
       {checked && explanation && (
         <div className="pt-3">
           <p className="text-xs 2xl:text-sm font-normal text-foreground mb-1">{t('explanation')}</p>
-          <p className="text-sm 2xl:text-base font-light text-muted-foreground">
+          <p className="text-sm 2xl:text-base font-normal text-muted-foreground">
             {explanation}
             {hasRef && (
               <button

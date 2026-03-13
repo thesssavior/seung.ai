@@ -47,7 +47,7 @@ const FreeResponseQuestion: React.FC<FreeResponseQuestionProps> = ({
 
   return (
     <div className="space-y-4 2xl:space-y-5">
-      <p className="text-base 2xl:text-lg font-light">{question}</p>
+      <p className="text-base 2xl:text-lg font-normal">{question}</p>
       <Textarea
         value={userAnswer}
         onChange={(e) => onAnswerChange(e.target.value)}
@@ -60,13 +60,13 @@ const FreeResponseQuestion: React.FC<FreeResponseQuestionProps> = ({
           <p className="text-xs 2xl:text-sm font-normal text-green-700 dark:text-green-400 mb-1">
             {t('correctAnswer')}
           </p>
-          <p className="text-sm 2xl:text-base font-light">{correctAnswer}</p>
+          <p className="text-sm 2xl:text-base font-normal">{correctAnswer}</p>
         </div>
       )}
       {checked && explanation && (
         <div className="pt-3">
-          <p className="text-xs 2xl:text-sm font-normal text-foreground mb-0.5">{t('explanation')}</p>
-          <p className="text-sm 2xl:text-base font-light text-muted-foreground">
+          <p className="text-xs 2xl:text-sm font-normal text-foreground mb-1">{t('explanation')}</p>
+          <p className="text-sm 2xl:text-base font-normal text-muted-foreground">
             {explanation}
             {hasRef && (
               <button
