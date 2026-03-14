@@ -503,6 +503,21 @@
     "freeTrialCta": "Commencer l'essai gratuit",
     "ctaNote": "Annulez à tout moment. Sans engagement."
   },
+  "fileUpload": {
+    "pdfOnly": "Seuls les fichiers PDF sont pris en charge",
+    "pdfSizeLimit": "La taille du fichier doit être inférieure à 50 Mo",
+    "audioSizeLimit": "La taille du fichier doit être inférieure à 100 Mo",
+    "dropPdf": "Déposez votre PDF ici ou",
+    "browse": "parcourir",
+    "pdfMaxSize": "PDF jusqu'à 50 Mo",
+    "uploadAudio": "Télécharger un fichier audio",
+    "audioFormats": "MP3, WAV, M4A, OGG, FLAC jusqu'à 100 Mo",
+    "micDenied": "Accès au microphone refusé",
+    "recordAudio": "Enregistrer l'audio",
+    "startRecording": "Cliquez pour commencer l'enregistrement",
+    "stopRecording": "Cliquez pour arrêter et transcrire",
+    "or": "ou"
+  },
   "SummaryFeedback": {
     "good": "Bien",
     "bad": "Mauvais",

@@ -499,6 +499,21 @@
     "freeTrialCta": "Kostenlos testen",
     "ctaNote": "Jederzeit kündbar. Keine Fragen."
   },
+  "fileUpload": {
+    "pdfOnly": "Es werden nur PDF-Dateien unterstützt",
+    "pdfSizeLimit": "Dateigröße muss unter 50MB liegen",
+    "audioSizeLimit": "Dateigröße muss unter 100MB liegen",
+    "dropPdf": "PDF hier ablegen oder",
+    "browse": "durchsuchen",
+    "pdfMaxSize": "PDF bis zu 50MB",
+    "uploadAudio": "Audiodatei hochladen",
+    "audioFormats": "MP3, WAV, M4A, OGG, FLAC bis zu 100MB",
+    "micDenied": "Mikrofonzugriff verweigert",
+    "recordAudio": "Audio aufnehmen",
+    "startRecording": "Klicken, um die Aufnahme zu starten",
+    "stopRecording": "Klicken, um zu stoppen und zu transkribieren",
+    "or": "oder"
+  },
   "SummaryFeedback": {
     "good": "Gut",
     "bad": "Schlecht",

@@ -504,6 +504,21 @@
     "freeTrialCta": "무료 체험 시작",
     "ctaNote": "언제든 해지 가능. 질문 없이 환불."
   },
+  "fileUpload": {
+    "pdfOnly": "PDF 파일만 지원됩니다",
+    "pdfSizeLimit": "파일 크기는 50MB 이하여야 합니다",
+    "audioSizeLimit": "파일 크기는 100MB 이하여야 합니다",
+    "dropPdf": "PDF를 여기에 드래그하거나",
+    "browse": "파일 선택",
+    "pdfMaxSize": "PDF 최대 50MB",
+    "uploadAudio": "오디오 파일 업로드",
+    "audioFormats": "MP3, WAV, M4A, OGG, FLAC 최대 100MB",
+    "micDenied": "마이크 접근이 거부되었습니다",
+    "recordAudio": "오디오 녹음",
+    "startRecording": "클릭하여 녹음 시작",
+    "stopRecording": "클릭하여 중지 및 변환",
+    "or": "또는"
+  },
   "SummaryFeedback": {
     "good": "좋아요",
     "bad": "별로예요",

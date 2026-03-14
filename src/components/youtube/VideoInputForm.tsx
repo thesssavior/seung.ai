@@ -565,7 +565,7 @@ export function VideoInputForm() {
         setRecordingTime(prev => prev + 1);
       }, 1000);
     } catch (err: any) {
-      setError('Microphone access denied');
+      setError(t('fileUpload.micDenied'));
     }
   }, [submitAudioFile]);
 
@@ -584,7 +584,7 @@ export function VideoInputForm() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 100 * 1024 * 1024) {
-        setError('File size must be under 100MB');
+        setError(t('fileUpload.audioSizeLimit'));
         return;
       }
       setError('');
@@ -607,11 +607,11 @@ export function VideoInputForm() {
 
   const processFile = useCallback((file: File) => {
     if (file.type !== 'application/pdf') {
-      setError('Only PDF files are supported');
+      setError(t('fileUpload.pdfOnly'));
       return;
     }
     if (file.size > 50 * 1024 * 1024) {
-      setError('File size must be under 50MB');
+      setError(t('fileUpload.pdfSizeLimit'));
       return;
     }
     setPdfFile(file);
@@ -828,9 +828,9 @@ export function VideoInputForm() {
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium">
-                  Drop your PDF here or <span className="text-foreground font-semibold">browse</span>
+                  {t('fileUpload.dropPdf')} <span className="text-foreground font-semibold">{t('fileUpload.browse')}</span>
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">PDF up to 50MB</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('fileUpload.pdfMaxSize')}</p>
               </div>
             </div>
           )}
@@ -867,9 +867,9 @@ export function VideoInputForm() {
                   <Upload className="h-5 w-5 text-foreground" />
                 </div>
                 <p className="text-sm font-medium">
-                  Upload audio file
+                  {t('fileUpload.uploadAudio')}
                 </p>
-                <p className="text-xs text-muted-foreground">MP3, WAV, M4A, OGG, FLAC up to 100MB</p>
+                <p className="text-xs text-muted-foreground">{t('fileUpload.audioFormats')}</p>
               </div>
             )}
           </div>
@@ -877,7 +877,7 @@ export function VideoInputForm() {
           {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-muted-foreground">or</span>
+            <span className="text-xs text-muted-foreground">{t('fileUpload.or')}</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
@@ -896,7 +896,7 @@ export function VideoInputForm() {
                   <div className="h-2 w-2 rounded-full bg-foreground animate-pulse" />
                   <span className="text-sm font-medium">{formatRecordingTime(recordingTime)}</span>
                 </div>
-                <p className="text-xs text-muted-foreground">Click to stop and transcribe</p>
+                <p className="text-xs text-muted-foreground">{t('fileUpload.stopRecording')}</p>
               </>
             ) : (
               <>
@@ -908,8 +908,8 @@ export function VideoInputForm() {
                 >
                   <Mic className="h-6 w-6" />
                 </button>
-                <p className="text-sm font-medium">Record audio</p>
-                <p className="text-xs text-muted-foreground">Click to start recording</p>
+                <p className="text-sm font-medium">{t('fileUpload.recordAudio')}</p>
+                <p className="text-xs text-muted-foreground">{t('fileUpload.startRecording')}</p>
               </>
             )}
           </div>

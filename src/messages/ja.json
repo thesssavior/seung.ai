@@ -503,6 +503,21 @@
     "freeTrialCta": "無料トライアルを始める",
     "ctaNote": "いつでも簡単にキャンセルできます。"
   },
+  "fileUpload": {
+    "pdfOnly": "PDFファイルのみ対応しています",
+    "pdfSizeLimit": "ファイルサイズは50MB以下にしてください",
+    "audioSizeLimit": "ファイルサイズは100MB以下にしてください",
+    "dropPdf": "PDFをここにドロップまたは",
+    "browse": "ファイルを選択",
+    "pdfMaxSize": "PDF 最大50MB",
+    "uploadAudio": "音声ファイルをアップロード",
+    "audioFormats": "MP3, WAV, M4A, OGG, FLAC 最大100MB",
+    "micDenied": "マイクへのアクセスが拒否されました",
+    "recordAudio": "音声を録音",
+    "startRecording": "クリックして録音を開始",
+    "stopRecording": "クリックして停止・変換",
+    "or": "または"
+  },
   "SummaryFeedback": {
     "good": "良い",
     "bad": "悪い",

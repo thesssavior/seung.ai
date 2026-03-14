@@ -499,6 +499,21 @@
     "freeTrialCta": "Mulai uji coba gratis",
     "ctaNote": "Batalkan kapan saja. Tanpa pertanyaan."
   },
+  "fileUpload": {
+    "pdfOnly": "Hanya file PDF yang didukung",
+    "pdfSizeLimit": "Ukuran file harus di bawah 50MB",
+    "audioSizeLimit": "Ukuran file harus di bawah 100MB",
+    "dropPdf": "Letakkan PDF Anda di sini atau",
+    "browse": "jelajahi",
+    "pdfMaxSize": "PDF hingga 50MB",
+    "uploadAudio": "Unggah file audio",
+    "audioFormats": "MP3, WAV, M4A, OGG, FLAC hingga 100MB",
+    "micDenied": "Akses mikrofon ditolak",
+    "recordAudio": "Rekam audio",
+    "startRecording": "Klik untuk mulai merekam",
+    "stopRecording": "Klik untuk berhenti dan transkripsi",
+    "or": "atau"
+  },
   "SummaryFeedback": {
     "good": "Bagus",
     "bad": "Buruk",
