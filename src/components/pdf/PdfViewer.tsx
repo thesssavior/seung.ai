@@ -10,6 +10,12 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
+const PDF_OPTIONS = {
+  cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+  cMapPacked: true,
+  standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
+};
+
 interface PdfViewerProps {
   pdfUrl: string;
   title?: string;
@@ -62,6 +68,7 @@ export function PdfViewer({ pdfUrl, title }: PdfViewerProps) {
         <Document
           file={pdfUrl}
           onLoadSuccess={onDocumentLoadSuccess}
+          options={PDF_OPTIONS}
           loading={
             <div className="flex items-center justify-center h-40 text-muted-foreground text-sm">
               Loading PDF...

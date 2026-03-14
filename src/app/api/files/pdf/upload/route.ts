@@ -17,7 +17,8 @@ export async function POST(req: Request) {
     }
 
     const fileBuffer = await file.arrayBuffer();
-    const fileName = `${user.id}/${Date.now()}_${file.name}`;
+    const ext = file.name.split('.').pop() || 'pdf';
+    const fileName = `${user.id}/${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabase
       .storage
