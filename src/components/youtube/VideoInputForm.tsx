@@ -620,7 +620,7 @@ export function VideoInputForm() {
     setTimeout(() => {
       submitPdfWithFile(file);
     }, 0);
-  }, []);
+  }, [submitPdfWithFile]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
