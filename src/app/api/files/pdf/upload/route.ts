@@ -9,36 +9,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const formData = await req.formData();
-    const file = formData.get('file') as File | null;
+    const { fileName } = await req.json();
+    const ext = (fileName || 'file.pdf').split('.').pop() || 'pdf';
+    const storagePath = `${user.id}/${Date.now()}.${ext}`;
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-    }
-
-    const fileBuffer = await file.arrayBuffer();
-    const ext = file.name.split('.').pop() || 'pdf';
-    const fileName = `${user.id}/${Date.now()}.${ext}`;
-
-    const { error: uploadError } = await supabase
+    // Create a signed URL so the client can upload directly to Supabase Storage
+    const { data, error: signError } = await supabase
       .storage
       .from('pdfs')
-      .upload(fileName, fileBuffer, {
-        contentType: 'application/pdf',
-        upsert: false,
-      });
+      .createSignedUploadUrl(storagePath);
 
-    if (uploadError) {
-      console.error('PDF upload error:', uploadError.message);
-      return NextResponse.json({ error: 'Failed to upload PDF' }, { status: 500 });
+    if (signError || !data) {
+      console.error('Signed URL error:', signError?.message);
+      return NextResponse.json({ error: 'Failed to create upload URL' }, { status: 500 });
     }
 
     const { data: urlData } = supabase
       .storage
       .from('pdfs')
-      .getPublicUrl(fileName);
+      .getPublicUrl(storagePath);
 
-    return NextResponse.json({ pdfUrl: urlData.publicUrl }, { status: 200 });
+    return NextResponse.json({
+      signedUrl: data.signedUrl,
+      token: data.token,
+      path: storagePath,
+      pdfUrl: urlData.publicUrl,
+    }, { status: 200 });
   } catch (error: any) {
     console.error('[API /files/pdf/upload] Error:', error.message);
     return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });

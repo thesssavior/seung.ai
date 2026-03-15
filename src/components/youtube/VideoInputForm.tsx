@@ -383,18 +383,24 @@ export function VideoInputForm() {
         ? localStorage.getItem('contentLanguage') || locale
         : locale;
 
-      // Upload PDF to storage via server endpoint
+      // Upload PDF to storage via signed URL (avoids server body size limits)
       let pdfUrl: string | null = null;
       if (user) {
-        const uploadForm = new FormData();
-        uploadForm.append('file', file);
-        const uploadRes = await fetch('/api/files/pdf/upload', {
+        const signRes = await fetch('/api/files/pdf/upload', {
           method: 'POST',
-          body: uploadForm,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: file.name }),
         });
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json();
-          pdfUrl = uploadData.pdfUrl;
+        if (signRes.ok) {
+          const { signedUrl, pdfUrl: publicUrl } = await signRes.json();
+          const uploadRes = await fetch(signedUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/pdf' },
+            body: file,
+          });
+          if (uploadRes.ok) {
+            pdfUrl = publicUrl;
+          }
         }
       }
 
@@ -438,8 +444,6 @@ export function VideoInputForm() {
         token_count: tokenCount,
       });
 
-      const localPdfUrl = pdfUrl || URL.createObjectURL(file);
-
       navigateToSummary(fileId, {
         videoId: '',
         locale,
@@ -450,7 +454,7 @@ export function VideoInputForm() {
         tokenCount,
         fetcher: 'pdf',
         sourceType: 'pdf' as const,
-        pdfUrl: localPdfUrl,
+        pdfUrl: URL.createObjectURL(file),
       });
 
     } catch (err: any) {
