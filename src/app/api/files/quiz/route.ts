@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, Type } from '@google/genai';
 import { getUser, getUserWithProfile } from '@/lib/supabase/auth';
 import { FREE_TOKEN_LIMIT } from '@/lib/utils';
+import { checkTrialLimit } from '@/lib/trial';
 import { supabase } from '@/lib/supabaseClient';
 import { getPostHogClient } from '@/lib/posthog-server';
 
@@ -15,6 +16,11 @@ export async function POST(req: NextRequest) {
     const user = await getUserWithProfile();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const trial = await checkTrialLimit(user.id, user.profile?.plan);
+    if (!trial.allowed) {
+      return NextResponse.json({ error: 'trial_limit_exceeded' }, { status: 403 });
     }
 
     if (user.profile?.plan !== 'premium' && tokenCount > FREE_TOKEN_LIMIT) {

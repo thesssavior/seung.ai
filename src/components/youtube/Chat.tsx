@@ -123,6 +123,10 @@ const Chat: React.FC<ChatProps> = ({
       });
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData.error === 'premium_required') {
+          throw new Error(t('chatPremiumOnly'));
+        }
         throw new Error('Failed to get chat response');
       }
 

@@ -4,6 +4,7 @@ import messages from '@/messages/en.json';
 import { getPostHogClient } from '@/lib/posthog-server';
 import { getUserWithProfile } from '@/lib/supabase/auth';
 import { FREE_TOKEN_LIMIT } from '@/lib/utils';
+import { checkTrialLimit } from '@/lib/trial';
 
 const model = 'gemini-2.5-flash';
 
@@ -26,6 +27,11 @@ export async function POST(req: Request) {
     const user = await getUserWithProfile();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const trial = await checkTrialLimit(user.id, user.profile?.plan);
+    if (!trial.allowed) {
+      return NextResponse.json({ error: 'trial_limit_exceeded' }, { status: 403 });
     }
 
     if (user.profile?.plan !== 'premium' && tokenCount > FREE_TOKEN_LIMIT) {

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { getPostHogClient } from '@/lib/posthog-server';
 import { getUserWithProfile } from '@/lib/supabase/auth';
-import { FREE_TOKEN_LIMIT } from '@/lib/utils';
 
 const model = 'gemini-2.5-flash';
 
@@ -29,8 +28,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (user.profile?.plan !== 'premium' && tokenCount > FREE_TOKEN_LIMIT) {
-      return NextResponse.json({ error: 'token_limit_exceeded' }, { status: 403 });
+    if (user.profile?.plan !== 'premium') {
+      return NextResponse.json({ error: 'premium_required' }, { status: 403 });
     }
 
     if (!message) {
