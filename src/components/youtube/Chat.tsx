@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { Loader2, Send, MessageCircle, ArrowUp } from 'lucide-react';
+import { Loader2, Send, MessageCircle, ArrowUp, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import posthog from 'posthog-js';
 
 interface ChatMessage {
@@ -37,6 +38,7 @@ const Chat: React.FC<ChatProps> = ({
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isMultiline, setIsMultiline] = useState(false);
@@ -125,7 +127,10 @@ const Chat: React.FC<ChatProps> = ({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         if (errorData.error === 'premium_required') {
-          throw new Error(t('chatPremiumOnly'));
+          setShowPremiumModal(true);
+          setMessages(prev => prev.slice(0, -1));
+          setIsLoading(false);
+          return;
         }
         throw new Error('Failed to get chat response');
       }
@@ -203,6 +208,49 @@ const Chat: React.FC<ChatProps> = ({
   }
 
   return (
+    <>
+    <AnimatePresence>
+      {showPremiumModal && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={() => setShowPremiumModal(false)}
+        >
+          <motion.div
+            className="bg-card text-card-foreground rounded-2xl shadow-2xl max-w-sm w-full p-8 relative"
+            initial={{ opacity: 0, scale: 0.95, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 12 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowPremiumModal(false)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="flex flex-col items-center text-center">
+              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-5">
+                <MessageCircle className="h-6 w-6 text-foreground" />
+              </div>
+              <h2 className="text-lg font-semibold mb-2">{t('chatPremiumOnly')}</h2>
+              <p className="text-sm text-muted-foreground mb-6">{t('subCTA')}</p>
+              <a
+                href="/pricing"
+                className="w-full h-11 rounded-lg bg-foreground hover:opacity-90 text-background font-medium flex items-center justify-center"
+              >
+                {t('upgrade')}
+              </a>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+
     <div className="flex flex-col h-full">
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
@@ -279,6 +327,7 @@ const Chat: React.FC<ChatProps> = ({
         </div>
       </div>
     </div>
+    </>
   );
 };
 
