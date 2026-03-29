@@ -8,14 +8,20 @@ import enMessages from '@/messages/en.json';
 import koMessages from '@/messages/ko.json';
 import esMessages from '@/messages/es.json';
 import { calculateTokenCount } from '@/lib/utils';
-import { getUser } from '@/lib/supabase/auth';
+import { getUserWithProfile } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabaseClient';
+import { checkTrialLimit, incrementTrialUsage } from '@/lib/trial';
 
 export async function POST(req: Request) {
   try {
-    const user = await getUser();
+    const user = await getUserWithProfile();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const trial = await checkTrialLimit(user.id, user.profile?.plan);
+    if (!trial.allowed) {
+      return NextResponse.json({ error: 'trial_limit_exceeded' }, { status: 403 });
     }
 
     const { videoId, locale = 'ko', contentLanguage, folderId, fileId: clientFileId } = await req.json();
@@ -148,13 +154,15 @@ export async function POST(req: Request) {
       }
     }
 
+    await incrementTrialUsage(user.id, user.profile?.plan);
+
     return NextResponse.json({
       transcript: formattedTranscriptText,
       title: title,
       description: description,
       tokenCount: tokenCount,
       fetcher: fetcherUsed,
-      fileId: fileId, // Will be null for guests or if no folderId
+      fileId: fileId,
     }, { status: 200 });
 
   } catch (error: any) {

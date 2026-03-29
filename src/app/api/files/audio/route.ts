@@ -1,16 +1,22 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { calculateTokenCount } from '@/lib/utils';
-import { getUser } from '@/lib/supabase/auth';
+import { getUserWithProfile } from '@/lib/supabase/auth';
 import { supabase } from '@/lib/supabaseClient';
+import { checkTrialLimit, incrementTrialUsage } from '@/lib/trial';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req: Request) {
   try {
-    const user = await getUser();
+    const user = await getUserWithProfile();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const trial = await checkTrialLimit(user.id, user.profile?.plan);
+    if (!trial.allowed) {
+      return NextResponse.json({ error: 'trial_limit_exceeded' }, { status: 403 });
     }
 
     const formData = await req.formData();
@@ -130,6 +136,8 @@ export async function POST(req: Request) {
         fileId = fileData.id;
       }
     }
+
+    await incrementTrialUsage(user.id, user.profile?.plan);
 
     return NextResponse.json({
       transcript: transcriptText,

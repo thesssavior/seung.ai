@@ -14,14 +14,17 @@ export async function GET(req: NextRequest) {
   if (user) {
     const { data, error } = await supabase
       .from('profiles')
-      .select('plan')
+      .select('plan, free_generations_used')
       .eq('id', user.id)
       .single();
 
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
-    return new Response(JSON.stringify({ plan: data?.plan || 'free' }), { status: 200 });
+    return new Response(JSON.stringify({
+      plan: data?.plan || 'free',
+      free_generations_used: data?.free_generations_used ?? 0,
+    }), { status: 200 });
   }
 
   if (email) {

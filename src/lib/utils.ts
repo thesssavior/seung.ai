@@ -4,6 +4,7 @@ import { Tiktoken } from "js-tiktoken/lite";
 import o200k_base from "js-tiktoken/ranks/o200k_base";
 
 export const FREE_TOKEN_LIMIT = 16384;
+export const FREE_TRIAL_LIMIT = 1;
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

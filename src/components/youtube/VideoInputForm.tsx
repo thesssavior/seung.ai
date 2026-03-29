@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useFolder } from '../home/SidebarLayout';
 import { useSummaryGeneration } from '@/contexts/SummaryGenerationContext';
 import { useHydration } from '@/hooks/useHydration';
-import { extractVideoId, FREE_TOKEN_LIMIT } from '@/lib/utils';
+import { extractVideoId, FREE_TOKEN_LIMIT, FREE_TRIAL_LIMIT } from '@/lib/utils';
 import * as pdfjsLib from 'pdfjs-dist';
 import posthog from 'posthog-js';
 
@@ -153,6 +153,7 @@ export function VideoInputForm() {
           if (!res.ok) { setUserPlan('free'); setPlanLoaded(true); return; }
           const data = await res.json();
           setUserPlan(data.plan || 'free');
+          setFreeGenerationsUsed(data.free_generations_used ?? 0);
         } catch {
           setUserPlan('free');
         }
@@ -173,16 +174,7 @@ export function VideoInputForm() {
   const [inAppBrowser, setInAppBrowser] = useState(false);
   const [showTokenLimitUpgrade, setShowTokenLimitUpgrade] = useState(false);
   const [trialLimitExceeded, setTrialLimitExceeded] = useState(false);
-  const [freeTrialsRemaining, setFreeTrialsRemaining] = useState(3);
-
-  // Check localStorage for free trial count on mount - only after hydration
-  useEffect(() => {
-    if (isHydrated && typeof window !== 'undefined') {
-      const storedTrialCount = localStorage.getItem('freeUserTrialCount');
-      const count = storedTrialCount ? parseInt(storedTrialCount, 10) : 0;
-      setFreeTrialsRemaining(3 - count);
-    }
-  }, [isHydrated]);
+  const [freeGenerationsUsed, setFreeGenerationsUsed] = useState(0);
 
   // Extract video ID from URL passed as query param
   useEffect(() => {
@@ -238,33 +230,22 @@ export function VideoInputForm() {
       return false;
     }
 
-    if (user && planLoaded && userPlan !== 'premium' && isHydrated && typeof window !== 'undefined') {
-      const storedTrialCount = localStorage.getItem('freeUserTrialCount');
-      const count = storedTrialCount ? parseInt(storedTrialCount, 10) : 0;
-
-      if (count >= 3) {
-        setTrialLimitExceeded(true);
-        setError(t('trialLimitExceededError'));
-        setIsLoading(false);
-        openSubscriptionModal();
-        return false;
-      }
+    if (user && planLoaded && userPlan !== 'premium' && freeGenerationsUsed >= FREE_TRIAL_LIMIT) {
+      setTrialLimitExceeded(true);
+      setError(t('trialLimitExceededError'));
+      setIsLoading(false);
+      openSubscriptionModal();
+      return false;
     }
 
     return true;
-  }, [user, planLoaded, userPlan, isHydrated, t, openSubscriptionModal]);
+  }, [user, planLoaded, userPlan, freeGenerationsUsed, t, openSubscriptionModal]);
 
   const markTrialUsed = useCallback(() => {
-    if (user && userPlan !== 'premium' && isHydrated) {
-      if (typeof window !== 'undefined') {
-        const storedTrialCount = localStorage.getItem('freeUserTrialCount');
-        const count = storedTrialCount ? parseInt(storedTrialCount, 10) : 0;
-        const newCount = count + 1;
-        localStorage.setItem('freeUserTrialCount', newCount.toString());
-        setFreeTrialsRemaining(3 - newCount);
-      }
+    if (user && userPlan !== 'premium') {
+      setFreeGenerationsUsed(prev => prev + 1);
     }
-  }, [user, userPlan, isHydrated]);
+  }, [user, userPlan]);
 
   const navigateToSummary = useCallback((fileId: string | null, transcriptData: any) => {
     setGenerationData({
@@ -312,8 +293,14 @@ export function VideoInputForm() {
 
       if (!transcriptResponse.ok) {
         const errorData = await transcriptResponse.json();
-        const errorMessage = errorData.error || t('failedToFetchTranscript');
-        throw new Error(errorMessage);
+        if (errorData.error === 'trial_limit_exceeded') {
+          setTrialLimitExceeded(true);
+          setError(t('trialLimitExceededError'));
+          setIsLoading(false);
+          openSubscriptionModal();
+          return;
+        }
+        throw new Error(errorData.error || t('failedToFetchTranscript'));
       }
 
       trickle.jump(92, t('processing'), 99);
@@ -357,7 +344,7 @@ export function VideoInputForm() {
       setIsLoading(false);
       trickle.reset();
     }
-  }, [url, user, checkTrialAndPlan, planLoaded, userPlan, isHydrated, locale, activeFolder, t, openSubscriptionModal, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
+  }, [url, user, checkTrialAndPlan, planLoaded, userPlan, locale, activeFolder, t, openSubscriptionModal, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
 
   const submitPdfWithFile = useCallback(async (file: File) => {
     setError("");
@@ -422,6 +409,13 @@ export function VideoInputForm() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (errorData.error === 'trial_limit_exceeded') {
+          setTrialLimitExceeded(true);
+          setError(t('trialLimitExceededError'));
+          setIsLoading(false);
+          openSubscriptionModal();
+          return;
+        }
         throw new Error(errorData.error || 'Failed to process PDF');
       }
 
@@ -465,7 +459,7 @@ export function VideoInputForm() {
       setIsLoading(false);
       trickle.reset();
     }
-  }, [user, checkTrialAndPlan, userPlan, isHydrated, locale, activeFolder, t, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
+  }, [user, checkTrialAndPlan, userPlan, locale, activeFolder, t, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
 
   const submitAudioFile = useCallback(async (file: File) => {
     setError("");
@@ -497,6 +491,13 @@ export function VideoInputForm() {
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (errorData.error === 'trial_limit_exceeded') {
+          setTrialLimitExceeded(true);
+          setError(t('trialLimitExceededError'));
+          setIsLoading(false);
+          openSubscriptionModal();
+          return;
+        }
         throw new Error(errorData.error || 'Failed to process audio');
       }
 
@@ -543,7 +544,7 @@ export function VideoInputForm() {
       setIsLoading(false);
       trickle.reset();
     }
-  }, [user, checkTrialAndPlan, userPlan, isHydrated, locale, activeFolder, t, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
+  }, [user, checkTrialAndPlan, userPlan, locale, activeFolder, t, markTrialUsed, navigateToSummary, showTokenLimitUpgrade, trialLimitExceeded]);
 
   const startRecording = useCallback(async () => {
     try {
